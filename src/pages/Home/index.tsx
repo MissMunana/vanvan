@@ -7,11 +7,33 @@ import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 
 export default function Home() {
-  const child = useAppStore((s) => s.getCurrentChild())
-  const tasks = useTaskStore((s) => s.getChildTasks(child?.childId || ''))
-  const weeklyStats = usePointStore((s) => s.getWeeklyStats(child?.childId || ''))
-  const pendingExchanges = useExchangeStore((s) => s.getPendingExchanges(child?.childId))
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const allTasks = useTaskStore((s) => s.tasks)
+  const logs = usePointStore((s) => s.logs)
+  const exchanges = useExchangeStore((s) => s.exchanges)
   const navigate = useNavigate()
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const childId = child?.childId || ''
+
+  const tasks = useMemo(() => allTasks.filter((t) => t.childId === childId && t.isActive), [allTasks, childId])
+
+  const weeklyStats = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    const weekStartStr = weekStart.toISOString()
+    const weekLogs = logs.filter((l) => l.childId === childId && l.createdAt >= weekStartStr)
+    return {
+      tasksCompleted: weekLogs.filter((l) => l.type === 'earn' && l.taskId).length,
+      pointsEarned: weekLogs.filter((l) => l.type === 'earn' || (l.type === 'adjust' && l.points > 0)).reduce((sum, l) => sum + l.points, 0),
+      pointsSpent: weekLogs.filter((l) => l.type === 'spend').reduce((sum, l) => sum + Math.abs(l.points), 0),
+    }
+  }, [logs, childId])
+
+  const pendingExchanges = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId), [exchanges, childId])
 
   const todayTasks = useMemo(() => {
     return tasks.filter((t) => !t.completedToday).slice(0, 4)

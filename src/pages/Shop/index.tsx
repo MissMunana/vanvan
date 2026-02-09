@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useRewardStore } from '../../stores/rewardStore'
@@ -9,10 +9,25 @@ import { REWARD_CATEGORY_INFO, type RewardCategory } from '../../types'
 import type { Reward } from '../../types'
 
 export default function Shop() {
-  const child = useAppStore((s) => s.getCurrentChild())
-  const rewardsByCategory = useRewardStore((s) => s.getChildRewardsByCategory(child?.childId || ''))
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const storeRewards = useRewardStore((s) => s.rewards)
   const createExchange = useExchangeStore((s) => s.createExchange)
-  const childExchanges = useExchangeStore((s) => s.getChildExchanges(child?.childId || ''))
+  const allExchanges = useExchangeStore((s) => s.exchanges)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const childId = child?.childId || ''
+
+  const rewardsByCategory = useMemo(() => {
+    const activeRewards = storeRewards.filter((r) => r.childId === childId && r.isActive)
+    const grouped: Record<RewardCategory, typeof activeRewards> = {
+      time: [], privilege: [], material: [],
+    }
+    activeRewards.forEach((r) => { grouped[r.category].push(r) })
+    return grouped
+  }, [storeRewards, childId])
+
+  const childExchanges = useMemo(() => allExchanges.filter((e) => e.childId === childId), [allExchanges, childId])
   const { showToast } = useToast()
 
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null)

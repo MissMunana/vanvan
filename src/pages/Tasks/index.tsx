@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
@@ -16,10 +16,23 @@ const EMOTIONS = [
 ]
 
 export default function Tasks() {
-  const child = useAppStore((s) => s.getCurrentChild())
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
   const incrementCompletionCount = useAppStore((s) => s.incrementCompletionCount)
   const updatePoints = useAppStore((s) => s.updatePoints)
-  const tasksByCategory = useTaskStore((s) => s.getChildTasksByCategory(child?.childId || ''))
+  const allTasks = useTaskStore((s) => s.tasks)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const childId = child?.childId || ''
+
+  const tasksByCategory = useMemo(() => {
+    const activeTasks = allTasks.filter((t) => t.childId === childId && t.isActive)
+    const grouped: Record<TaskCategory, typeof activeTasks> = {
+      life: [], study: [], manner: [], chore: [],
+    }
+    activeTasks.forEach((t) => { grouped[t.category].push(t) })
+    return grouped
+  }, [allTasks, childId])
   const completeTask = useTaskStore((s) => s.completeTask)
   const undoComplete = useTaskStore((s) => s.undoComplete)
   const addLog = usePointStore((s) => s.addLog)

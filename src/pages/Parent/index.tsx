@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
@@ -14,8 +14,10 @@ import type { TaskCategory, RewardCategory } from '../../types'
 type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust'
 
 export default function Parent() {
-  const child = useAppStore((s) => s.getCurrentChild())
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
   const parentPin = useAppStore((s) => s.parentPin)
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
 
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -151,9 +153,29 @@ export default function Parent() {
 }
 
 function Dashboard() {
-  const child = useAppStore((s) => s.getCurrentChild())
-  const weeklyStats = usePointStore((s) => s.getWeeklyStats(child?.childId || ''))
-  const pendingCount = useExchangeStore((s) => s.getPendingExchanges(child?.childId).length)
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const logs = usePointStore((s) => s.logs)
+  const exchanges = useExchangeStore((s) => s.exchanges)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const childId = child?.childId || ''
+
+  const weeklyStats = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    const weekStartStr = weekStart.toISOString()
+    const weekLogs = logs.filter((l) => l.childId === childId && l.createdAt >= weekStartStr)
+    return {
+      tasksCompleted: weekLogs.filter((l) => l.type === 'earn' && l.taskId).length,
+      pointsEarned: weekLogs.filter((l) => l.type === 'earn' || (l.type === 'adjust' && l.points > 0)).reduce((sum, l) => sum + l.points, 0),
+      pointsSpent: weekLogs.filter((l) => l.type === 'spend').reduce((sum, l) => sum + Math.abs(l.points), 0),
+    }
+  }, [logs, childId])
+
+  const pendingCount = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId).length, [exchanges, childId])
 
   if (!child) return null
 
@@ -225,8 +247,12 @@ function Dashboard() {
 }
 
 function TaskManager() {
-  const child = useAppStore((s) => s.getCurrentChild())
-  const allTasks = useTaskStore((s) => s.tasks.filter((t) => t.childId === child?.childId))
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const storeTasks = useTaskStore((s) => s.tasks)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const allTasks = useMemo(() => storeTasks.filter((t) => t.childId === child?.childId), [storeTasks, child?.childId])
   const addTask = useTaskStore((s) => s.addTask)
   const addTasks = useTaskStore((s) => s.addTasks)
   const deleteTask = useTaskStore((s) => s.deleteTask)
@@ -390,8 +416,12 @@ function TaskManager() {
 }
 
 function RewardManager() {
-  const child = useAppStore((s) => s.getCurrentChild())
-  const allRewards = useRewardStore((s) => s.rewards.filter((r) => r.childId === child?.childId))
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const storeRewards = useRewardStore((s) => s.rewards)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const allRewards = useMemo(() => storeRewards.filter((r) => r.childId === child?.childId), [storeRewards, child?.childId])
   const addReward = useRewardStore((s) => s.addReward)
   const addRewards = useRewardStore((s) => s.addRewards)
   const deleteReward = useRewardStore((s) => s.deleteReward)
@@ -542,9 +572,13 @@ function RewardManager() {
 }
 
 function ExchangeReview() {
-  const child = useAppStore((s) => s.getCurrentChild())
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
   const updatePoints = useAppStore((s) => s.updatePoints)
-  const exchanges = useExchangeStore((s) => s.getChildExchanges(child?.childId || ''))
+  const allExchanges = useExchangeStore((s) => s.exchanges)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const exchanges = useMemo(() => allExchanges.filter((e) => e.childId === (child?.childId || '')), [allExchanges, child?.childId])
   const reviewExchange = useExchangeStore((s) => s.reviewExchange)
   const addLog = usePointStore((s) => s.addLog)
   const { showToast } = useToast()
@@ -675,8 +709,11 @@ function ExchangeReview() {
 }
 
 function PointAdjust() {
-  const child = useAppStore((s) => s.getCurrentChild())
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
   const updatePoints = useAppStore((s) => s.updatePoints)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
   const addLog = usePointStore((s) => s.addLog)
   const { showToast } = useToast()
 

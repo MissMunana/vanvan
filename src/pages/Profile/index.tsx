@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { usePointStore } from '../../stores/pointStore'
@@ -6,10 +6,30 @@ import { useExchangeStore } from '../../stores/exchangeStore'
 import { Modal } from '../../components/common/Modal'
 
 export default function Profile() {
-  const child = useAppStore((s) => s.getCurrentChild())
-  const weeklyStats = usePointStore((s) => s.getWeeklyStats(child?.childId || ''))
-  const recentLogs = usePointStore((s) => s.getChildLogs(child?.childId || '', 20))
-  const exchanges = useExchangeStore((s) => s.getChildExchanges(child?.childId || ''))
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const logs = usePointStore((s) => s.logs)
+  const allExchanges = useExchangeStore((s) => s.exchanges)
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
+  const childId = child?.childId || ''
+
+  const weeklyStats = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    const weekStartStr = weekStart.toISOString()
+    const weekLogs = logs.filter((l) => l.childId === childId && l.createdAt >= weekStartStr)
+    return {
+      tasksCompleted: weekLogs.filter((l) => l.type === 'earn' && l.taskId).length,
+      pointsEarned: weekLogs.filter((l) => l.type === 'earn' || (l.type === 'adjust' && l.points > 0)).reduce((sum, l) => sum + l.points, 0),
+      pointsSpent: weekLogs.filter((l) => l.type === 'spend').reduce((sum, l) => sum + Math.abs(l.points), 0),
+    }
+  }, [logs, childId])
+
+  const recentLogs = useMemo(() => logs.filter((l) => l.childId === childId).slice(0, 20), [logs, childId])
+  const exchanges = useMemo(() => allExchanges.filter((e) => e.childId === childId), [allExchanges, childId])
   const navigate = useNavigate()
 
   const [showHistory, setShowHistory] = useState(false)
