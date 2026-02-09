@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
@@ -7,6 +7,9 @@ import { useRewardStore } from '../../stores/rewardStore'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { getAgeGroup, getAgeFromBirthday, formatAge } from '../../hooks/useAgeGroup'
 import type { TaskCategory, RewardCategory } from '../../types'
+
+const PICKER_ITEM_H = 40
+const PICKER_VISIBLE = 5
 
 export default function Onboarding() {
   const [step, setStep] = useState(0)
@@ -24,6 +27,61 @@ export default function Onboarding() {
 
   // Step 3: Selected rewards
   const [selectedRewards, setSelectedRewards] = useState<Set<number>>(new Set())
+
+  // Date picker
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [pickYear, setPickYear] = useState(2020)
+  const [pickMonth, setPickMonth] = useState(1)
+  const [pickDay, setPickDay] = useState(1)
+  const yearColRef = useRef<HTMLDivElement>(null)
+  const monthColRef = useRef<HTMLDivElement>(null)
+  const dayColRef = useRef<HTMLDivElement>(null)
+  const scrollTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+
+  const currentYear = new Date().getFullYear()
+  const pickerYears = Array.from({ length: 10 }, (_, i) => currentYear - 12 + i)
+  const pickerMonths = Array.from({ length: 12 }, (_, i) => i + 1)
+  const pickerDaysCount = new Date(pickYear, pickMonth, 0).getDate()
+  const pickerDays = Array.from({ length: pickerDaysCount }, (_, i) => i + 1)
+
+  const handleColScroll = (key: string, el: HTMLDivElement, values: number[], setter: (v: number) => void) => {
+    clearTimeout(scrollTimers.current[key])
+    scrollTimers.current[key] = setTimeout(() => {
+      const idx = Math.round(el.scrollTop / PICKER_ITEM_H)
+      const clamped = Math.max(0, Math.min(idx, values.length - 1))
+      setter(values[clamped])
+    }, 80)
+  }
+
+  const openDatePicker = () => {
+    if (birthday) {
+      const [y, m, d] = birthday.split('-').map(Number)
+      setPickYear(y)
+      setPickMonth(m)
+      setPickDay(d)
+    }
+    setShowDatePicker(true)
+  }
+
+  const confirmBirthday = () => {
+    const maxDay = new Date(pickYear, pickMonth, 0).getDate()
+    const day = Math.min(pickDay, maxDay)
+    setBirthday(`${pickYear}-${String(pickMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`)
+    setShowDatePicker(false)
+  }
+
+  useEffect(() => {
+    if (!showDatePicker) return
+    requestAnimationFrame(() => {
+      yearColRef.current?.scrollTo({ top: (pickYear - pickerYears[0]) * PICKER_ITEM_H })
+      monthColRef.current?.scrollTo({ top: (pickMonth - 1) * PICKER_ITEM_H })
+      dayColRef.current?.scrollTo({ top: (pickDay - 1) * PICKER_ITEM_H })
+    })
+  }, [showDatePicker])
+
+  useEffect(() => {
+    if (pickDay > pickerDaysCount) setPickDay(pickerDaysCount)
+  }, [pickerDaysCount])
 
   const addChild = useAppStore((s) => s.addChild)
   const setParentPin = useAppStore((s) => s.setParentPin)
@@ -94,6 +152,8 @@ export default function Onboarding() {
       display: 'flex',
       flexDirection: 'column',
       background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
+      overflow: 'hidden',
+      position: 'relative',
     }}>
       {/* Progress */}
       <div style={{
@@ -112,7 +172,7 @@ export default function Onboarding() {
         ))}
       </div>
 
-      <div style={{ flex: 1, padding: 24, overflow: 'auto' }}>
+      <div style={{ flex: 1, padding: 24, overflowX: 'hidden', overflowY: 'auto' }}>
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div key="step0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
@@ -160,14 +220,27 @@ export default function Onboarding() {
                   <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>
                     生日{birthday ? `（${formatAge(birthday)}）` : ''}
                   </label>
-                  <input
-                    type="date"
-                    value={birthday}
-                    onChange={(e) => setBirthday(e.target.value)}
-                    max={new Date(Date.now() - 3 * 365.25 * 86400000).toISOString().split('T')[0]}
-                    min={new Date(Date.now() - 12 * 365.25 * 86400000).toISOString().split('T')[0]}
-                    style={{ fontSize: '1rem' }}
-                  />
+                  <button
+                    onClick={openDatePicker}
+                    style={{
+                      width: '100%',
+                      padding: '12px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1.5px solid var(--color-border)',
+                      background: 'white',
+                      fontSize: '1rem',
+                      textAlign: 'center',
+                      color: birthday ? 'var(--color-text)' : 'var(--color-text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    {birthday
+                      ? `🎂 ${Number(birthday.split('-')[0])}年${Number(birthday.split('-')[1])}月${Number(birthday.split('-')[2])}日`
+                      : '🎂 点击选择生日'}
+                  </button>
                 </div>
 
                 <div>
@@ -373,6 +446,204 @@ export default function Onboarding() {
           </button>
         )}
       </div>
+
+      {/* Birthday Picker Bottom Sheet */}
+      <AnimatePresence>
+        {showDatePicker && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDatePicker(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.35)',
+                zIndex: 1000,
+              }}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'white',
+                borderRadius: '20px 20px 0 0',
+                padding: '20px 16px',
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+                zIndex: 1001,
+                maxWidth: 480,
+                margin: '0 auto',
+              }}
+            >
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <div style={{ fontSize: '2.5rem' }}>🎂</div>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: 4 }}>选择宝贝的生日</div>
+              </div>
+
+              {/* Column headers */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>年</div>
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>月</div>
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>日</div>
+              </div>
+
+              {/* Picker columns */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {/* Year */}
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: PICKER_ITEM_H * 2,
+                    left: 4, right: 4,
+                    height: PICKER_ITEM_H,
+                    background: 'var(--color-primary-light)',
+                    borderRadius: 10,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }} />
+                  <div
+                    ref={yearColRef}
+                    onScroll={() => yearColRef.current && handleColScroll('year', yearColRef.current, pickerYears, setPickYear)}
+                    style={{
+                      height: PICKER_ITEM_H * PICKER_VISIBLE,
+                      overflowY: 'auto',
+                      scrollSnapType: 'y mandatory',
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
+                      position: 'relative',
+                      zIndex: 1,
+                      maskImage: 'linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)',
+                    }}
+                  >
+                    <div style={{ height: PICKER_ITEM_H * 2 }} />
+                    {pickerYears.map((y) => (
+                      <div key={y} style={{
+                        height: PICKER_ITEM_H,
+                        scrollSnapAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: pickYear === y ? 700 : 400,
+                        fontSize: '1rem',
+                      }}>
+                        {y}
+                      </div>
+                    ))}
+                    <div style={{ height: PICKER_ITEM_H * 2 }} />
+                  </div>
+                </div>
+
+                {/* Month */}
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: PICKER_ITEM_H * 2,
+                    left: 4, right: 4,
+                    height: PICKER_ITEM_H,
+                    background: 'var(--color-primary-light)',
+                    borderRadius: 10,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }} />
+                  <div
+                    ref={monthColRef}
+                    onScroll={() => monthColRef.current && handleColScroll('month', monthColRef.current, pickerMonths, setPickMonth)}
+                    style={{
+                      height: PICKER_ITEM_H * PICKER_VISIBLE,
+                      overflowY: 'auto',
+                      scrollSnapType: 'y mandatory',
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
+                      position: 'relative',
+                      zIndex: 1,
+                      maskImage: 'linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)',
+                    }}
+                  >
+                    <div style={{ height: PICKER_ITEM_H * 2 }} />
+                    {pickerMonths.map((m) => (
+                      <div key={m} style={{
+                        height: PICKER_ITEM_H,
+                        scrollSnapAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: pickMonth === m ? 700 : 400,
+                        fontSize: '1rem',
+                      }}>
+                        {m}月
+                      </div>
+                    ))}
+                    <div style={{ height: PICKER_ITEM_H * 2 }} />
+                  </div>
+                </div>
+
+                {/* Day */}
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: PICKER_ITEM_H * 2,
+                    left: 4, right: 4,
+                    height: PICKER_ITEM_H,
+                    background: 'var(--color-primary-light)',
+                    borderRadius: 10,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                  }} />
+                  <div
+                    ref={dayColRef}
+                    onScroll={() => dayColRef.current && handleColScroll('day', dayColRef.current, pickerDays, setPickDay)}
+                    style={{
+                      height: PICKER_ITEM_H * PICKER_VISIBLE,
+                      overflowY: 'auto',
+                      scrollSnapType: 'y mandatory',
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
+                      position: 'relative',
+                      zIndex: 1,
+                      maskImage: 'linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)',
+                    }}
+                  >
+                    <div style={{ height: PICKER_ITEM_H * 2 }} />
+                    {pickerDays.map((d) => (
+                      <div key={d} style={{
+                        height: PICKER_ITEM_H,
+                        scrollSnapAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: pickDay === d ? 700 : 400,
+                        fontSize: '1rem',
+                      }}>
+                        {d}日
+                      </div>
+                    ))}
+                    <div style={{ height: PICKER_ITEM_H * 2 }} />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={confirmBirthday}
+                className="btn btn-primary btn-block"
+                style={{ marginTop: 16 }}
+              >
+                确定 🎉
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
