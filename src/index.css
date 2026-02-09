@@ -176,7 +176,11 @@ input:focus, select:focus, textarea:focus {
   animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 ::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  display: none;
 }
