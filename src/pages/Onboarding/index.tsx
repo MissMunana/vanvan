@@ -12,6 +12,14 @@ const PICKER_ITEM_H = 40
 const PICKER_VISIBLE = 5
 
 export default function Onboarding() {
+  const children = useAppStore((s) => s.children)
+  const parentPin = useAppStore((s) => s.parentPin)
+  const hasExistingData = children.length > 0
+
+  // Returning user: PIN login
+  const [loginPin, setLoginPin] = useState('')
+  const [loginPinError, setLoginPinError] = useState(false)
+
   const [step, setStep] = useState(0)
   const navigate = useNavigate()
 
@@ -89,6 +97,16 @@ export default function Onboarding() {
   const addTasks = useTaskStore((s) => s.addTasks)
   const addRewards = useRewardStore((s) => s.addRewards)
 
+  const handleLogin = () => {
+    if (loginPin !== parentPin) {
+      setLoginPinError(true)
+      setLoginPin('')
+      return
+    }
+    completeOnboarding()
+    navigate('/')
+  }
+
   const age = birthday ? getAgeFromBirthday(birthday).years : 0
   const ageGroup = getAgeGroup(age)
   const filteredTasks = TASK_TEMPLATES.filter((t) => t.ageGroups.includes(ageGroup))
@@ -144,6 +162,93 @@ export default function Onboarding() {
     enter: { x: 300, opacity: 0 },
     center: { x: 0, opacity: 1 },
     exit: { x: -300, opacity: 0 },
+  }
+
+  // Returning user: show simplified PIN login
+  if (hasExistingData) {
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
+        padding: 24,
+      }}>
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', damping: 15, stiffness: 200 }}
+          style={{ textAlign: 'center', width: '100%', maxWidth: 340 }}
+        >
+          <div style={{ fontSize: '4rem', marginBottom: 12 }}>⭐</div>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 8 }}>欢迎回来!</h2>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 12,
+            marginBottom: 24,
+            flexWrap: 'wrap',
+          }}>
+            {children.map((c) => (
+              <div key={c.childId} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'white',
+                padding: '6px 14px',
+                borderRadius: 20,
+                fontSize: '0.9rem',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              }}>
+                <span style={{ fontSize: '1.2rem' }}>{c.avatar}</span>
+                <span style={{ fontWeight: 600 }}>{c.name}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, display: 'block', color: 'var(--color-text-secondary)' }}>
+              请输入家长密码
+            </label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={loginPin}
+              onChange={(e) => { setLoginPin(e.target.value.replace(/\D/g, '')); setLoginPinError(false) }}
+              onKeyDown={(e) => e.key === 'Enter' && loginPin.length >= 4 && handleLogin()}
+              placeholder="输入4位数字密码"
+              style={{
+                textAlign: 'center',
+                letterSpacing: '0.5em',
+                fontSize: '1.2rem',
+                padding: '14px 16px',
+                border: loginPinError ? '2px solid var(--color-danger)' : '1.5px solid var(--color-border)',
+                borderRadius: 'var(--radius-sm)',
+                width: '100%',
+                background: 'white',
+              }}
+            />
+            {loginPinError && (
+              <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 6 }}>
+                密码错误，请重试
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleLogin}
+            className="btn btn-primary btn-block"
+            disabled={loginPin.length < 4}
+            style={{ fontSize: '1.05rem', padding: '14px' }}
+          >
+            进入
+          </button>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
