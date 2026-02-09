@@ -16,7 +16,11 @@ export default function Onboarding() {
   const parentPin = useAppStore((s) => s.parentPin)
   const hasExistingData = children.length > 0
 
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const setCurrentChild = useAppStore((s) => s.setCurrentChild)
+
   // Returning user: PIN login
+  const [selectedChildId, setSelectedChildId] = useState(currentChildId || children[0]?.childId || '')
   const [loginPin, setLoginPin] = useState('')
   const [loginPinError, setLoginPinError] = useState(false)
 
@@ -102,6 +106,9 @@ export default function Onboarding() {
       setLoginPinError(true)
       setLoginPin('')
       return
+    }
+    if (selectedChildId) {
+      setCurrentChild(selectedChildId)
     }
     completeOnboarding()
     navigate('/')
@@ -191,21 +198,30 @@ export default function Onboarding() {
             marginBottom: 24,
             flexWrap: 'wrap',
           }}>
-            {children.map((c) => (
-              <div key={c.childId} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'white',
-                padding: '6px 14px',
-                borderRadius: 20,
-                fontSize: '0.9rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              }}>
-                <span style={{ fontSize: '1.2rem' }}>{c.avatar}</span>
-                <span style={{ fontWeight: 600 }}>{c.name}</span>
-              </div>
-            ))}
+            {children.map((c) => {
+              const isSelected = c.childId === selectedChildId
+              return (
+                <button
+                  key={c.childId}
+                  onClick={() => setSelectedChildId(c.childId)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: isSelected ? 'var(--color-primary-light)' : 'white',
+                    padding: '8px 16px',
+                    borderRadius: 20,
+                    fontSize: '0.9rem',
+                    boxShadow: isSelected ? '0 2px 12px rgba(255,184,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)',
+                    border: isSelected ? '2px solid var(--color-primary)' : '2px solid transparent',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem' }}>{c.avatar}</span>
+                  <span style={{ fontWeight: 600 }}>{c.name}</span>
+                </button>
+              )
+            })}
           </div>
 
           <div style={{ marginBottom: 16 }}>
