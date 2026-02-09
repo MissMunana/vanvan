@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Reward, RewardCategory } from '../types'
+import { REWARD_TEMPLATES } from '../data/templates'
 
 interface RewardStore {
   rewards: Reward[]
@@ -68,6 +69,18 @@ export const useRewardStore = create<RewardStore>()(
         return grouped
       },
     }),
-    { name: 'star-rewards' }
+    {
+      name: 'star-rewards',
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        const state = persistedState as { rewards: Reward[] }
+        const iconMap = new Map(REWARD_TEMPLATES.map((t) => [t.name, t.icon]))
+        state.rewards = state.rewards.map((reward) => {
+          const newIcon = iconMap.get(reward.name)
+          return newIcon ? { ...reward, icon: newIcon } : reward
+        })
+        return state
+      },
+    }
   )
 )

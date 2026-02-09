@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Task, TaskCategory } from '../types'
+import { TASK_TEMPLATES } from '../data/templates'
 
 interface TaskStore {
   tasks: Task[]
@@ -139,6 +140,18 @@ export const useTaskStore = create<TaskStore>()(
         }))
       },
     }),
-    { name: 'star-tasks' }
+    {
+      name: 'star-tasks',
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        const state = persistedState as { tasks: Task[] }
+        const iconMap = new Map(TASK_TEMPLATES.map((t) => [t.name, t.icon]))
+        state.tasks = state.tasks.map((task) => {
+          const newIcon = iconMap.get(task.name)
+          return newIcon ? { ...task, icon: newIcon } : task
+        })
+        return state
+      },
+    }
   )
 )
