@@ -11,33 +11,40 @@ import type { TaskCategory, RewardCategory } from '../../types'
 const PICKER_ITEM_H = 40
 const PICKER_VISIBLE = 5
 
+type Mode = 'welcome' | 'login' | 'register'
+
 export default function Onboarding() {
   const children = useAppStore((s) => s.children)
   const parentPin = useAppStore((s) => s.parentPin)
-  const hasExistingData = children.length > 0
-
   const currentChildId = useAppStore((s) => s.currentChildId)
   const setCurrentChild = useAppStore((s) => s.setCurrentChild)
+  const addChild = useAppStore((s) => s.addChild)
+  const setParentPin = useAppStore((s) => s.setParentPin)
+  const completeOnboarding = useAppStore((s) => s.completeOnboarding)
+  const addTasks = useTaskStore((s) => s.addTasks)
+  const addRewards = useRewardStore((s) => s.addRewards)
+  const navigate = useNavigate()
 
-  // Returning user: PIN login
+  const hasExistingData = children.length > 0
+
+  // Auto-detect mode: if has data → login, if not → welcome
+  const [mode, setMode] = useState<Mode>(hasExistingData ? 'login' : 'welcome')
+
+  // Login state
   const [selectedChildId, setSelectedChildId] = useState(currentChildId || children[0]?.childId || '')
   const [loginPin, setLoginPin] = useState('')
   const [loginPinError, setLoginPinError] = useState(false)
 
-  const [step, setStep] = useState(0)
-  const navigate = useNavigate()
-
-  // Step 1: Child profile
+  // Register state
+  const [regStep, setRegStep] = useState(0) // 0=form, 1=tasks, 2=rewards, 3=ready
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [birthday, setBirthday] = useState('')
   const [avatar, setAvatar] = useState('🐱')
   const [pin, setPin] = useState('')
-
-  // Step 2: Selected tasks
+  const [confirmPin, setConfirmPin] = useState('')
+  const [pinMismatch, setPinMismatch] = useState(false)
   const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set())
-
-  // Step 3: Selected rewards
   const [selectedRewards, setSelectedRewards] = useState<Set<number>>(new Set())
 
   // Date picker
@@ -95,12 +102,7 @@ export default function Onboarding() {
     if (pickDay > pickerDaysCount) setPickDay(pickerDaysCount)
   }, [pickerDaysCount])
 
-  const addChild = useAppStore((s) => s.addChild)
-  const setParentPin = useAppStore((s) => s.setParentPin)
-  const completeOnboarding = useAppStore((s) => s.completeOnboarding)
-  const addTasks = useTaskStore((s) => s.addTasks)
-  const addRewards = useRewardStore((s) => s.addRewards)
-
+  // Login handler
   const handleLogin = () => {
     if (loginPin !== parentPin) {
       setLoginPinError(true)
@@ -114,6 +116,7 @@ export default function Onboarding() {
     navigate('/')
   }
 
+  // Register: computed values
   const age = birthday ? getAgeFromBirthday(birthday).years : 0
   const ageGroup = getAgeGroup(age)
   const filteredTasks = TASK_TEMPLATES.filter((t) => t.ageGroups.includes(ageGroup))
@@ -128,7 +131,7 @@ export default function Onboarding() {
     setSelectedRewards(defaultRewards)
   })
 
-  const handleComplete = () => {
+  const handleRegComplete = () => {
     const childId = addChild({ name, gender, birthday, avatar })
     setParentPin(pin || '1234')
 
@@ -165,24 +168,78 @@ export default function Onboarding() {
     navigate('/')
   }
 
+  const canProceedReg = () => {
+    if (!name.trim() || !birthday || pin.length < 4) return false
+    if (confirmPin !== pin) return false
+    return true
+  }
+
+  const handleRegNext = () => {
+    if (regStep === 0) {
+      if (confirmPin !== pin) {
+        setPinMismatch(true)
+        return
+      }
+      setPinMismatch(false)
+    }
+    setRegStep(regStep + 1)
+  }
+
   const slideVariants = {
     enter: { x: 300, opacity: 0 },
     center: { x: 0, opacity: 1 },
     exit: { x: -300, opacity: 0 },
   }
 
-  // Returning user: show simplified PIN login
-  if (hasExistingData) {
+  const bgStyle = {
+    minHeight: '100dvh',
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
+    background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
+  }
+
+  // ============ WELCOME SCREEN ============
+  if (mode === 'welcome') {
     return (
-      <div style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
-        padding: 24,
-      }}>
+      <div style={{ ...bgStyle, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', damping: 15, stiffness: 200 }}
+          style={{ textAlign: 'center', width: '100%', maxWidth: 340 }}
+        >
+          <div style={{ fontSize: '5rem', marginBottom: 16 }}>⭐</div>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 8 }}>小星星成长宝</h1>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: 40, lineHeight: 1.6 }}>
+            让好习惯变得有趣!
+          </p>
+
+          <button
+            onClick={() => setMode('register')}
+            className="btn btn-primary btn-block"
+            style={{ fontSize: '1.05rem', padding: '14px', marginBottom: 12 }}
+          >
+            注册新账号
+          </button>
+
+          {hasExistingData && (
+            <button
+              onClick={() => setMode('login')}
+              className="btn btn-outline btn-block"
+              style={{ fontSize: '1.05rem', padding: '14px' }}
+            >
+              已有账号，登录
+            </button>
+          )}
+        </motion.div>
+      </div>
+    )
+  }
+
+  // ============ LOGIN SCREEN ============
+  if (mode === 'login' && hasExistingData) {
+    return (
+      <div style={{ ...bgStyle, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -190,7 +247,9 @@ export default function Onboarding() {
           style={{ textAlign: 'center', width: '100%', maxWidth: 340 }}
         >
           <div style={{ fontSize: '4rem', marginBottom: 12 }}>⭐</div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 8 }}>欢迎回来!</h2>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>欢迎回来!</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: 20, fontSize: '0.9rem' }}>选择孩子并输入密码登录</p>
+
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -226,7 +285,7 @@ export default function Onboarding() {
 
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, display: 'block', color: 'var(--color-text-secondary)' }}>
-              请输入家长密码
+              请输入密码
             </label>
             <input
               type="password"
@@ -260,22 +319,30 @@ export default function Onboarding() {
             disabled={loginPin.length < 4}
             style={{ fontSize: '1.05rem', padding: '14px' }}
           >
-            进入
+            登录
+          </button>
+
+          <button
+            onClick={() => setMode('welcome')}
+            style={{
+              marginTop: 16,
+              background: 'none',
+              border: 'none',
+              color: 'var(--color-text-secondary)',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+            }}
+          >
+            返回
           </button>
         </motion.div>
       </div>
     )
   }
 
+  // ============ REGISTER FLOW ============
   return (
-    <div style={{
-      minHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
-      overflow: 'hidden',
-      position: 'relative',
-    }}>
+    <div style={{ ...bgStyle, overflow: 'hidden', position: 'relative' }}>
       {/* Progress */}
       <div style={{
         display: 'flex',
@@ -292,7 +359,7 @@ export default function Onboarding() {
             flex: 1,
             height: 4,
             borderRadius: 2,
-            background: i <= step ? 'var(--color-primary)' : 'rgba(0,0,0,0.1)',
+            background: i <= regStep ? 'var(--color-primary)' : 'rgba(0,0,0,0.1)',
             transition: 'background 0.3s',
           }} />
         ))}
@@ -300,21 +367,21 @@ export default function Onboarding() {
 
       <div style={{ flex: 1, padding: 24, overflowX: 'hidden', overflowY: 'auto' }}>
         <AnimatePresence mode="wait">
-          {step === 0 && (
-            <motion.div key="step0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
+          {regStep === 0 && (
+            <motion.div key="reg0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{ fontSize: '3rem', marginBottom: 8 }}>✨</div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>欢迎使用小星星成长宝!</h2>
-                <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>请告诉我孩子的信息</p>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>注册新账号</h2>
+                <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>填写孩子信息并设置密码</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>孩子的名字</label>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>用户名（孩子姓名）</label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="请输入名字"
+                    placeholder="请输入孩子的名字"
                     style={{ fontSize: '1rem' }}
                   />
                 </div>
@@ -395,22 +462,42 @@ export default function Onboarding() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>设置家长密码（4位数字）</label>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>设置密码（4位数字）</label>
                   <input
                     type="password"
                     inputMode="numeric"
                     maxLength={4}
                     value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                    onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setPinMismatch(false) }}
                     placeholder="请输入4位数字密码"
                   />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>确认密码</label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={confirmPin}
+                    onChange={(e) => { setConfirmPin(e.target.value.replace(/\D/g, '')); setPinMismatch(false) }}
+                    placeholder="再次输入密码"
+                    style={{
+                      border: pinMismatch ? '2px solid var(--color-danger)' : undefined,
+                    }}
+                  />
+                  {pinMismatch && (
+                    <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 4 }}>
+                      两次密码不一致
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
           )}
 
-          {step === 1 && (
-            <motion.div key="step1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
+          {regStep === 1 && (
+            <motion.div key="reg1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>📋</div>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>选择习惯任务</h2>
@@ -456,8 +543,8 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 2 && (
-            <motion.div key="step2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
+          {regStep === 2 && (
+            <motion.div key="reg2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🎁</div>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>设置奖励</h2>
@@ -503,8 +590,8 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 3 && (
-            <motion.div key="step3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
+          {regStep === 3 && (
+            <motion.div key="reg3" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
                 <motion.div
                   initial={{ scale: 0 }}
@@ -514,7 +601,7 @@ export default function Onboarding() {
                 >
                   🚀
                 </motion.div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>准备好了!</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>注册成功!</h2>
                 <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
                   {name}的成长之旅即将开始<br />
                   完成任务 → 获得积分 → 兑换奖励<br />
@@ -544,27 +631,35 @@ export default function Onboarding() {
 
       {/* Bottom Buttons */}
       <div style={{ padding: '16px 24px 32px', display: 'flex', gap: 12 }}>
-        {step > 0 && (
+        {regStep === 0 ? (
           <button
-            onClick={() => setStep(step - 1)}
+            onClick={() => setMode(hasExistingData ? 'login' : 'welcome')}
+            className="btn btn-outline"
+            style={{ flex: 1 }}
+          >
+            返回
+          </button>
+        ) : (
+          <button
+            onClick={() => setRegStep(regStep - 1)}
             className="btn btn-outline"
             style={{ flex: 1 }}
           >
             上一步
           </button>
         )}
-        {step < 3 ? (
+        {regStep < 3 ? (
           <button
-            onClick={() => setStep(step + 1)}
+            onClick={handleRegNext}
             className="btn btn-primary"
             style={{ flex: 2 }}
-            disabled={step === 0 && (!name.trim() || !birthday || pin.length < 4)}
+            disabled={regStep === 0 && !canProceedReg()}
           >
-            下一步
+            {regStep === 0 ? '注册' : '下一步'}
           </button>
         ) : (
           <button
-            onClick={handleComplete}
+            onClick={handleRegComplete}
             className="btn btn-primary"
             style={{ flex: 2 }}
           >
