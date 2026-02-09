@@ -13,6 +13,21 @@ const PICKER_VISIBLE = 5
 
 type Mode = 'welcome' | 'login' | 'register'
 
+// Synchronously check localStorage for existing data (bypasses Zustand async hydration)
+function checkLocalData(): { hasData: boolean; childId: string } {
+  try {
+    const stored = localStorage.getItem('star-app')
+    if (!stored) return { hasData: false, childId: '' }
+    const parsed = JSON.parse(stored)
+    const children = parsed?.state?.children
+    if (Array.isArray(children) && children.length > 0) {
+      const currentId = parsed?.state?.currentChildId || children[0]?.childId || ''
+      return { hasData: true, childId: currentId }
+    }
+  } catch { /* ignore */ }
+  return { hasData: false, childId: '' }
+}
+
 export default function Onboarding() {
   const children = useAppStore((s) => s.children)
   const parentPin = useAppStore((s) => s.parentPin)
@@ -25,20 +40,24 @@ export default function Onboarding() {
   const addRewards = useRewardStore((s) => s.addRewards)
   const navigate = useNavigate()
 
-  const hasExistingData = children.length > 0
+  // Check both Zustand state and localStorage directly for existing data
+  const localData = checkLocalData()
+  const hasExistingData = children.length > 0 || localData.hasData
 
   // Auto-detect mode: if has data → login, if not → welcome
-  const [mode, setMode] = useState<Mode>(hasExistingData ? 'login' : 'welcome')
+  const [mode, setMode] = useState<Mode>(() => hasExistingData ? 'login' : 'welcome')
 
-  // Sync mode after Zustand persist hydration (async load from localStorage)
+  // Sync mode when hasExistingData changes (e.g., after Zustand hydration)
   useEffect(() => {
     if (hasExistingData && mode === 'welcome') {
       setMode('login')
     }
   }, [hasExistingData])
 
-  // Login state
-  const [selectedChildId, setSelectedChildId] = useState(currentChildId || children[0]?.childId || '')
+  // Login state - also use localStorage fallback for initial childId
+  const [selectedChildId, setSelectedChildId] = useState(
+    currentChildId || children[0]?.childId || localData.childId || ''
+  )
 
   // Sync selected child after hydration
   useEffect(() => {
