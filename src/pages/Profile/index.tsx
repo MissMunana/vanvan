@@ -90,6 +90,7 @@ export default function Profile() {
   }, [allTasks, childId])
 
   const [showHistory, setShowHistory] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
 
   if (!child) return null
 
@@ -242,7 +243,49 @@ export default function Profile() {
           <span style={{ flex: 1, fontWeight: 600 }}>家长控制台</span>
           <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
         </button>
+
+        <button
+          onClick={() => setShowAbout(true)}
+          className="card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            width: '100%',
+            textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: '1.3rem' }}>ℹ️</span>
+          <span style={{ flex: 1, fontWeight: 600 }}>关于</span>
+          <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+        </button>
       </div>
+
+      {/* About modal */}
+      <Modal
+        open={showAbout}
+        onClose={() => setShowAbout(false)}
+        title="关于"
+      >
+        <div style={{ textAlign: 'center', padding: '16px 0' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 12 }}>⭐</div>
+          <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 4 }}>小星星成长宝</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+            V1.5 体验优化版
+          </div>
+          <div style={{
+            display: 'inline-block',
+            padding: '4px 12px',
+            borderRadius: 8,
+            background: 'var(--color-bg)',
+            fontSize: '0.75rem',
+            color: 'var(--color-text-secondary)',
+            fontFamily: 'monospace',
+          }}>
+            Build: {typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : 'dev'}
+          </div>
+        </div>
+      </Modal>
 
       {/* Points history modal */}
       <Modal
