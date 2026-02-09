@@ -14,6 +14,7 @@ import Parent from './pages/Parent'
 import Badges from './pages/Badges'
 import Print from './pages/Print'
 import InstallPrompt from './components/common/InstallPrompt'
+import { Agentation } from 'agentation'
 
 export default function App() {
   const onboardingCompleted = useAppStore((s) => s.onboardingCompleted)
@@ -68,6 +69,7 @@ export default function App() {
         parentPin={parentPin}
         onUnlock={() => setScreenLock({ show: false, type: 'limit' })}
       />
+      {import.meta.env.DEV && <Agentation />}
     </>
   )
 }
