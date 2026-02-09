@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Exchange, ExchangeStatus } from '../types'
+import { generateId } from '../utils/generateId'
 
 interface ExchangeStore {
   exchanges: Exchange[]
@@ -8,10 +9,6 @@ interface ExchangeStore {
   reviewExchange: (exchangeId: string, status: 'approved' | 'rejected', rejectReason?: string) => void
   getChildExchanges: (childId: string) => Exchange[]
   getPendingExchanges: (childId?: string) => Exchange[]
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 }
 
 export const useExchangeStore = create<ExchangeStore>()(

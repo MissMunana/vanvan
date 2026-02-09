@@ -157,9 +157,13 @@ function Dashboard() {
   const currentChildId = useAppStore((s) => s.currentChildId)
   const logs = usePointStore((s) => s.logs)
   const exchanges = useExchangeStore((s) => s.exchanges)
+  const navigate = useNavigate()
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
   const childId = child?.childId || ''
+
+  const [showScreenTime, setShowScreenTime] = useState(false)
+  const screenTime = child?.settings?.screenTime
 
   const weeklyStats = useMemo(() => {
     const now = new Date()
@@ -242,6 +246,132 @@ function Dashboard() {
           <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>待审核</div>
         </div>
       </div>
+
+      {/* Quick actions */}
+      <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+        <button
+          className="btn btn-outline"
+          style={{ flex: 1 }}
+          onClick={() => navigate('/print')}
+        >
+          🖨️ 打印任务表
+        </button>
+        <button
+          className="btn btn-outline"
+          style={{ flex: 1 }}
+          onClick={() => setShowScreenTime(true)}
+        >
+          ⏱️ 屏幕时间
+        </button>
+      </div>
+
+      {/* Screen time settings modal */}
+      <Modal
+        open={showScreenTime}
+        onClose={() => setShowScreenTime(false)}
+        title="屏幕时间管控"
+      >
+        {child && screenTime && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '8px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600 }}>启用屏幕时间限制</span>
+              <button
+                onClick={() => {
+                  const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, enabled: !screenTime.enabled } } }
+                  useAppStore.setState((state) => ({
+                    children: state.children.map((c) => c.childId === child.childId ? updated : c),
+                  }))
+                }}
+                style={{
+                  width: 48,
+                  height: 28,
+                  borderRadius: 14,
+                  background: screenTime.enabled ? 'var(--color-success)' : '#ccc',
+                  position: 'relative',
+                  transition: 'background 0.2s',
+                }}
+              >
+                <div style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  top: 3,
+                  left: screenTime.enabled ? 23 : 3,
+                  transition: 'left 0.2s',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                }} />
+              </button>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4, display: 'block' }}>
+                每日使用上限（分钟）
+              </label>
+              <input
+                type="number"
+                value={screenTime.dailyLimitMinutes}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 30
+                  const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, dailyLimitMinutes: val } } }
+                  useAppStore.setState((state) => ({
+                    children: state.children.map((c) => c.childId === child.childId ? updated : c),
+                  }))
+                }}
+                min={5}
+                max={120}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4, display: 'block' }}>
+                  锁定开始（时）
+                </label>
+                <input
+                  type="number"
+                  value={screenTime.lockStartHour}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 22
+                    const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, lockStartHour: val } } }
+                    useAppStore.setState((state) => ({
+                      children: state.children.map((c) => c.childId === child.childId ? updated : c),
+                    }))
+                  }}
+                  min={0}
+                  max={23}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4, display: 'block' }}>
+                  锁定结束（时）
+                </label>
+                <input
+                  type="number"
+                  value={screenTime.lockEndHour}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 6
+                    const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, lockEndHour: val } } }
+                    useAppStore.setState((state) => ({
+                      children: state.children.map((c) => c.childId === child.childId ? updated : c),
+                    }))
+                  }}
+                  min={0}
+                  max={23}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+              启用后，每日使用达到上限会弹出休息提示，{screenTime.lockStartHour}:00-{screenTime.lockEndHour}:00自动锁定。需要家长密码解锁。
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

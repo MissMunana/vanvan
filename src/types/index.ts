@@ -1,3 +1,10 @@
+export interface ScreenTimeConfig {
+  dailyLimitMinutes: number
+  lockStartHour: number
+  lockEndHour: number
+  enabled: boolean
+}
+
 export interface Child {
   childId: string
   name: string
@@ -10,6 +17,7 @@ export interface Child {
   settings: {
     soundEnabled: boolean
     vibrationEnabled: boolean
+    screenTime: ScreenTimeConfig
   }
   createdAt: string
 }
@@ -22,6 +30,8 @@ export interface AppState {
 }
 
 export type TaskCategory = 'life' | 'study' | 'manner' | 'chore'
+
+export type HabitStage = 'start' | 'persist' | 'stable' | 'graduated'
 
 export interface Task {
   taskId: string
@@ -36,6 +46,8 @@ export interface Task {
   consecutiveDays: number
   lastCompletedDate: string | null
   completedToday: boolean
+  stage: HabitStage
+  totalCompletions: number
   createdAt: string
 }
 
@@ -108,4 +120,27 @@ export const REWARD_CATEGORY_INFO: Record<RewardCategory, { label: string; icon:
   time: { label: '亲子时光', icon: '🥰' },
   privilege: { label: '小特权', icon: '👑' },
   material: { label: '实物奖励', icon: '🎁' },
+}
+
+export type BadgeCategory = 'habit' | 'points' | 'special'
+
+export interface BadgeDefinition {
+  badgeId: string
+  name: string
+  icon: string
+  description: string
+  category: BadgeCategory
+}
+
+export interface UnlockedBadge {
+  childId: string
+  badgeId: string
+  unlockedAt: string
+}
+
+export const HABIT_STAGE_INFO: Record<HabitStage, { label: string; icon: string; description: string }> = {
+  start: { label: '启动期', icon: '🌰', description: '1-7天，积分×1.5' },
+  persist: { label: '坚持期', icon: '🌱', description: '8-21天，正常积分' },
+  stable: { label: '稳定期', icon: '🌿', description: '22-66天，积分×0.8' },
+  graduated: { label: '已毕业', icon: '🌸', description: '66天+，习惯大师' },
 }

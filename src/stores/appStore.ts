@@ -3,6 +3,13 @@ import { persist } from 'zustand/middleware'
 import type { Child } from '../types'
 import { getAgeGroup, getAgeFromBirthday } from '../hooks/useAgeGroup'
 
+const DEFAULT_SCREEN_TIME = {
+  dailyLimitMinutes: 30,
+  lockStartHour: 22,
+  lockEndHour: 6,
+  enabled: false,
+}
+
 interface AppStore {
   currentChildId: string | null
   children: Child[]
@@ -48,6 +55,7 @@ export const useAppStore = create<AppStore>()(
           settings: {
             soundEnabled: true,
             vibrationEnabled: true,
+            screenTime: DEFAULT_SCREEN_TIME,
           },
           createdAt: new Date().toISOString(),
         }
@@ -91,6 +99,20 @@ export const useAppStore = create<AppStore>()(
         completionCount: 0,
       }),
     }),
-    { name: 'star-app' }
+    {
+      name: 'star-app',
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        const state = persistedState as { children: Child[]; currentChildId: string | null; parentPin: string; onboardingCompleted: boolean; completionCount: number }
+        state.children = state.children.map((child) => ({
+          ...child,
+          settings: {
+            ...child.settings,
+            screenTime: child.settings?.screenTime || DEFAULT_SCREEN_TIME,
+          },
+        }))
+        return state
+      },
+    }
   )
 )

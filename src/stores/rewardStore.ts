@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Reward, RewardCategory } from '../types'
 import { REWARD_TEMPLATES } from '../data/templates'
+import { generateId } from '../utils/generateId'
 
 interface RewardStore {
   rewards: Reward[]
@@ -11,10 +12,6 @@ interface RewardStore {
   deleteReward: (rewardId: string) => void
   getChildRewards: (childId: string) => Reward[]
   getChildRewardsByCategory: (childId: string) => Record<RewardCategory, Reward[]>
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 }
 
 export const useRewardStore = create<RewardStore>()(

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PointLog } from '../types'
+import { generateId } from '../utils/generateId'
 
 const MAX_LOGS = 200
 
@@ -9,10 +10,6 @@ interface PointStore {
   addLog: (log: Omit<PointLog, 'logId' | 'createdAt'>) => void
   getChildLogs: (childId: string, limit?: number) => PointLog[]
   getWeeklyStats: (childId: string) => { tasksCompleted: number; pointsEarned: number; pointsSpent: number }
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 }
 
 export const usePointStore = create<PointStore>()(

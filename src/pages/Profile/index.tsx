@@ -1,10 +1,16 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
+import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
+import { useBadgeStore } from '../../stores/badgeStore'
 import { Modal } from '../../components/common/Modal'
 import { formatAge } from '../../hooks/useAgeGroup'
+import LineChart from '../../components/charts/LineChart'
+import PieChart from '../../components/charts/PieChart'
+import { CATEGORY_INFO, type TaskCategory } from '../../types'
+import { BADGE_LIST } from '../../data/badges'
 
 export default function Profile() {
   const children = useAppStore((s) => s.children)
@@ -29,9 +35,59 @@ export default function Profile() {
     }
   }, [logs, childId])
 
+  const allTasks = useTaskStore((s) => s.tasks)
+  const unlockedBadges = useBadgeStore((s) => s.unlockedBadges)
+
   const recentLogs = useMemo(() => logs.filter((l) => l.childId === childId).slice(0, 20), [logs, childId])
   const exchanges = useMemo(() => allExchanges.filter((e) => e.childId === childId), [allExchanges, childId])
   const navigate = useNavigate()
+
+  const badgeCount = useMemo(() => unlockedBadges.filter((b) => b.childId === childId).length, [unlockedBadges, childId])
+
+  // Weekly points trend (last 4 weeks)
+  const weeklyTrend = useMemo(() => {
+    const weeks: { label: string; value: number }[] = []
+    const now = new Date()
+    for (let w = 3; w >= 0; w--) {
+      const weekStart = new Date(now)
+      weekStart.setDate(now.getDate() - now.getDay() - w * 7)
+      weekStart.setHours(0, 0, 0, 0)
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekStart.getDate() + 7)
+      const startStr = weekStart.toISOString()
+      const endStr = weekEnd.toISOString()
+      const earned = logs
+        .filter((l) => l.childId === childId && l.createdAt >= startStr && l.createdAt < endStr && (l.type === 'earn' || (l.type === 'adjust' && l.points > 0)))
+        .reduce((sum, l) => sum + l.points, 0)
+      const label = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`
+      weeks.push({ label, value: earned })
+    }
+    return weeks
+  }, [logs, childId])
+
+  // Category completion pie chart
+  const categoryStats = useMemo(() => {
+    const childTasks = allTasks.filter((t) => t.childId === childId && t.isActive)
+    const colors: Record<TaskCategory, string> = {
+      life: 'var(--color-category-life)',
+      study: 'var(--color-category-study)',
+      manner: 'var(--color-category-manner)',
+      chore: 'var(--color-category-chore)',
+    }
+    return (Object.keys(CATEGORY_INFO) as TaskCategory[]).map((cat) => ({
+      label: CATEGORY_INFO[cat].label,
+      value: childTasks.filter((t) => t.category === cat && t.completedToday).length,
+      color: colors[cat],
+    }))
+  }, [allTasks, childId])
+
+  // Top 3 favorite tasks
+  const topTasks = useMemo(() => {
+    return allTasks
+      .filter((t) => t.childId === childId && (t.totalCompletions || 0) > 0)
+      .sort((a, b) => (b.totalCompletions || 0) - (a.totalCompletions || 0))
+      .slice(0, 3)
+  }, [allTasks, childId])
 
   const [showHistory, setShowHistory] = useState(false)
 
@@ -100,8 +156,61 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Growth curves */}
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, marginBottom: 12 }}>积分趋势（近4周）</div>
+        <LineChart data={weeklyTrend} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, marginBottom: 12 }}>今日分类完成</div>
+        <PieChart segments={categoryStats} />
+      </div>
+
+      {topTasks.length > 0 && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>最喜欢的习惯 Top 3</div>
+          {topTasks.map((t, i) => (
+            <div key={t.taskId} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '6px 0',
+            }}>
+              <span style={{ fontWeight: 700, color: i === 0 ? 'var(--color-primary)' : 'var(--color-text-secondary)', width: 20 }}>
+                {i + 1}
+              </span>
+              <span style={{ fontSize: '1.2rem' }}>{t.icon}</span>
+              <span style={{ flex: 1, fontWeight: 600 }}>{t.name}</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                {t.totalCompletions || 0}次
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Menu items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <button
+          onClick={() => navigate('/badges')}
+          className="card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            width: '100%',
+            textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: '1.3rem' }}>🏅</span>
+          <span style={{ flex: 1, fontWeight: 600 }}>我的勋章</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+            {badgeCount}/{BADGE_LIST.length}
+          </span>
+          <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+        </button>
+
         <button
           onClick={() => setShowHistory(true)}
           className="card"

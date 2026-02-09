@@ -3,10 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
+import { useBadgeStore } from '../../stores/badgeStore'
 import { useToast } from '../../components/common/Toast'
 import { PointAnimation } from '../../components/common/PointAnimation'
 import { Modal } from '../../components/common/Modal'
-import { CATEGORY_INFO, type TaskCategory } from '../../types'
+import { useSound } from '../../hooks/useSound'
+import GraduationCeremony from '../../components/common/GraduationCeremony'
+import { CATEGORY_INFO, HABIT_STAGE_INFO, type TaskCategory } from '../../types'
+import { BADGE_LIST } from '../../data/badges'
 
 const EMOTIONS = [
   { emoji: '😊', label: '开心' },
@@ -36,18 +40,21 @@ export default function Tasks() {
   const completeTask = useTaskStore((s) => s.completeTask)
   const undoComplete = useTaskStore((s) => s.undoComplete)
   const addLog = usePointStore((s) => s.addLog)
+  const checkAndUnlock = useBadgeStore((s) => s.checkAndUnlock)
   const { showToast } = useToast()
+  const { play } = useSound()
 
   const [animTrigger, setAnimTrigger] = useState(0)
   const [lastPoints, setLastPoints] = useState(0)
   const [activeCategory, setActiveCategory] = useState<TaskCategory | 'all'>('all')
   const [emotionModal, setEmotionModal] = useState<{ taskId: string; points: number } | null>(null)
+  const [graduation, setGraduation] = useState<{ show: boolean; taskName: string }>({ show: false, taskName: '' })
 
-  const handleComplete = useCallback((taskId: string, taskName: string, points: number) => {
+  const handleComplete = useCallback((taskId: string, taskName: string, _basePoints: number) => {
     if (!child) return
 
-    const { bonusPoints, consecutiveDays } = completeTask(taskId)
-    const totalPoints = points + bonusPoints
+    const result = completeTask(taskId)
+    const totalPoints = result.earnedPoints + result.bonusPoints
 
     updatePoints(child.childId, totalPoints)
 
@@ -66,9 +73,47 @@ export default function Tasks() {
     setLastPoints(totalPoints)
     setAnimTrigger((t) => t + 1)
 
+    // Play sound
+    play('complete')
+    if (result.bonusPoints > 0) {
+      setTimeout(() => play('applause'), 300)
+    }
+
+    // Check badges
+    const updatedTasks = useTaskStore.getState().tasks.filter((t) => t.childId === child.childId)
+    const updatedLogs = usePointStore.getState().logs
+    const unlockedBadgeIds = useBadgeStore.getState().getChildBadges(child.childId).map((b) => b.badgeId)
+    const newBadges = checkAndUnlock({
+      child,
+      tasks: updatedTasks,
+      logs: updatedLogs,
+      unlockedBadgeIds,
+    })
+    if (newBadges.length > 0) {
+      setTimeout(() => {
+        play('badge')
+        const badge = BADGE_LIST.find((b) => b.badgeId === newBadges[0])
+        if (badge) {
+          showToast(`${badge.icon} 获得勋章：${badge.name}！`)
+        }
+      }, 800)
+    }
+
+    // Check graduation
+    if (result.graduated) {
+      setTimeout(() => {
+        setGraduation({ show: true, taskName })
+        play('levelup')
+      }, 1200)
+    }
+
     let message = `你坚持做到了! +${totalPoints}分`
-    if (bonusPoints > 0) {
-      message = `连续${consecutiveDays}天! 额外奖励+${bonusPoints}分 🎉`
+    if (result.bonusPoints > 0) {
+      message = `连续${result.consecutiveDays}天! 额外奖励+${result.bonusPoints}分`
+    }
+    if (result.stageChanged && !result.graduated) {
+      const stageInfo = HABIT_STAGE_INFO[result.newStage]
+      message += ` ${stageInfo.icon} 进入${stageInfo.label}!`
     }
 
     showToast(message, {
@@ -86,11 +131,10 @@ export default function Tasks() {
         setEmotionModal({ taskId, points: totalPoints })
       }, 1500)
     }
-  }, [child, completeTask, updatePoints, incrementCompletionCount, addLog, showToast, undoComplete])
+  }, [child, completeTask, updatePoints, incrementCompletionCount, addLog, showToast, undoComplete, play, checkAndUnlock])
 
   const handleEmotionSelect = (emotion: string) => {
     if (!child || !emotionModal) return
-    // Update the last log with emotion
     const logs = usePointStore.getState().logs
     const lastLog = logs.find((l) => l.taskId === emotionModal.taskId)
     if (lastLog) {
@@ -113,6 +157,11 @@ export default function Tasks() {
   return (
     <div className="page">
       <PointAnimation trigger={animTrigger} points={lastPoints} />
+      <GraduationCeremony
+        show={graduation.show}
+        taskName={graduation.taskName}
+        onClose={() => setGraduation({ show: false, taskName: '' })}
+      />
 
       <h2 className="page-title">今日任务</h2>
 
@@ -162,91 +211,103 @@ export default function Tasks() {
       {/* Task list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <AnimatePresence>
-          {displayTasks.map((task) => (
-            <motion.div
-              key={task.taskId}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="card"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '14px 16px',
-                opacity: task.completedToday ? 0.6 : 1,
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Task icon */}
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: task.completedToday ? '#f0f0f0' : 'var(--color-primary-light)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                flexShrink: 0,
-              }}>
-                {task.completedToday ? '✅' : task.icon}
-              </div>
-
-              {/* Task info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
+          {displayTasks.map((task) => {
+            const stageInfo = task.stage ? HABIT_STAGE_INFO[task.stage] : null
+            return (
+              <motion.div
+                key={task.taskId}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="card"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '14px 16px',
+                  opacity: task.completedToday ? 0.6 : 1,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Task icon */}
                 <div style={{
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  textDecoration: task.completedToday ? 'line-through' : 'none',
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: task.completedToday ? '#f0f0f0' : 'var(--color-primary-light)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  flexShrink: 0,
                 }}>
-                  {task.name}
+                  {task.completedToday ? '✅' : task.icon}
                 </div>
-                {task.consecutiveDays > 0 && (
-                  <div style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--color-warning)',
-                    marginTop: 2,
-                  }}>
-                    🔥 已连续 {task.consecutiveDays} 天
-                  </div>
-                )}
-              </div>
 
-              {/* Points and complete button */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <span style={{
-                  fontWeight: 700,
-                  color: 'var(--color-primary)',
-                  fontSize: '1rem',
-                }}>
-                  +{task.points}
-                </span>
-                {!task.completedToday && (
-                  <motion.button
-                    whileTap={{ scale: 0.85 }}
-                    onClick={() => handleComplete(task.taskId, task.name, task.points)}
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '50%',
-                      background: 'var(--color-primary)',
-                      color: 'white',
-                      fontSize: '1.2rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(255,184,0,0.4)',
-                    }}
-                  >
-                    ✓
-                  </motion.button>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                {/* Task info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    textDecoration: task.completedToday ? 'line-through' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}>
+                    {task.name}
+                    {stageInfo && (
+                      <span style={{ fontSize: '0.7rem' }} title={stageInfo.description}>
+                        {stageInfo.icon}
+                      </span>
+                    )}
+                  </div>
+                  {task.consecutiveDays > 0 && (
+                    <div style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--color-warning)',
+                      marginTop: 2,
+                    }}>
+                      🔥 已连续 {task.consecutiveDays} 天
+                      {stageInfo && <span> · {stageInfo.label}</span>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Points and complete button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                  <span style={{
+                    fontWeight: 700,
+                    color: 'var(--color-primary)',
+                    fontSize: '1rem',
+                  }}>
+                    +{task.points}
+                  </span>
+                  {!task.completedToday && (
+                    <motion.button
+                      whileTap={{ scale: 0.85 }}
+                      onClick={() => handleComplete(task.taskId, task.name, task.points)}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        background: 'var(--color-primary)',
+                        color: 'white',
+                        fontSize: '1.2rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(255,184,0,0.4)',
+                      }}
+                    >
+                      ✓
+                    </motion.button>
+                  )}
+                </div>
+              </motion.div>
+            )
+          })}
         </AnimatePresence>
       </div>
 
