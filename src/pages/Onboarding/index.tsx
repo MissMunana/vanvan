@@ -30,8 +30,22 @@ export default function Onboarding() {
   // Auto-detect mode: if has data → login, if not → welcome
   const [mode, setMode] = useState<Mode>(hasExistingData ? 'login' : 'welcome')
 
+  // Sync mode after Zustand persist hydration (async load from localStorage)
+  useEffect(() => {
+    if (hasExistingData && mode === 'welcome') {
+      setMode('login')
+    }
+  }, [hasExistingData])
+
   // Login state
   const [selectedChildId, setSelectedChildId] = useState(currentChildId || children[0]?.childId || '')
+
+  // Sync selected child after hydration
+  useEffect(() => {
+    if (children.length > 0 && !selectedChildId) {
+      setSelectedChildId(currentChildId || children[0]?.childId || '')
+    }
+  }, [children, currentChildId])
   const [loginPin, setLoginPin] = useState('')
   const [loginPinError, setLoginPinError] = useState(false)
 
