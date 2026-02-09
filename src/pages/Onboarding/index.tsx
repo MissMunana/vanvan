@@ -159,7 +159,12 @@ export default function Onboarding() {
       <div style={{
         display: 'flex',
         gap: 6,
-        padding: '20px 24px 0',
+        padding: 'calc(12px + env(safe-area-inset-top, 0px)) 24px 12px',
+        background: 'linear-gradient(180deg, #FFF9EC, #FFF9EC 80%, transparent)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        flexShrink: 0,
       }}>
         {[0, 1, 2, 3].map((i) => (
           <div key={i} style={{
