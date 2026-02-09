@@ -5,6 +5,7 @@ import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
 import { useRewardStore } from '../../stores/rewardStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
+import { useBadgeStore } from '../../stores/badgeStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
@@ -1205,11 +1206,15 @@ function Settings() {
   const parentPin = useAppStore((s) => s.parentPin)
   const setParentPin = useAppStore((s) => s.setParentPin)
   const updateChild = useAppStore((s) => s.updateChild)
+  const deleteChildFromApp = useAppStore((s) => s.deleteChild)
   const addChild = useAppStore((s) => s.addChild)
+  const logout = useAppStore((s) => s.logout)
   const resetData = useAppStore((s) => s.resetData)
   const setCurrentChild = useAppStore((s) => s.setCurrentChild)
   const navigate = useNavigate()
   const { showToast } = useToast()
+
+  const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
 
   const [editingChild, setEditingChild] = useState<{ childId: string; name: string; gender: 'male' | 'female'; birthday: string; avatar: string } | null>(null)
   const [showAddChild, setShowAddChild] = useState(false)
@@ -1217,13 +1222,17 @@ function Settings() {
   const [showPinChange, setShowPinChange] = useState(false)
   const [pinForm, setPinForm] = useState({ oldPin: '', newPin: '', confirmPin: '' })
   const [pinChangeError, setPinChangeError] = useState('')
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showDeleteChild, setShowDeleteChild] = useState<string | null>(null)
+  const [deletePin, setDeletePin] = useState('')
+  const [deletePinError, setDeletePinError] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showDestroyConfirm, setShowDestroyConfirm] = useState(false)
+  const [destroyChecked, setDestroyChecked] = useState(false)
   const [ageGroupChangeConfirm, setAgeGroupChangeConfirm] = useState(false)
 
   const handleSaveChild = () => {
     if (!editingChild || !editingChild.name.trim()) return
 
-    // Check if ageGroup would change
     const currentChild = children.find((c) => c.childId === editingChild.childId)
     if (currentChild && editingChild.birthday && editingChild.birthday !== currentChild.birthday) {
       const { years: newYears } = getAgeFromBirthday(editingChild.birthday)
@@ -1259,6 +1268,31 @@ function Settings() {
     showToast('孩子已添加')
   }
 
+  const handleDeleteChild = () => {
+    if (!showDeleteChild) return
+    if (deletePin !== parentPin) {
+      setDeletePinError(true)
+      setDeletePin('')
+      return
+    }
+    // Clean up related data in all stores
+    useTaskStore.getState().deleteByChildId(showDeleteChild)
+    usePointStore.getState().deleteByChildId(showDeleteChild)
+    useRewardStore.getState().deleteByChildId(showDeleteChild)
+    useExchangeStore.getState().deleteByChildId(showDeleteChild)
+    useBadgeStore.getState().deleteByChildId(showDeleteChild)
+    deleteChildFromApp(showDeleteChild)
+    setShowDeleteChild(null)
+    setDeletePin('')
+    setDeletePinError(false)
+    showToast('已删除')
+    // If no children left, go back to onboarding
+    if (children.length <= 1) {
+      resetData()
+      navigate('/')
+    }
+  }
+
   const handlePinChange = () => {
     if (pinForm.oldPin !== parentPin) {
       setPinChangeError('旧密码不正确')
@@ -1279,7 +1313,20 @@ function Settings() {
     showToast('密码已修改')
   }
 
-  const handleReset = () => {
+  const handleSoundToggle = () => {
+    if (!child) return
+    const updated = { ...child, settings: { ...child.settings, soundEnabled: !child.settings.soundEnabled } }
+    useAppStore.setState((state) => ({
+      children: state.children.map((c) => c.childId === child.childId ? updated : c),
+    }))
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const handleDestroy = () => {
     resetData()
     navigate('/')
   }
@@ -1288,6 +1335,8 @@ function Settings() {
   const today = new Date()
   const maxBirthday = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate()).toISOString().split('T')[0]
   const minBirthday = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate()).toISOString().split('T')[0]
+
+  const deletingChildName = showDeleteChild ? children.find((c) => c.childId === showDeleteChild)?.name : ''
 
   return (
     <div>
@@ -1328,6 +1377,12 @@ function Settings() {
           >
             ✎
           </button>
+          <button
+            onClick={() => setShowDeleteChild(c.childId)}
+            style={{ fontSize: '0.9rem', color: 'var(--color-danger)', padding: '4px 6px' }}
+          >
+            ✕
+          </button>
         </div>
       ))}
 
@@ -1339,6 +1394,44 @@ function Settings() {
         >
           + 添加新孩子
         </button>
+      )}
+
+      {/* Sound toggle */}
+      {child && (
+        <>
+          <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>偏好设置</div>
+          <div className="card" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+            <span style={{ fontSize: '1.3rem' }}>🔊</span>
+            <span style={{ flex: 1, fontWeight: 600 }}>音效</span>
+            <button
+              onClick={handleSoundToggle}
+              style={{
+                width: 48,
+                height: 28,
+                borderRadius: 14,
+                background: child.settings.soundEnabled ? 'var(--color-success)' : '#ccc',
+                position: 'relative',
+                transition: 'background 0.2s',
+              }}
+            >
+              <div style={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                background: 'white',
+                position: 'absolute',
+                top: 3,
+                left: child.settings.soundEnabled ? 23 : 3,
+                transition: 'left 0.2s',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+              }} />
+            </button>
+          </div>
+        </>
       )}
 
       {/* PIN change */}
@@ -1370,16 +1463,16 @@ function Settings() {
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600 }}>小星星成长宝</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
-            版本: {__COMMIT_HASH__}
+            版本: {typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : 'dev'}
           </div>
         </div>
       </div>
 
-      {/* Data reset */}
-      <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>数据管理</div>
+      {/* Account management */}
+      <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>账号管理</div>
       <button
         className="card"
-        onClick={() => setShowResetConfirm(true)}
+        onClick={() => setShowLogoutConfirm(true)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -1388,8 +1481,23 @@ function Settings() {
           textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: '1.3rem' }}>🗑️</span>
-        <span style={{ flex: 1, fontWeight: 600, color: 'var(--color-danger)' }}>重置所有数据</span>
+        <span style={{ fontSize: '1.3rem' }}>🚪</span>
+        <span style={{ flex: 1, fontWeight: 600 }}>退出登录</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+      </button>
+      <button
+        className="card"
+        onClick={() => { setShowDestroyConfirm(true); setDestroyChecked(false) }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          width: '100%',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: '1.3rem' }}>⚠️</span>
+        <span style={{ flex: 1, fontWeight: 600, color: 'var(--color-text-secondary)' }}>注销账号</span>
         <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
       </button>
 
@@ -1555,6 +1663,42 @@ function Settings() {
         </div>
       </Modal>
 
+      {/* Delete child modal */}
+      <Modal
+        open={!!showDeleteChild}
+        onClose={() => { setShowDeleteChild(null); setDeletePin(''); setDeletePinError(false) }}
+        title="删除孩子档案"
+      >
+        <div style={{ fontSize: '0.9rem', lineHeight: 1.8, marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-danger)', fontWeight: 600 }}>此操作不可撤销！</p>
+          <p>删除后，<strong>{deletingChildName}</strong>的所有数据（任务、积分、兑换记录）将无法恢复。</p>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>请输入家长密码确认</label>
+          <input
+            type="password"
+            inputMode="numeric"
+            maxLength={4}
+            value={deletePin}
+            onChange={(e) => { setDeletePin(e.target.value.replace(/\D/g, '')); setDeletePinError(false) }}
+            onKeyDown={(e) => e.key === 'Enter' && handleDeleteChild()}
+            placeholder="输入4位密码"
+            style={{
+              textAlign: 'center',
+              letterSpacing: '0.3em',
+              border: deletePinError ? '2px solid var(--color-danger)' : undefined,
+            }}
+          />
+          {deletePinError && (
+            <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 4 }}>密码错误</div>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => { setShowDeleteChild(null); setDeletePin(''); setDeletePinError(false) }}>取消</button>
+          <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleDeleteChild} disabled={deletePin.length < 4}>确认删除</button>
+        </div>
+      </Modal>
+
       {/* PIN change modal */}
       <Modal open={showPinChange} onClose={() => { setShowPinChange(false); setPinChangeError(''); setPinForm({ oldPin: '', newPin: '', confirmPin: '' }) }} title="修改家长密码">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1607,15 +1751,47 @@ function Settings() {
         </div>
       </Modal>
 
-      {/* Reset data confirm modal */}
-      <Modal open={showResetConfirm} onClose={() => setShowResetConfirm(false)} title="确认重置">
+      {/* Logout confirm modal */}
+      <Modal open={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} title="退出登录">
         <div style={{ fontSize: '0.9rem', lineHeight: 1.8, marginBottom: 20 }}>
-          <p style={{ color: 'var(--color-danger)', fontWeight: 600 }}>此操作不可撤销！</p>
-          <p>重置后，所有孩子的档案、任务、积分、兑换记录都将被清除，需要重新进行初始设置。</p>
+          <p>确定要退出登录吗？</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>退出后数据不会丢失，重新进入引导流程即可恢复使用。</p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowResetConfirm(false)}>取消</button>
-          <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleReset}>确认重置</button>
+          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowLogoutConfirm(false)}>取消</button>
+          <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleLogout}>确认退出</button>
+        </div>
+      </Modal>
+
+      {/* Destroy account confirm modal */}
+      <Modal open={showDestroyConfirm} onClose={() => setShowDestroyConfirm(false)} title="注销账号">
+        <div style={{ fontSize: '0.9rem', lineHeight: 1.8, marginBottom: 16 }}>
+          <p style={{ color: 'var(--color-danger)', fontWeight: 600 }}>注销后，以下数据将被永久删除且无法恢复：</p>
+          <ul style={{ paddingLeft: 20, margin: '8px 0' }}>
+            <li>所有孩子的任务、积分、兑换记录</li>
+            <li>所有勋章和成长数据</li>
+            <li>家长账号信息</li>
+          </ul>
+        </div>
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontSize: '0.85rem',
+          marginBottom: 16,
+          cursor: 'pointer',
+        }}>
+          <input
+            type="checkbox"
+            checked={destroyChecked}
+            onChange={(e) => setDestroyChecked(e.target.checked)}
+            style={{ width: 18, height: 18, accentColor: 'var(--color-danger)' }}
+          />
+          我已了解注销后果
+        </label>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowDestroyConfirm(false)}>取消</button>
+          <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleDestroy} disabled={!destroyChecked}>确认注销</button>
         </div>
       </Modal>
     </div>

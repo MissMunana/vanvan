@@ -12,6 +12,7 @@ interface RewardStore {
   deleteReward: (rewardId: string) => void
   getChildRewards: (childId: string) => Reward[]
   getChildRewardsByCategory: (childId: string) => Record<RewardCategory, Reward[]>
+  deleteByChildId: (childId: string) => void
 }
 
 export const useRewardStore = create<RewardStore>()(
@@ -64,6 +65,10 @@ export const useRewardStore = create<RewardStore>()(
           grouped[r.category].push(r)
         })
         return grouped
+      },
+
+      deleteByChildId: (childId) => {
+        set((state) => ({ rewards: state.rewards.filter((r) => r.childId !== childId) }))
       },
     }),
     {

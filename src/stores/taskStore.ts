@@ -39,6 +39,7 @@ interface TaskStore {
   undoComplete: (taskId: string) => void
   getChildTasks: (childId: string) => Task[]
   getChildTasksByCategory: (childId: string) => Record<TaskCategory, Task[]>
+  deleteByChildId: (childId: string) => void
   refreshDailyStatus: () => void
 }
 
@@ -158,6 +159,10 @@ export const useTaskStore = create<TaskStore>()(
           grouped[t.category].push(t)
         })
         return grouped
+      },
+
+      deleteByChildId: (childId) => {
+        set((state) => ({ tasks: state.tasks.filter((t) => t.childId !== childId) }))
       },
 
       refreshDailyStatus: () => {

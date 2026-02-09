@@ -9,6 +9,7 @@ interface ExchangeStore {
   reviewExchange: (exchangeId: string, status: 'approved' | 'rejected', rejectReason?: string) => void
   getChildExchanges: (childId: string) => Exchange[]
   getPendingExchanges: (childId?: string) => Exchange[]
+  deleteByChildId: (childId: string) => void
 }
 
 export const useExchangeStore = create<ExchangeStore>()(
@@ -51,6 +52,10 @@ export const useExchangeStore = create<ExchangeStore>()(
         return get().exchanges.filter(
           (e) => e.status === 'pending' && (!childId || e.childId === childId)
         )
+      },
+
+      deleteByChildId: (childId) => {
+        set((state) => ({ exchanges: state.exchanges.filter((e) => e.childId !== childId) }))
       },
     }),
     { name: 'star-exchanges' }

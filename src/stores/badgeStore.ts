@@ -7,6 +7,7 @@ interface BadgeStore {
   unlockedBadges: UnlockedBadge[]
   checkAndUnlock: (ctx: BadgeContext) => string[]
   getChildBadges: (childId: string) => UnlockedBadge[]
+  deleteByChildId: (childId: string) => void
 }
 
 export const useBadgeStore = create<BadgeStore>()(
@@ -45,6 +46,10 @@ export const useBadgeStore = create<BadgeStore>()(
 
       getChildBadges: (childId) => {
         return get().unlockedBadges.filter((b) => b.childId === childId)
+      },
+
+      deleteByChildId: (childId) => {
+        set((state) => ({ unlockedBadges: state.unlockedBadges.filter((b) => b.childId !== childId) }))
       },
     }),
     { name: 'star-badges', version: 1 }

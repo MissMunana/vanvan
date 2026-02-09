@@ -22,9 +22,11 @@ interface AppStore {
   setParentPin: (pin: string) => void
   completeOnboarding: () => void
   updateChild: (childId: string, updates: Partial<Pick<Child, 'name' | 'gender' | 'birthday' | 'avatar'>>) => void
+  deleteChild: (childId: string) => void
   updatePoints: (childId: string, delta: number) => void
   getCurrentChild: () => Child | null
   incrementCompletionCount: () => number
+  logout: () => void
   resetData: () => void
 }
 
@@ -86,6 +88,18 @@ export const useAppStore = create<AppStore>()(
         }))
       },
 
+      deleteChild: (childId) => {
+        set((state) => {
+          const remaining = state.children.filter((c) => c.childId !== childId)
+          return {
+            children: remaining,
+            currentChildId: state.currentChildId === childId
+              ? (remaining[0]?.childId || null)
+              : state.currentChildId,
+          }
+        })
+      },
+
       updatePoints: (childId, delta) => {
         set((state) => ({
           children: state.children.map((c) =>
@@ -106,6 +120,8 @@ export const useAppStore = create<AppStore>()(
         set({ completionCount: newCount })
         return newCount
       },
+
+      logout: () => set({ onboardingCompleted: false }),
 
       resetData: () => set({
         currentChildId: null,

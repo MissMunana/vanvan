@@ -10,6 +10,7 @@ interface PointStore {
   addLog: (log: Omit<PointLog, 'logId' | 'createdAt'>) => void
   getChildLogs: (childId: string, limit?: number) => PointLog[]
   getWeeklyStats: (childId: string) => { tasksCompleted: number; pointsEarned: number; pointsSpent: number }
+  deleteByChildId: (childId: string) => void
 }
 
 export const usePointStore = create<PointStore>()(
@@ -55,6 +56,10 @@ export const usePointStore = create<PointStore>()(
             .filter((l) => l.type === 'spend')
             .reduce((sum, l) => sum + Math.abs(l.points), 0),
         }
+      },
+
+      deleteByChildId: (childId) => {
+        set((state) => ({ logs: state.logs.filter((l) => l.childId !== childId) }))
       },
     }),
     { name: 'star-points' }
