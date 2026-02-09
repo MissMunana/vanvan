@@ -1,18 +1,28 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
+import { useToast } from '../../components/common/Toast'
+import { PointAnimation } from '../../components/common/PointAnimation'
 
 export default function Home() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
+  const incrementCompletionCount = useAppStore((s) => s.incrementCompletionCount)
+  const updatePoints = useAppStore((s) => s.updatePoints)
   const allTasks = useTaskStore((s) => s.tasks)
+  const completeTask = useTaskStore((s) => s.completeTask)
+  const undoComplete = useTaskStore((s) => s.undoComplete)
   const logs = usePointStore((s) => s.logs)
+  const addLog = usePointStore((s) => s.addLog)
   const exchanges = useExchangeStore((s) => s.exchanges)
   const navigate = useNavigate()
+  const { showToast } = useToast()
+  const [animTrigger, setAnimTrigger] = useState(0)
+  const [lastPoints, setLastPoints] = useState(0)
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
   const childId = child?.childId || ''
@@ -41,10 +51,42 @@ export default function Home() {
 
   const completedCount = tasks.filter((t) => t.completedToday).length
 
+  const handleComplete = useCallback((taskId: string, taskName: string, points: number) => {
+    if (!child) return
+    const { bonusPoints, consecutiveDays } = completeTask(taskId)
+    const totalPoints = points + bonusPoints
+    updatePoints(child.childId, totalPoints)
+    incrementCompletionCount()
+    addLog({
+      childId: child.childId,
+      taskId,
+      type: 'earn',
+      points: totalPoints,
+      reason: `完成任务: ${taskName}`,
+      emotion: null,
+      operator: 'child',
+    })
+    setLastPoints(totalPoints)
+    setAnimTrigger((t) => t + 1)
+    let message = `你坚持做到了! +${totalPoints}分`
+    if (bonusPoints > 0) {
+      message = `连续${consecutiveDays}天! 额外奖励+${bonusPoints}分 🎉`
+    }
+    showToast(message, {
+      label: '撤销',
+      onClick: () => {
+        undoComplete(taskId)
+        updatePoints(child.childId, -totalPoints)
+        showToast('已撤销')
+      },
+    })
+  }, [child, completeTask, updatePoints, incrementCompletionCount, addLog, showToast, undoComplete])
+
   if (!child) return null
 
   return (
     <div className="page">
+      <PointAnimation trigger={animTrigger} points={lastPoints} />
       {/* Header with avatar and greeting */}
       <div style={{
         display: 'flex',
@@ -219,9 +261,29 @@ export default function Home() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{task.name}</div>
               </div>
-              <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>
-                +{task.points}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>
+                  +{task.points}
+                </span>
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => handleComplete(task.taskId, task.name, task.points)}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'var(--color-primary)',
+                    color: 'white',
+                    fontSize: '1.1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(255,184,0,0.4)',
+                  }}
+                >
+                  ✓
+                </motion.button>
+              </div>
             </div>
           ))}
         </div>

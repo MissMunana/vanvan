@@ -9,6 +9,7 @@ import Tasks from './pages/Tasks'
 import Shop from './pages/Shop'
 import Profile from './pages/Profile'
 import Parent from './pages/Parent'
+import InstallPrompt from './components/common/InstallPrompt'
 
 export default function App() {
   const onboardingCompleted = useAppStore((s) => s.onboardingCompleted)
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />
+      <InstallPrompt />
     </>
   )
 }

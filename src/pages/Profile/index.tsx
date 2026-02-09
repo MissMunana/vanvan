@@ -4,6 +4,7 @@ import { useAppStore } from '../../stores/appStore'
 import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { Modal } from '../../components/common/Modal'
+import { formatAge } from '../../hooks/useAgeGroup'
 
 export default function Profile() {
   const children = useAppStore((s) => s.children)
@@ -62,7 +63,7 @@ export default function Profile() {
         </div>
         <div style={{ fontWeight: 700, fontSize: '1.2rem' }}>{child.name}</div>
         <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-          {child.age}岁 · {child.gender === 'male' ? '男孩' : '女孩'}
+          {formatAge(child.birthday, child.age)} · {child.gender === 'male' ? '男孩' : '女孩'}
         </div>
       </div>
 

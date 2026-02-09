@@ -5,7 +5,7 @@ import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useRewardStore } from '../../stores/rewardStore'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
-import { getAgeGroup } from '../../hooks/useAgeGroup'
+import { getAgeGroup, getAgeFromBirthday, formatAge } from '../../hooks/useAgeGroup'
 import type { TaskCategory, RewardCategory } from '../../types'
 
 export default function Onboarding() {
@@ -15,7 +15,7 @@ export default function Onboarding() {
   // Step 1: Child profile
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
-  const [age, setAge] = useState(6)
+  const [birthday, setBirthday] = useState('')
   const [avatar, setAvatar] = useState('🐱')
   const [pin, setPin] = useState('')
 
@@ -31,6 +31,7 @@ export default function Onboarding() {
   const addTasks = useTaskStore((s) => s.addTasks)
   const addRewards = useRewardStore((s) => s.addRewards)
 
+  const age = birthday ? getAgeFromBirthday(birthday).years : 0
   const ageGroup = getAgeGroup(age)
   const filteredTasks = TASK_TEMPLATES.filter((t) => t.ageGroups.includes(ageGroup))
 
@@ -45,7 +46,7 @@ export default function Onboarding() {
   })
 
   const handleComplete = () => {
-    const childId = addChild({ name, gender, age, avatar })
+    const childId = addChild({ name, gender, birthday, avatar })
     setParentPin(pin || '1234')
 
     const tasksToAdd = filteredTasks
@@ -156,23 +157,17 @@ export default function Onboarding() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>年龄: {age}岁</label>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>
+                    生日{birthday ? `（${formatAge(birthday)}）` : ''}
+                  </label>
                   <input
-                    type="range"
-                    min={3}
-                    max={12}
-                    value={age}
-                    onChange={(e) => setAge(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      accentColor: 'var(--color-primary)',
-                      border: 'none',
-                      padding: 0,
-                    }}
+                    type="date"
+                    value={birthday}
+                    onChange={(e) => setBirthday(e.target.value)}
+                    max={new Date(Date.now() - 3 * 365.25 * 86400000).toISOString().split('T')[0]}
+                    min={new Date(Date.now() - 12 * 365.25 * 86400000).toISOString().split('T')[0]}
+                    style={{ fontSize: '1rem' }}
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                    <span>3岁</span><span>12岁</span>
-                  </div>
                 </div>
 
                 <div>
@@ -364,7 +359,7 @@ export default function Onboarding() {
             onClick={() => setStep(step + 1)}
             className="btn btn-primary"
             style={{ flex: 2 }}
-            disabled={step === 0 && (!name.trim() || pin.length < 4)}
+            disabled={step === 0 && (!name.trim() || !birthday || pin.length < 4)}
           >
             下一步
           </button>

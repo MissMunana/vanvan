@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Child } from '../types'
-import { getAgeGroup } from '../hooks/useAgeGroup'
+import { getAgeGroup, getAgeFromBirthday } from '../hooks/useAgeGroup'
 
 interface AppStore {
   currentChildId: string | null
@@ -10,7 +10,7 @@ interface AppStore {
   onboardingCompleted: boolean
   completionCount: number
 
-  addChild: (child: Omit<Child, 'childId' | 'ageGroup' | 'totalPoints' | 'settings' | 'createdAt'>) => string
+  addChild: (child: Omit<Child, 'childId' | 'age' | 'ageGroup' | 'totalPoints' | 'settings' | 'createdAt'>) => string
   setCurrentChild: (childId: string) => void
   setParentPin: (pin: string) => void
   completeOnboarding: () => void
@@ -35,12 +35,14 @@ export const useAppStore = create<AppStore>()(
 
       addChild: (data) => {
         const childId = generateId()
+        const { years } = getAgeFromBirthday(data.birthday)
         const child: Child = {
           childId,
           name: data.name,
           gender: data.gender,
-          age: data.age,
-          ageGroup: getAgeGroup(data.age),
+          birthday: data.birthday,
+          age: years,
+          ageGroup: getAgeGroup(years),
           avatar: data.avatar,
           totalPoints: 0,
           settings: {
