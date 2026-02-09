@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
@@ -7,11 +7,12 @@ import { useRewardStore } from '../../stores/rewardStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
-import { TASK_TEMPLATES, REWARD_TEMPLATES } from '../../data/templates'
+import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { CATEGORY_INFO, REWARD_CATEGORY_INFO } from '../../types'
-import type { TaskCategory, RewardCategory } from '../../types'
+import { formatAge, getAgeFromBirthday, getAgeGroup } from '../../hooks/useAgeGroup'
+import type { TaskCategory, RewardCategory, Task, Reward } from '../../types'
 
-type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust'
+type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust' | 'settings'
 
 export default function Parent() {
   const children = useAppStore((s) => s.children)
@@ -22,21 +23,51 @@ export default function Parent() {
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState(false)
+  const [failCount, setFailCount] = useState(0)
+  const [lockUntil, setLockUntil] = useState(0)
+  const [lockRemaining, setLockRemaining] = useState(0)
   const [activeTab, setActiveTab] = useState<ParentTab>('dashboard')
 
   const navigate = useNavigate()
 
+  // PIN lockout countdown
+  useEffect(() => {
+    if (lockUntil <= Date.now()) return
+    const timer = setInterval(() => {
+      const remaining = lockUntil - Date.now()
+      if (remaining <= 0) {
+        setLockRemaining(0)
+        clearInterval(timer)
+      } else {
+        setLockRemaining(remaining)
+      }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [lockUntil])
+
+  const isLocked = lockRemaining > 0
+
   const handlePinSubmit = () => {
+    if (isLocked) return
     if (pinInput === parentPin) {
       setAuthenticated(true)
       setPinError(false)
+      setFailCount(0)
     } else {
+      const newCount = failCount + 1
+      setFailCount(newCount)
       setPinError(true)
       setPinInput('')
+      if (newCount >= 3) {
+        const until = Date.now() + 5 * 60 * 1000
+        setLockUntil(until)
+        setLockRemaining(until - Date.now())
+      }
     }
   }
 
   if (!authenticated) {
+    const lockSec = Math.ceil((lockRemaining % 60000) / 1000)
     return (
       <div style={{
         minHeight: '100dvh',
@@ -47,37 +78,55 @@ export default function Parent() {
         padding: 24,
         background: 'var(--color-bg)',
       }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>🔒</div>
+        <div style={{ fontSize: '3rem', marginBottom: 16 }}>{isLocked ? '🔐' : '🔒'}</div>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 24 }}>家长验证</h2>
-        <input
-          type="password"
-          inputMode="numeric"
-          maxLength={4}
-          value={pinInput}
-          onChange={(e) => {
-            setPinInput(e.target.value.replace(/\D/g, ''))
-            setPinError(false)
-          }}
-          onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
-          placeholder="请输入4位数字密码"
-          style={{
-            textAlign: 'center',
-            fontSize: '1.5rem',
-            letterSpacing: '0.5em',
-            maxWidth: 200,
-            border: pinError ? '2px solid var(--color-danger)' : undefined,
-          }}
-        />
-        {pinError && (
-          <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 8 }}>
-            密码错误，请重试
+        {isLocked ? (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ color: 'var(--color-danger)', fontSize: '0.9rem', marginBottom: 8 }}>
+              密码错误次数过多，已锁定
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-danger)' }}>
+              {Math.floor(lockRemaining / 60000)}:{String(lockSec % 60).padStart(2, '0')}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
+              后可重试
+            </div>
           </div>
+        ) : (
+          <>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pinInput}
+              onChange={(e) => {
+                setPinInput(e.target.value.replace(/\D/g, ''))
+                setPinError(false)
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
+              placeholder="请输入4位数字密码"
+              style={{
+                textAlign: 'center',
+                fontSize: '1.5rem',
+                letterSpacing: '0.5em',
+                maxWidth: 200,
+                border: pinError ? '2px solid var(--color-danger)' : undefined,
+              }}
+            />
+            {pinError && (
+              <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 8 }}>
+                密码错误{failCount >= 2 ? `，再错${3 - failCount}次将锁定5分钟` : '，请重试'}
+              </div>
+            )}
+          </>
         )}
         <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
           <button className="btn btn-outline" onClick={() => navigate('/')}>返回</button>
-          <button className="btn btn-primary" onClick={handlePinSubmit} disabled={pinInput.length < 4}>
-            确认
-          </button>
+          {!isLocked && (
+            <button className="btn btn-primary" onClick={handlePinSubmit} disabled={pinInput.length < 4}>
+              确认
+            </button>
+          )}
         </div>
       </div>
     )
@@ -90,7 +139,8 @@ export default function Parent() {
     { key: 'tasks', label: '任务', icon: '📋' },
     { key: 'rewards', label: '奖励', icon: '🎁' },
     { key: 'exchanges', label: '审核', icon: '📬' },
-    { key: 'adjust', label: '调分', icon: '⚙️' },
+    { key: 'adjust', label: '调分', icon: '✏️' },
+    { key: 'settings', label: '设置', icon: '⚙️' },
   ]
 
   return (
@@ -131,7 +181,7 @@ export default function Parent() {
               color: activeTab === tab.key ? 'var(--color-primary)' : 'var(--color-text-secondary)',
               fontSize: '0.7rem',
               fontWeight: activeTab === tab.key ? 700 : 400,
-              minWidth: 60,
+              minWidth: 52,
             }}
           >
             <span style={{ fontSize: '1.1rem' }}>{tab.icon}</span>
@@ -147,6 +197,7 @@ export default function Parent() {
         {activeTab === 'rewards' && <RewardManager />}
         {activeTab === 'exchanges' && <ExchangeReview />}
         {activeTab === 'adjust' && <PointAdjust />}
+        {activeTab === 'settings' && <Settings />}
       </div>
     </div>
   )
@@ -391,6 +442,7 @@ function TaskManager() {
 
   const [showAdd, setShowAdd] = useState(false)
   const [showImport, setShowImport] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [newTask, setNewTask] = useState({
     name: '',
     category: 'life' as TaskCategory,
@@ -416,6 +468,19 @@ function TaskManager() {
     setShowAdd(false)
     setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '' })
     showToast('任务已添加')
+  }
+
+  const handleEditSave = () => {
+    if (!editingTask || !editingTask.name.trim()) return
+    updateTask(editingTask.taskId, {
+      name: editingTask.name,
+      category: editingTask.category,
+      points: editingTask.points,
+      icon: editingTask.icon,
+      description: editingTask.description,
+    })
+    setEditingTask(null)
+    showToast('任务已更新')
   }
 
   const handleImport = () => {
@@ -466,6 +531,12 @@ function TaskManager() {
               {task.consecutiveDays > 0 && ` · 连续${task.consecutiveDays}天`}
             </div>
           </div>
+          <button
+            onClick={() => setEditingTask({ ...task })}
+            style={{ fontSize: '0.9rem', color: 'var(--color-primary)', padding: '4px 6px' }}
+          >
+            ✎
+          </button>
           <button
             onClick={() => updateTask(task.taskId, { isActive: !task.isActive })}
             style={{
@@ -541,6 +612,43 @@ function TaskManager() {
           <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleImport}>确认导入</button>
         </div>
       </Modal>
+
+      {/* Edit task modal */}
+      <Modal open={!!editingTask} onClose={() => setEditingTask(null)} title="编辑任务">
+        {editingTask && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>任务名称</label>
+              <input value={editingTask.name} onChange={(e) => setEditingTask({ ...editingTask, name: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>分类</label>
+              <select value={editingTask.category} onChange={(e) => setEditingTask({ ...editingTask, category: e.target.value as TaskCategory })}>
+                {Object.entries(CATEGORY_INFO).map(([k, v]) => (
+                  <option key={k} value={k}>{v.icon} {v.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>积分: {editingTask.points}</label>
+              <input type="range" min={1} max={50} value={editingTask.points} onChange={(e) => setEditingTask({ ...editingTask, points: Number(e.target.value) })} style={{ border: 'none', padding: 0, accentColor: 'var(--color-primary)' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>图标</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {ICONS.map((icon) => (
+                  <button key={icon} onClick={() => setEditingTask({ ...editingTask, icon })} style={{
+                    width: 40, height: 40, borderRadius: 8, fontSize: '1.2rem',
+                    border: editingTask.icon === icon ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                    background: editingTask.icon === icon ? 'var(--color-primary-light)' : 'white',
+                  }}>{icon}</button>
+                ))}
+              </div>
+            </div>
+            <button className="btn btn-primary btn-block" onClick={handleEditSave} disabled={!editingTask.name.trim()}>保存修改</button>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
@@ -559,6 +667,7 @@ function RewardManager() {
   const { showToast } = useToast()
 
   const [showAdd, setShowAdd] = useState(false)
+  const [editingReward, setEditingReward] = useState<Reward | null>(null)
   const [newReward, setNewReward] = useState({
     name: '',
     category: 'time' as RewardCategory,
@@ -585,6 +694,19 @@ function RewardManager() {
     setShowAdd(false)
     setNewReward({ name: '', category: 'time', points: 20, icon: '🎁', description: '' })
     showToast('奖励已添加')
+  }
+
+  const handleEditRewardSave = () => {
+    if (!editingReward || !editingReward.name.trim()) return
+    updateReward(editingReward.rewardId, {
+      name: editingReward.name,
+      category: editingReward.category,
+      points: editingReward.points,
+      icon: editingReward.icon,
+      description: editingReward.description,
+    })
+    setEditingReward(null)
+    showToast('奖励已更新')
   }
 
   const handleImportRewards = () => {
@@ -633,6 +755,12 @@ function RewardManager() {
               {REWARD_CATEGORY_INFO[reward.category].label} · {reward.points}分
             </div>
           </div>
+          <button
+            onClick={() => setEditingReward({ ...reward })}
+            style={{ fontSize: '0.9rem', color: 'var(--color-primary)', padding: '4px 6px' }}
+          >
+            ✎
+          </button>
           <button
             onClick={() => updateReward(reward.rewardId, { isActive: !reward.isActive })}
             style={{
@@ -696,6 +824,47 @@ function RewardManager() {
           </div>
           <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={!newReward.name.trim()}>添加奖励</button>
         </div>
+      </Modal>
+
+      {/* Edit reward modal */}
+      <Modal open={!!editingReward} onClose={() => setEditingReward(null)} title="编辑奖励">
+        {editingReward && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>奖励名称</label>
+              <input value={editingReward.name} onChange={(e) => setEditingReward({ ...editingReward, name: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>分类</label>
+              <select value={editingReward.category} onChange={(e) => setEditingReward({ ...editingReward, category: e.target.value as RewardCategory })}>
+                {Object.entries(REWARD_CATEGORY_INFO).map(([k, v]) => (
+                  <option key={k} value={k}>{v.icon} {v.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>所需积分: {editingReward.points}</label>
+              <input type="range" min={5} max={500} step={5} value={editingReward.points} onChange={(e) => setEditingReward({ ...editingReward, points: Number(e.target.value) })} style={{ border: 'none', padding: 0, accentColor: 'var(--color-primary)' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>图标</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {ICONS.map((icon) => (
+                  <button key={icon} onClick={() => setEditingReward({ ...editingReward, icon })} style={{
+                    width: 40, height: 40, borderRadius: 8, fontSize: '1.2rem',
+                    border: editingReward.icon === icon ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                    background: editingReward.icon === icon ? 'var(--color-primary-light)' : 'white',
+                  }}>{icon}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>描述（选填）</label>
+              <input value={editingReward.description} onChange={(e) => setEditingReward({ ...editingReward, description: e.target.value })} />
+            </div>
+            <button className="btn btn-primary btn-block" onClick={handleEditRewardSave} disabled={!editingReward.name.trim()}>保存修改</button>
+          </div>
+        )}
       </Modal>
     </div>
   )
@@ -851,6 +1020,25 @@ function PointAdjust() {
   const [points, setPoints] = useState(10)
   const [reason, setReason] = useState('')
   const [showDeductWarning, setShowDeductWarning] = useState(false)
+  const [cooldownUntil, setCooldownUntil] = useState(0)
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
+
+  // Deduction cooldown countdown
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return
+    const timer = setInterval(() => {
+      const remaining = cooldownUntil - Date.now()
+      if (remaining <= 0) {
+        setCooldownRemaining(0)
+        clearInterval(timer)
+      } else {
+        setCooldownRemaining(remaining)
+      }
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [cooldownUntil])
+
+  const isCoolingDown = cooldownRemaining > 0
 
   if (!child) return null
 
@@ -859,6 +1047,8 @@ function PointAdjust() {
       showToast('请填写原因')
       return
     }
+
+    if (mode === 'subtract' && isCoolingDown) return
 
     const delta = mode === 'add' ? points : -points
     const maxDeduct = Math.floor(child.totalPoints * 0.1)
@@ -881,6 +1071,9 @@ function PointAdjust() {
     showToast(`已${mode === 'add' ? '增加' : '减少'}${points}积分`)
     setReason('')
     setPoints(10)
+    if (mode === 'subtract') {
+      setMode('add')
+    }
   }
 
   return (
@@ -944,10 +1137,27 @@ function PointAdjust() {
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="如: 主动帮助了弟弟" />
         </div>
 
+        {mode === 'subtract' && isCoolingDown && (
+          <div style={{
+            textAlign: 'center',
+            padding: 12,
+            marginBottom: 10,
+            background: '#fff3e0',
+            borderRadius: 10,
+            fontSize: '0.85rem',
+            color: 'var(--color-warning)',
+          }}>
+            冷静期倒计时：{Math.floor(cooldownRemaining / 60000)}:{String(Math.ceil((cooldownRemaining % 60000) / 1000) % 60).padStart(2, '0')}
+            <div style={{ fontSize: '0.75rem', marginTop: 4, color: 'var(--color-text-secondary)' }}>
+              请冷静思考是否真的需要扣分
+            </div>
+          </div>
+        )}
+
         <button
           className={`btn btn-block ${mode === 'add' ? 'btn-primary' : 'btn-danger'}`}
           onClick={handleSubmit}
-          disabled={!reason.trim()}
+          disabled={!reason.trim() || (mode === 'subtract' && isCoolingDown)}
         >
           确认{mode === 'add' ? '增加' : '减少'} {points} 积分
         </button>
@@ -976,10 +1186,436 @@ function PointAdjust() {
             onClick={() => {
               setMode('subtract')
               setShowDeductWarning(false)
+              const until = Date.now() + 10 * 60 * 1000
+              setCooldownUntil(until)
+              setCooldownRemaining(until - Date.now())
             }}
           >
             确定要扣分
           </button>
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
+function Settings() {
+  const children = useAppStore((s) => s.children)
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const parentPin = useAppStore((s) => s.parentPin)
+  const setParentPin = useAppStore((s) => s.setParentPin)
+  const updateChild = useAppStore((s) => s.updateChild)
+  const addChild = useAppStore((s) => s.addChild)
+  const resetData = useAppStore((s) => s.resetData)
+  const setCurrentChild = useAppStore((s) => s.setCurrentChild)
+  const navigate = useNavigate()
+  const { showToast } = useToast()
+
+  const [editingChild, setEditingChild] = useState<{ childId: string; name: string; gender: 'male' | 'female'; birthday: string; avatar: string } | null>(null)
+  const [showAddChild, setShowAddChild] = useState(false)
+  const [newChild, setNewChild] = useState({ name: '', gender: 'male' as 'male' | 'female', birthday: '', avatar: '🐱' })
+  const [showPinChange, setShowPinChange] = useState(false)
+  const [pinForm, setPinForm] = useState({ oldPin: '', newPin: '', confirmPin: '' })
+  const [pinChangeError, setPinChangeError] = useState('')
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [ageGroupChangeConfirm, setAgeGroupChangeConfirm] = useState(false)
+
+  const handleSaveChild = () => {
+    if (!editingChild || !editingChild.name.trim()) return
+
+    // Check if ageGroup would change
+    const currentChild = children.find((c) => c.childId === editingChild.childId)
+    if (currentChild && editingChild.birthday && editingChild.birthday !== currentChild.birthday) {
+      const { years: newYears } = getAgeFromBirthday(editingChild.birthday)
+      const newAgeGroup = getAgeGroup(newYears)
+      if (newAgeGroup !== currentChild.ageGroup && !ageGroupChangeConfirm) {
+        setAgeGroupChangeConfirm(true)
+        return
+      }
+    }
+
+    updateChild(editingChild.childId, {
+      name: editingChild.name,
+      gender: editingChild.gender,
+      birthday: editingChild.birthday,
+      avatar: editingChild.avatar,
+    })
+    setEditingChild(null)
+    setAgeGroupChangeConfirm(false)
+    showToast('已更新')
+  }
+
+  const handleAddChild = () => {
+    if (!newChild.name.trim() || !newChild.birthday) return
+    const childId = addChild({
+      name: newChild.name,
+      gender: newChild.gender,
+      birthday: newChild.birthday,
+      avatar: newChild.avatar,
+    })
+    setCurrentChild(childId)
+    setShowAddChild(false)
+    setNewChild({ name: '', gender: 'male', birthday: '', avatar: '🐱' })
+    showToast('孩子已添加')
+  }
+
+  const handlePinChange = () => {
+    if (pinForm.oldPin !== parentPin) {
+      setPinChangeError('旧密码不正确')
+      return
+    }
+    if (pinForm.newPin.length < 4) {
+      setPinChangeError('新密码至少4位')
+      return
+    }
+    if (pinForm.newPin !== pinForm.confirmPin) {
+      setPinChangeError('两次输入的新密码不一致')
+      return
+    }
+    setParentPin(pinForm.newPin)
+    setShowPinChange(false)
+    setPinForm({ oldPin: '', newPin: '', confirmPin: '' })
+    setPinChangeError('')
+    showToast('密码已修改')
+  }
+
+  const handleReset = () => {
+    resetData()
+    navigate('/')
+  }
+
+  // Birthday range constraints (3-12 years old)
+  const today = new Date()
+  const maxBirthday = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate()).toISOString().split('T')[0]
+  const minBirthday = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate()).toISOString().split('T')[0]
+
+  return (
+    <div>
+      {/* Children management */}
+      <div style={{ fontWeight: 700, marginBottom: 12 }}>孩子管理</div>
+      {children.map((c) => (
+        <div key={c.childId} className="card" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>{c.avatar}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600 }}>{c.name}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+              {formatAge(c.birthday, c.age)} · {c.gender === 'male' ? '男孩' : '女孩'}
+              {c.childId === currentChildId && ' · 当前'}
+            </div>
+          </div>
+          {c.childId !== currentChildId && (
+            <button
+              onClick={() => setCurrentChild(c.childId)}
+              className="btn btn-outline btn-sm"
+              style={{ fontSize: '0.75rem' }}
+            >
+              切换
+            </button>
+          )}
+          <button
+            onClick={() => setEditingChild({
+              childId: c.childId,
+              name: c.name,
+              gender: c.gender,
+              birthday: c.birthday || '',
+              avatar: c.avatar,
+            })}
+            style={{ fontSize: '0.9rem', color: 'var(--color-primary)', padding: '4px 6px' }}
+          >
+            ✎
+          </button>
+        </div>
+      ))}
+
+      {children.length < 5 && (
+        <button
+          className="btn btn-outline btn-block"
+          style={{ marginTop: 8, marginBottom: 20 }}
+          onClick={() => setShowAddChild(true)}
+        >
+          + 添加新孩子
+        </button>
+      )}
+
+      {/* PIN change */}
+      <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>安全设置</div>
+      <button
+        className="card"
+        onClick={() => setShowPinChange(true)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          width: '100%',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: '1.3rem' }}>🔑</span>
+        <span style={{ flex: 1, fontWeight: 600 }}>修改家长密码</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+      </button>
+
+      {/* About */}
+      <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>关于</div>
+      <div className="card" style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}>
+        <span style={{ fontSize: '1.3rem' }}>ℹ️</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600 }}>小星星成长宝</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+            版本: {__COMMIT_HASH__}
+          </div>
+        </div>
+      </div>
+
+      {/* Data reset */}
+      <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>数据管理</div>
+      <button
+        className="card"
+        onClick={() => setShowResetConfirm(true)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          width: '100%',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: '1.3rem' }}>🗑️</span>
+        <span style={{ flex: 1, fontWeight: 600, color: 'var(--color-danger)' }}>重置所有数据</span>
+        <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+      </button>
+
+      {/* Edit child modal */}
+      <Modal open={!!editingChild} onClose={() => { setEditingChild(null); setAgeGroupChangeConfirm(false) }} title="编辑孩子资料">
+        {editingChild && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {ageGroupChangeConfirm && (
+              <div style={{
+                background: '#fff3e0',
+                padding: 12,
+                borderRadius: 10,
+                fontSize: '0.85rem',
+                color: 'var(--color-warning)',
+              }}>
+                修改出生日期会影响年龄段设置和界面风格，确定修改吗？
+              </div>
+            )}
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>名字</label>
+              <input
+                value={editingChild.name}
+                onChange={(e) => setEditingChild({ ...editingChild, name: e.target.value })}
+                maxLength={10}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>性别</label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {(['male', 'female'] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setEditingChild({ ...editingChild, gender: g })}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      border: editingChild.gender === g ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      background: editingChild.gender === g ? 'var(--color-primary-light)' : 'white',
+                    }}
+                  >
+                    {g === 'male' ? '👦 男孩' : '👧 女孩'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>出生日期</label>
+              <input
+                type="date"
+                value={editingChild.birthday}
+                onChange={(e) => setEditingChild({ ...editingChild, birthday: e.target.value })}
+                min={minBirthday}
+                max={maxBirthday}
+                style={{ width: '100%' }}
+              />
+              {editingChild.birthday && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
+                  {formatAge(editingChild.birthday)}
+                </div>
+              )}
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>头像</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {AVATAR_OPTIONS.map((a) => (
+                  <button
+                    key={a}
+                    onClick={() => setEditingChild({ ...editingChild, avatar: a })}
+                    style={{
+                      width: 44, height: 44, borderRadius: 10, fontSize: '1.3rem',
+                      border: editingChild.avatar === a ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      background: editingChild.avatar === a ? 'var(--color-primary-light)' : 'white',
+                    }}
+                  >{a}</button>
+                ))}
+              </div>
+            </div>
+            <button
+              className="btn btn-primary btn-block"
+              onClick={handleSaveChild}
+              disabled={!editingChild.name.trim()}
+            >
+              {ageGroupChangeConfirm ? '确认修改' : '保存'}
+            </button>
+          </div>
+        )}
+      </Modal>
+
+      {/* Add child modal */}
+      <Modal open={showAddChild} onClose={() => setShowAddChild(false)} title="添加新孩子">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>名字</label>
+            <input
+              value={newChild.name}
+              onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
+              placeholder="宝贝的名字"
+              maxLength={10}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>性别</label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {(['male', 'female'] as const).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setNewChild({ ...newChild, gender: g })}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: 10,
+                    fontWeight: 600,
+                    border: newChild.gender === g ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                    background: newChild.gender === g ? 'var(--color-primary-light)' : 'white',
+                  }}
+                >
+                  {g === 'male' ? '👦 男孩' : '👧 女孩'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>出生日期</label>
+            <input
+              type="date"
+              value={newChild.birthday}
+              onChange={(e) => setNewChild({ ...newChild, birthday: e.target.value })}
+              min={minBirthday}
+              max={maxBirthday}
+              style={{ width: '100%' }}
+            />
+            {newChild.birthday && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
+                {formatAge(newChild.birthday)}
+              </div>
+            )}
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>头像</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {AVATAR_OPTIONS.map((a) => (
+                <button
+                  key={a}
+                  onClick={() => setNewChild({ ...newChild, avatar: a })}
+                  style={{
+                    width: 44, height: 44, borderRadius: 10, fontSize: '1.3rem',
+                    border: newChild.avatar === a ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                    background: newChild.avatar === a ? 'var(--color-primary-light)' : 'white',
+                  }}
+                >{a}</button>
+              ))}
+            </div>
+          </div>
+          <button
+            className="btn btn-primary btn-block"
+            onClick={handleAddChild}
+            disabled={!newChild.name.trim() || !newChild.birthday}
+          >
+            添加孩子
+          </button>
+        </div>
+      </Modal>
+
+      {/* PIN change modal */}
+      <Modal open={showPinChange} onClose={() => { setShowPinChange(false); setPinChangeError(''); setPinForm({ oldPin: '', newPin: '', confirmPin: '' }) }} title="修改家长密码">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>当前密码</label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pinForm.oldPin}
+              onChange={(e) => { setPinForm({ ...pinForm, oldPin: e.target.value.replace(/\D/g, '') }); setPinChangeError('') }}
+              placeholder="输入当前4位密码"
+              style={{ textAlign: 'center', letterSpacing: '0.3em' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>新密码</label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pinForm.newPin}
+              onChange={(e) => { setPinForm({ ...pinForm, newPin: e.target.value.replace(/\D/g, '') }); setPinChangeError('') }}
+              placeholder="输入新的4位密码"
+              style={{ textAlign: 'center', letterSpacing: '0.3em' }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>确认新密码</label>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={pinForm.confirmPin}
+              onChange={(e) => { setPinForm({ ...pinForm, confirmPin: e.target.value.replace(/\D/g, '') }); setPinChangeError('') }}
+              placeholder="再次输入新密码"
+              style={{ textAlign: 'center', letterSpacing: '0.3em' }}
+            />
+          </div>
+          {pinChangeError && (
+            <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>{pinChangeError}</div>
+          )}
+          <button
+            className="btn btn-primary btn-block"
+            onClick={handlePinChange}
+            disabled={pinForm.oldPin.length < 4 || pinForm.newPin.length < 4 || pinForm.confirmPin.length < 4}
+          >
+            确认修改
+          </button>
+        </div>
+      </Modal>
+
+      {/* Reset data confirm modal */}
+      <Modal open={showResetConfirm} onClose={() => setShowResetConfirm(false)} title="确认重置">
+        <div style={{ fontSize: '0.9rem', lineHeight: 1.8, marginBottom: 20 }}>
+          <p style={{ color: 'var(--color-danger)', fontWeight: 600 }}>此操作不可撤销！</p>
+          <p>重置后，所有孩子的档案、任务、积分、兑换记录都将被清除，需要重新进行初始设置。</p>
+        </div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowResetConfirm(false)}>取消</button>
+          <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleReset}>确认重置</button>
         </div>
       </Modal>
     </div>

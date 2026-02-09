@@ -21,6 +21,7 @@ interface AppStore {
   setCurrentChild: (childId: string) => void
   setParentPin: (pin: string) => void
   completeOnboarding: () => void
+  updateChild: (childId: string, updates: Partial<Pick<Child, 'name' | 'gender' | 'birthday' | 'avatar'>>) => void
   updatePoints: (childId: string, delta: number) => void
   getCurrentChild: () => Child | null
   incrementCompletionCount: () => number
@@ -69,6 +70,21 @@ export const useAppStore = create<AppStore>()(
       setCurrentChild: (childId) => set({ currentChildId: childId }),
       setParentPin: (pin) => set({ parentPin: pin }),
       completeOnboarding: () => set({ onboardingCompleted: true }),
+
+      updateChild: (childId, updates) => {
+        set((state) => ({
+          children: state.children.map((c) => {
+            if (c.childId !== childId) return c
+            const updated = { ...c, ...updates }
+            if (updates.birthday) {
+              const { years } = getAgeFromBirthday(updates.birthday)
+              updated.age = years
+              updated.ageGroup = getAgeGroup(years)
+            }
+            return updated
+          }),
+        }))
+      },
 
       updatePoints: (childId, delta) => {
         set((state) => ({

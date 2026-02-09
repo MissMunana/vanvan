@@ -33,7 +33,9 @@ export default function Home() {
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dropHighlight, setDropHighlight] = useState(false)
   const [graduation, setGraduation] = useState<{ show: boolean; taskName: string }>({ show: false, taskName: '' })
+  const [showChildSwitcher, setShowChildSwitcher] = useState(false)
   const planetRef = useRef<HTMLDivElement>(null)
+  const setCurrentChild = useAppStore((s) => s.setCurrentChild)
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
   const childId = child?.childId || ''
@@ -174,7 +176,10 @@ export default function Home() {
         justifyContent: 'space-between',
         marginBottom: 20,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: children.length > 1 ? 'pointer' : 'default' }}
+          onClick={() => children.length > 1 && setShowChildSwitcher(!showChildSwitcher)}
+        >
           <div style={{
             width: 44,
             height: 44,
@@ -188,8 +193,13 @@ export default function Home() {
             {child.avatar}
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
+            <div style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 4 }}>
               {getGreeting()}，{child.name}!
+              {children.length > 1 && (
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+                  {showChildSwitcher ? '▲' : '▼'}
+                </span>
+              )}
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
               今天也要加油哦
@@ -209,6 +219,43 @@ export default function Home() {
           家长
         </button>
       </div>
+
+      {/* Child switcher dropdown */}
+      {showChildSwitcher && children.length > 1 && (
+        <div style={{
+          background: 'white',
+          borderRadius: 12,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          marginBottom: 16,
+          overflow: 'hidden',
+        }}>
+          {children.map((c) => (
+            <button
+              key={c.childId}
+              onClick={() => {
+                setCurrentChild(c.childId)
+                setShowChildSwitcher(false)
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                width: '100%',
+                padding: '12px 16px',
+                textAlign: 'left',
+                background: c.childId === currentChildId ? 'var(--color-primary-light)' : 'white',
+                borderBottom: '1px solid var(--color-border)',
+              }}
+            >
+              <span style={{ fontSize: '1.3rem' }}>{c.avatar}</span>
+              <span style={{ flex: 1, fontWeight: c.childId === currentChildId ? 700 : 400 }}>{c.name}</span>
+              {c.childId === currentChildId && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>当前</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Points Planet (Drop Target) */}
       <motion.div
