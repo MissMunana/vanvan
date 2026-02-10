@@ -1471,6 +1471,9 @@ function Settings() {
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
             版本: {typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : 'dev'}
           </div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+            更新于 2026-02-10
+          </div>
         </div>
       </div>
 

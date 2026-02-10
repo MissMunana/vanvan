@@ -270,8 +270,11 @@ export default function Profile() {
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
           <div style={{ marginBottom: 12, fontSize: '3rem' }}>⭐</div>
           <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 4 }}>小星星成长宝</div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>
             V1.5 体验优化版
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+            更新于 2026-02-10
           </div>
           <div style={{
             display: 'inline-block',
