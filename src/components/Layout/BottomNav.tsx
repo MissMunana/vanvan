@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页', icon: '✨' },
-  { path: '/tasks', label: '任务', icon: '🎯' },
-  { path: '/shop', label: '商城', icon: '🎪' },
-  { path: '/profile', label: '我的', icon: '🐻' },
+  { path: '/', label: '首页', icon: '🏠' },
+  { path: '/health', label: '健康', icon: '📊' },
+  { path: '/shop', label: '商城', icon: '🎁' },
+  { path: '/knowledge', label: '知识', icon: '📖' },
+  { path: '/profile', label: '我的', icon: '👤' },
 ]
 
 export function BottomNav() {
@@ -57,7 +58,7 @@ export function BottomNav() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 2,
-                padding: '6px 16px',
+                padding: '6px 8px',
               }}
             >
               <span

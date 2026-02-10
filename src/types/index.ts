@@ -144,3 +144,122 @@ export const HABIT_STAGE_INFO: Record<HabitStage, { label: string; icon: string;
   stable: { label: '稳定期', icon: '🌿', description: '22-66天，积分×0.8' },
   graduated: { label: '已毕业', icon: '🌸', description: '66天+，习惯大师' },
 }
+
+// ============ V2.0 健康管理模块类型 ============
+
+export type MeasureMethod = 'ear' | 'forehead' | 'armpit' | 'rectal' | 'oral'
+
+export type SymptomTag = 'cough' | 'runny_nose' | 'vomiting' | 'diarrhea' | 'rash' | 'lethargy' | 'headache' | 'sore_throat' | 'other'
+
+export type DosageForm = 'suspension_drops' | 'suspension' | 'granules' | 'tablets' | 'suppository'
+
+export type AdministrationRoute = 'oral' | 'topical' | 'rectal'
+
+export type FeverLevel = 'normal' | 'low' | 'moderate' | 'high'
+
+export type HealthTab = 'growth' | 'fever' | 'medication' | 'vaccine' | 'milestone'
+
+export type GrowthMetric = 'height' | 'weight' | 'bmi' | 'headCircumference'
+
+export interface GrowthRecord {
+  recordId: string
+  childId: string
+  date: string
+  ageInMonths: number
+  height: number | null
+  weight: number | null
+  headCircumference: number | null
+  bmi: number | null
+  heightPercentile: number | null
+  weightPercentile: number | null
+  bmiPercentile: number | null
+  note: string
+  createdAt: string
+}
+
+export interface TemperatureRecord {
+  recordId: string
+  childId: string
+  temperature: number
+  measureMethod: MeasureMethod
+  measureTime: string
+  symptoms: SymptomTag[]
+  note: string
+  createdAt: string
+}
+
+export interface MedicationRecord {
+  recordId: string
+  childId: string
+  drugName: string
+  genericName: string
+  dosageForm: DosageForm
+  singleDose: number
+  doseUnit: string
+  administrationTime: string
+  route: AdministrationRoute
+  reason: string
+  note: string
+  createdAt: string
+}
+
+export interface VaccinationRecord {
+  recordId: string
+  childId: string
+  vaccineName: string
+  vaccineType: 'planned' | 'optional'
+  doseNumber: number
+  totalDoses: number
+  date: string
+  batchNumber: string
+  site: string
+  vaccinator: string
+  reactions: VaccineReaction[]
+  note: string
+  createdAt: string
+}
+
+export interface VaccineReaction {
+  type: string
+  severity: 'mild' | 'moderate' | 'severe'
+  duration: string
+}
+
+export type MilestoneStatus = 'not_started' | 'in_progress' | 'achieved'
+
+export interface MilestoneRecord {
+  recordId: string
+  childId: string
+  milestoneId: string
+  status: MilestoneStatus
+  achievedDate: string | null
+  note: string
+  createdAt: string
+}
+
+export const FEVER_LEVEL_INFO: Record<FeverLevel, { label: string; color: string; range: string; advice: string }> = {
+  normal: { label: '正常', color: '#4CAF50', range: '36.0-37.2℃', advice: '体温正常' },
+  low: { label: '低中热', color: '#FFB800', range: '37.3-38.4℃', advice: '关注孩子精神状态，保持正常穿着，少量多次饮水' },
+  moderate: { label: '中高热', color: '#FF9800', range: '38.5-39.9℃', advice: '如孩子明显不适，可考虑使用退烧药改善舒适度（遵医嘱）' },
+  high: { label: '高热', color: '#FF5252', range: '≥40.0℃', advice: '建议使用退烧药并密切观察，如伴有严重症状请立即就医' },
+}
+
+export const SYMPTOM_TAG_INFO: Record<SymptomTag, { label: string; icon: string }> = {
+  cough: { label: '咳嗽', icon: '🤧' },
+  runny_nose: { label: '流涕', icon: '🤒' },
+  vomiting: { label: '呕吐', icon: '🤮' },
+  diarrhea: { label: '腹泻', icon: '💩' },
+  rash: { label: '皮疹', icon: '🔴' },
+  lethargy: { label: '精神差', icon: '😴' },
+  headache: { label: '头痛', icon: '🤕' },
+  sore_throat: { label: '嗓子痛', icon: '😣' },
+  other: { label: '其他', icon: '📝' },
+}
+
+export const MEASURE_METHOD_INFO: Record<MeasureMethod, { label: string }> = {
+  ear: { label: '耳温' },
+  forehead: { label: '额温' },
+  armpit: { label: '腋温' },
+  rectal: { label: '肛温' },
+  oral: { label: '口温' },
+}

@@ -13,6 +13,8 @@ import Profile from './pages/Profile'
 import Parent from './pages/Parent'
 import Badges from './pages/Badges'
 import Print from './pages/Print'
+import Health from './pages/Health'
+import Knowledge from './pages/Knowledge'
 import InstallPrompt from './components/common/InstallPrompt'
 import { Agentation } from 'agentation'
 
@@ -54,6 +56,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/health" element={<Health />} />
+        <Route path="/knowledge" element={<Knowledge />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/parent" element={<Parent />} />

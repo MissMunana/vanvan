@@ -15,6 +15,16 @@
   --color-category-study: #2196F3;
   --color-category-manner: #E91E63;
   --color-category-chore: #4CAF50;
+  /* V2.0 健康管理模块 */
+  --color-health: #4ECDC4;
+  --color-health-light: #E0F7F5;
+  --color-health-dark: #3DB8B0;
+  --color-fever-normal: #4CAF50;
+  --color-fever-low: #FFB800;
+  --color-fever-moderate: #FF9800;
+  --color-fever-high: #FF5252;
+  --color-medication: #7E57C2;
+  --color-vaccine: #42A5F5;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
