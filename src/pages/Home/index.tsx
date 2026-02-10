@@ -241,17 +241,17 @@ export default function Home() {
       >
         {/* Floating sparkle decorations — 9 pieces, varied size & depth */}
         {/* Large — focal accents */}
-        <div style={{ position: 'absolute', top: 8, left: 14, fontSize: '1.6rem', opacity: 0.85, animation: 'float 5.5s ease-in-out infinite' }}>✨</div>
-        <div style={{ position: 'absolute', top: 14, right: 18, fontSize: '1.8rem', opacity: 0.9, animation: 'float 6s ease-in-out infinite 1.2s' }}>✨</div>
-        <div style={{ position: 'absolute', bottom: 10, right: 30, fontSize: '1.5rem', opacity: 0.88, animation: 'float 5s ease-in-out infinite 2.8s' }}>✨</div>
+        <div style={{ position: 'absolute', top: 8, left: 14, fontSize: '1.6rem', opacity: 0.75, animation: 'float 5.5s ease-in-out infinite' }}>✨</div>
+        <div style={{ position: 'absolute', top: 14, right: 18, fontSize: '1.8rem', opacity: 0.75, animation: 'float 6s ease-in-out infinite 1.2s' }}>✨</div>
+        <div style={{ position: 'absolute', bottom: 10, right: 30, fontSize: '1.5rem', opacity: 0.72, animation: 'float 5s ease-in-out infinite 2.8s' }}>✨</div>
         {/* Medium — mid-layer */}
-        <div style={{ position: 'absolute', bottom: 12, left: 24, fontSize: '1.2rem', opacity: 0.7, animation: 'float 6.5s ease-in-out infinite 0.6s' }}>✨</div>
-        <div style={{ position: 'absolute', top: '45%', right: 55, fontSize: '1.1rem', opacity: 0.65, animation: 'float 7s ease-in-out infinite 3.5s' }}>✨</div>
-        <div style={{ position: 'absolute', top: 38, left: '42%', fontSize: '1.3rem', opacity: 0.75, animation: 'float 5.8s ease-in-out infinite 1.8s' }}>✨</div>
+        <div style={{ position: 'absolute', bottom: 12, left: 24, fontSize: '1.2rem', opacity: 0.6, animation: 'float 6.5s ease-in-out infinite 0.6s' }}>✨</div>
+        <div style={{ position: 'absolute', top: '45%', right: 55, fontSize: '1.1rem', opacity: 0.55, animation: 'float 7s ease-in-out infinite 3.5s' }}>✨</div>
+        <div style={{ position: 'absolute', top: 38, left: '42%', fontSize: '1.3rem', opacity: 0.65, animation: 'float 5.8s ease-in-out infinite 1.8s' }}>✨</div>
         {/* Small — atmospheric dust */}
-        <div style={{ position: 'absolute', top: '55%', left: 45, fontSize: '0.85rem', opacity: 0.55, animation: 'float 7s ease-in-out infinite 4s' }}>✨</div>
-        <div style={{ position: 'absolute', top: 28, right: 80, fontSize: '0.75rem', opacity: 0.5, animation: 'float 6.2s ease-in-out infinite 2.2s' }}>✨</div>
-        <div style={{ position: 'absolute', bottom: 32, left: '60%', fontSize: '0.9rem', opacity: 0.6, animation: 'float 5.5s ease-in-out infinite 3s' }}>✨</div>
+        <div style={{ position: 'absolute', top: '55%', left: 45, fontSize: '0.85rem', opacity: 0.45, animation: 'float 7s ease-in-out infinite 4s' }}>✨</div>
+        <div style={{ position: 'absolute', top: 28, right: 80, fontSize: '0.75rem', opacity: 0.4, animation: 'float 6.2s ease-in-out infinite 2.2s' }}>✨</div>
+        <div style={{ position: 'absolute', bottom: 32, left: '60%', fontSize: '0.9rem', opacity: 0.5, animation: 'float 5.5s ease-in-out infinite 3s' }}>✨</div>
 
         <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: 4 }}>
           {draggingId ? '松手即可加分!' : '我的积分'}
