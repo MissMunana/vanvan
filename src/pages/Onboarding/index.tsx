@@ -225,6 +225,7 @@ export default function Onboarding() {
 
   const bgStyle = {
     minHeight: '100dvh',
+    width: '100%' as const,
     display: 'flex' as const,
     flexDirection: 'column' as const,
     background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
@@ -238,7 +239,7 @@ export default function Onboarding() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(340px, calc(100vw - 48px))' }}
+          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(400px, calc(100vw - 48px))' }}
         >
           <div style={{ marginBottom: 16 }}><span style={{ fontSize: '4rem' }}>⭐</span></div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 8 }}>小星星成长宝</h1>
@@ -276,7 +277,7 @@ export default function Onboarding() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(340px, calc(100vw - 48px))' }}
+          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(400px, calc(100vw - 48px))' }}
         >
           <div style={{ marginBottom: 12 }}><span style={{ fontSize: '3.5rem' }}>⭐</span></div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>欢迎回来!</h2>
@@ -373,8 +374,10 @@ export default function Onboarding() {
   }
 
   // ============ REGISTER FLOW ============
+  const regMaxWidth = 'min(480px, 100%)'
+
   return (
-    <div style={{ ...bgStyle, overflow: 'hidden', position: 'relative' }}>
+    <div style={{ ...bgStyle, overflow: 'hidden', position: 'relative', alignItems: 'center' }}>
       {/* Progress */}
       <div style={{
         display: 'flex',
@@ -385,6 +388,8 @@ export default function Onboarding() {
         top: 0,
         zIndex: 10,
         flexShrink: 0,
+        width: '100%',
+        maxWidth: regMaxWidth,
       }}>
         {[0, 1, 2, 3].map((i) => (
           <div key={i} style={{
@@ -397,7 +402,7 @@ export default function Onboarding() {
         ))}
       </div>
 
-      <div style={{ flex: 1, padding: 24, overflowX: 'hidden', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: 24, overflowX: 'hidden', overflowY: 'auto', width: '100%', maxWidth: regMaxWidth }}>
         <AnimatePresence mode="wait">
           {regStep === 0 && (
             <motion.div key="reg0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
@@ -664,7 +669,7 @@ export default function Onboarding() {
       </div>
 
       {/* Bottom Buttons */}
-      <div style={{ padding: '16px 24px 32px', display: 'flex', gap: 12 }}>
+      <div style={{ padding: '16px 24px 32px', display: 'flex', gap: 12, width: '100%', maxWidth: regMaxWidth }}>
         {regStep === 0 ? (
           <button
             onClick={() => setMode(hasExistingData ? 'login' : 'welcome')}
