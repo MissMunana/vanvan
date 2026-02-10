@@ -1,5 +1,3 @@
-import { AppIcon } from '../common/AppIcon'
-
 interface TabItem<T extends string> {
   key: T
   label: string
@@ -45,7 +43,7 @@ export default function SubTabBar<T extends string>({ tabs, active, onChange, co
               whiteSpace: 'nowrap',
             }}
           >
-            <AppIcon name={tab.icon} size={16} />
+            {tab.icon}
             {tab.label}
           </button>
         )

@@ -11,13 +11,11 @@ import { useSound } from '../../hooks/useSound'
 import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { CATEGORY_INFO, HABIT_STAGE_INFO, type TaskCategory } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
-import { AppIcon } from '../../components/common/AppIcon'
-
 const EMOTIONS = [
-  { icon: 'Smile', label: '开心' },
-  { icon: 'Dumbbell', label: '自豪' },
-  { icon: 'SmilePlus', label: '轻松' },
-  { icon: 'Meh', label: '没什么感觉' },
+  { emoji: '😊', label: '开心' },
+  { emoji: '💪', label: '自豪' },
+  { emoji: '😌', label: '轻松' },
+  { emoji: '🤔', label: '没什么感觉' },
 ]
 
 export default function Tasks() {
@@ -204,7 +202,7 @@ export default function Tasks() {
               border: '1px solid var(--color-border)',
             }}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name={info.icon} size={16} /> {info.label}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{info.icon} {info.label}</span>
           </button>
         ))}
       </div>
@@ -243,7 +241,7 @@ export default function Tasks() {
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}>
-                  <AppIcon name={task.completedToday ? 'CheckCircle' : task.icon} size={28} color={task.completedToday ? '#9E9E9E' : undefined} />
+                  <span style={{ fontSize: '1.8rem' }}>{task.completedToday ? '✅' : task.icon}</span>
                 </div>
 
                 {/* Task info */}
@@ -259,7 +257,7 @@ export default function Tasks() {
                     {task.name}
                     {stageInfo && (
                       <span style={{ display: 'inline-flex', alignItems: 'center' }} title={stageInfo.description}>
-                        <AppIcon name={stageInfo.icon} size={14} />
+                        {stageInfo.icon}
                       </span>
                     )}
                   </div>
@@ -269,7 +267,7 @@ export default function Tasks() {
                       color: 'var(--color-warning)',
                       marginTop: 2,
                     }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}><AppIcon name="Flame" size={14} /> 已连续 {task.consecutiveDays} 天</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>🔥 已连续 {task.consecutiveDays} 天</span>
                       {stageInfo && <span> · {stageInfo.label}</span>}
                     </div>
                   )}
@@ -301,7 +299,7 @@ export default function Tasks() {
                         boxShadow: '0 2px 8px rgba(255,184,0,0.4)',
                       }}
                     >
-                      <AppIcon name="Check" size={20} />
+                      ✓
                     </motion.button>
                   )}
                 </div>
@@ -317,7 +315,7 @@ export default function Tasks() {
           padding: '40px 0',
           color: 'var(--color-text-secondary)',
         }}>
-          <div style={{ marginBottom: 12 }}><AppIcon name="ClipboardList" size={48} color="var(--color-text-secondary)" /></div>
+          <div style={{ fontSize: '3rem', marginBottom: 12 }}>📋</div>
           <div>还没有任务哦</div>
           <div style={{ fontSize: '0.85rem', marginTop: 4 }}>让家长在家长控制台添加任务吧</div>
         </div>
@@ -332,7 +330,7 @@ export default function Tasks() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
           {EMOTIONS.map((e) => (
             <button
-              key={e.icon}
+              key={e.emoji}
               onClick={() => handleEmotionSelect(e.label)}
               style={{
                 display: 'flex',
@@ -346,7 +344,7 @@ export default function Tasks() {
                 width: '100%',
               }}
             >
-              <AppIcon name={e.icon} size={28} />
+              <span style={{ fontSize: '1.8rem' }}>{e.emoji}</span>
               <span style={{ fontWeight: 600 }}>{e.label}</span>
             </button>
           ))}

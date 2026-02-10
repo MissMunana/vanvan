@@ -1,12 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AppIcon } from '../common/AppIcon'
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页', icon: 'Sparkles' },
-  { path: '/tasks', label: '任务', icon: 'Target' },
-  { path: '/shop', label: '商城', icon: 'Gift' },
-  { path: '/profile', label: '我的', icon: 'PawPrint' },
-  { path: '/parent', label: '家长', icon: 'Lock' },
+  { path: '/', label: '首页', icon: '🏠' },
+  { path: '/tasks', label: '任务', icon: '📋' },
+  { path: '/shop', label: '商城', icon: '🎁' },
+  { path: '/profile', label: '我的', icon: '👤' },
+  { path: '/parent', label: '家长', icon: '🔒' },
 ]
 
 export function SideNav() {
@@ -36,7 +35,7 @@ export function SideNav() {
         alignItems: 'center',
         gap: 8,
       }}>
-        <AppIcon name="Star" size={24} color="#FFB800" />
+        ⭐
         <span>小星星成长宝</span>
       </div>
 
@@ -63,7 +62,7 @@ export function SideNav() {
                 transition: 'background 0.2s',
               }}
             >
-              <AppIcon name={item.icon} size={22} />
+              <span>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           )

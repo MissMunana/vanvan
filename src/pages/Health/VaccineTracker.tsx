@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
-import { AppIcon } from '../../components/common/AppIcon'
+
 import { PLANNED_VACCINES, OPTIONAL_VACCINES, ALL_VACCINES, type VaccineScheduleItem } from '../../data/vaccineSchedule'
 import { getAgeInMonths } from '../../utils/growthUtils'
 import type { VaccinationRecord } from '../../types'
@@ -92,7 +92,7 @@ export default function VaccineTracker() {
             border: viewMode === 'schedule' ? 'none' : '1px solid var(--color-border)',
           }}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="ClipboardList" size={14} /> 接种日程</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📋 接种日程</span>
         </button>
         <button
           onClick={() => setViewMode('history')}
@@ -107,7 +107,7 @@ export default function VaccineTracker() {
             border: viewMode === 'history' ? 'none' : '1px solid var(--color-border)',
           }}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="FileText" size={14} /> 接种记录 ({records.length})</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📝 接种记录 ({records.length})</span>
         </button>
       </div>
 
@@ -132,7 +132,7 @@ export default function VaccineTracker() {
               padding: 12,
             }}>
               <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Syringe" size={14} /> {selectedVaccine.name}（第{selectedVaccine.doseNumber}剂）</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>💉 {selectedVaccine.name}（第{selectedVaccine.doseNumber}剂）</span>
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
                 {selectedVaccine.description}
@@ -269,7 +269,7 @@ function VaccineScheduleView({
       </div>
 
       {/* Planned vaccines schedule */}
-      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Hospital" size={14} /> 国家免疫规划疫苗</span></div>
+      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>🏥 国家免疫规划疫苗</span></div>
       {groupedPlanned.map((group) => {
         const isPast = ageMonths > group.months + 3
         const isCurrent = ageMonths >= group.months - 1 && ageMonths <= group.months + 3
@@ -291,7 +291,7 @@ function VaccineScheduleView({
                 {group.label}
                 {isCurrent && <span style={{ fontSize: '0.65rem', color: 'var(--color-vaccine)', marginLeft: 6 }}>← 当前</span>}
               </span>
-              {allDone && <span style={{ fontSize: '0.7rem', color: '#4CAF50' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="CheckCircle" size={12} color="#4CAF50" /> 已完成</span></span>}
+              {allDone && <span style={{ fontSize: '0.7rem', color: '#4CAF50' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✅ 已完成</span></span>}
             </div>
             {group.vaccines.map((v) => {
               const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
@@ -309,7 +309,7 @@ function VaccineScheduleView({
       })}
 
       {/* Optional vaccines */}
-      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginTop: 16, marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Lightbulb" size={14} /> 非免疫规划疫苗（自费）</span></div>
+      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginTop: 16, marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>💡 非免疫规划疫苗（自费）</span></div>
       <div className="card" style={{ padding: '10px 14px' }}>
         {OPTIONAL_VACCINES.map((v) => {
           const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
@@ -341,7 +341,7 @@ function VaccineRow({
     }}>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name={done ? 'CheckCircle' : 'Square'} size={14} color={done ? '#4CAF50' : 'var(--color-text-secondary)'} /> {vaccine.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{done ? '✅' : '⬜'} {vaccine.name}</span>
           {vaccine.totalDoses > 1 && (
             <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
               （第{vaccine.doseNumber}/{vaccine.totalDoses}剂）
@@ -394,17 +394,17 @@ function VaccineHistoryView({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Syringe" size={14} /> {r.vaccineName}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>💉 {r.vaccineName}</span>
                 {r.totalDoses > 1 && `（第${r.doseNumber}/${r.totalDoses}剂）`}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}><AppIcon name="Calendar" size={12} /> {r.date}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>📅 {r.date}</span>
                 {r.site && ` · 部位：${r.site}`}
                 {r.batchNumber && ` · 批号：${r.batchNumber}`}
               </div>
               {r.note && (
                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}><AppIcon name="FileText" size={12} /> {r.note}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>📝 {r.note}</span>
                 </div>
               )}
             </div>

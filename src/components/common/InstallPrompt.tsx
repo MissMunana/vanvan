@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AppIcon } from './AppIcon'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -68,7 +67,7 @@ export default function InstallPrompt() {
             zIndex: 9999,
           }}
         >
-          <AppIcon name="Star" size={32} color="#FFB800" />
+          <span style={{ fontSize: 32 }}>⭐</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: '#333' }}>
               添加到主屏幕

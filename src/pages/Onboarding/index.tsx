@@ -7,8 +7,6 @@ import { useRewardStore } from '../../stores/rewardStore'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { getAgeGroup, getAgeFromBirthday, formatAge } from '../../hooks/useAgeGroup'
 import type { TaskCategory, RewardCategory } from '../../types'
-import { AppIcon } from '../../components/common/AppIcon'
-
 const PICKER_ITEM_H = 40
 const PICKER_VISIBLE = 5
 
@@ -74,7 +72,7 @@ export default function Onboarding() {
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [birthday, setBirthday] = useState('')
-  const [avatar, setAvatar] = useState('Cat')
+  const [avatar, setAvatar] = useState('🐱')
   const [pin, setPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [pinMismatch, setPinMismatch] = useState(false)
@@ -242,7 +240,7 @@ export default function Onboarding() {
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
           style={{ textAlign: 'center', width: '100%', maxWidth: 'min(340px, calc(100vw - 48px))' }}
         >
-          <div style={{ marginBottom: 16 }}><AppIcon name="Star" size={64} color="#FFB800" /></div>
+          <div style={{ marginBottom: 16 }}><span style={{ fontSize: '4rem' }}>⭐</span></div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 8 }}>小星星成长宝</h1>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: 40, lineHeight: 1.6 }}>
             让好习惯变得有趣!
@@ -280,7 +278,7 @@ export default function Onboarding() {
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
           style={{ textAlign: 'center', width: '100%', maxWidth: 'min(340px, calc(100vw - 48px))' }}
         >
-          <div style={{ marginBottom: 12 }}><AppIcon name="Star" size={52} color="#FFB800" /></div>
+          <div style={{ marginBottom: 12 }}><span style={{ fontSize: '3.5rem' }}>⭐</span></div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>欢迎回来!</h2>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: 20, fontSize: '0.9rem' }}>选择孩子并输入密码登录</p>
 
@@ -310,7 +308,7 @@ export default function Onboarding() {
                     transition: 'all 0.2s',
                   }}
                 >
-                  <AppIcon name={c.avatar} size={20} />
+                  {c.avatar}
                   <span style={{ fontWeight: 600 }}>{c.name}</span>
                 </button>
               )
@@ -404,7 +402,7 @@ export default function Onboarding() {
           {regStep === 0 && (
             <motion.div key="reg0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ marginBottom: 8 }}><AppIcon name="Sparkles" size={40} color="#FFB800" /></div>
+                <div style={{ marginBottom: 8 }}><span style={{ fontSize: '2.5rem' }}>✨</span></div>
                 <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>注册新账号</h2>
                 <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>填写孩子信息并设置密码</p>
               </div>
@@ -423,7 +421,7 @@ export default function Onboarding() {
                 <div>
                   <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>性别</label>
                   <div style={{ display: 'flex', gap: 12 }}>
-                    {([['male', '男孩'], ['female', '女孩']] as const).map(([v, l]) => (
+                    {([['male', '👦 男孩'], ['female', '👧 女孩']] as const).map(([v, l]) => (
                       <button
                         key={v}
                         onClick={() => setGender(v)}
@@ -465,7 +463,7 @@ export default function Onboarding() {
                     }}
                   >
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <AppIcon name="Cake" size={18} />
+                      🎂
                       {birthday
                         ? `${Number(birthday.split('-')[0])}年${Number(birthday.split('-')[1])}月${Number(birthday.split('-')[2])}日`
                         : '点击选择生日'}
@@ -491,7 +489,7 @@ export default function Onboarding() {
                           justifyContent: 'center',
                         }}
                       >
-                        <AppIcon name={a} size={24} />
+                        <span style={{ fontSize: '1.5rem' }}>{a}</span>
                       </button>
                     ))}
                   </div>
@@ -535,7 +533,7 @@ export default function Onboarding() {
           {regStep === 1 && (
             <motion.div key="reg1" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ marginBottom: 8 }}><AppIcon name="ClipboardList" size={36} color="var(--color-primary)" /></div>
+                <div style={{ marginBottom: 8 }}><span style={{ fontSize: '2.2rem' }}>📋</span></div>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>选择习惯任务</h2>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>根据{name}的年龄推荐了这些习惯</p>
               </div>
@@ -561,7 +559,7 @@ export default function Onboarding() {
                       width: '100%',
                     }}
                   >
-                    <AppIcon name={task.icon} size={28} />
+                    <span style={{ fontSize: '1.8rem' }}>{task.icon}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600 }}>{task.name}</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{task.description}</div>
@@ -582,7 +580,7 @@ export default function Onboarding() {
           {regStep === 2 && (
             <motion.div key="reg2" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ marginBottom: 8 }}><AppIcon name="Gift" size={36} color="var(--color-primary)" /></div>
+                <div style={{ marginBottom: 8 }}><span style={{ fontSize: '2.2rem' }}>🎁</span></div>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>设置奖励</h2>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>选择{name}喜欢的奖励</p>
               </div>
@@ -608,7 +606,7 @@ export default function Onboarding() {
                       width: '100%',
                     }}
                   >
-                    <AppIcon name={reward.icon} size={28} />
+                    <span style={{ fontSize: '1.8rem' }}>{reward.icon}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600 }}>{reward.name}</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{reward.description}</div>
@@ -635,7 +633,7 @@ export default function Onboarding() {
                   transition={{ type: 'spring', damping: 10, stiffness: 200, delay: 0.2 }}
                   style={{ marginBottom: 20 }}
                 >
-                  <AppIcon name="Rocket" size={64} color="var(--color-primary)" />
+                  <span style={{ fontSize: '4rem' }}>🚀</span>
                 </motion.div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>注册成功!</h2>
                 <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
@@ -653,10 +651,10 @@ export default function Onboarding() {
                 }}>
                   <div style={{ fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>给家长的小贴士</div>
                   <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
-                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="CheckCircle" size={16} color="#4CAF50" /> 庆祝孩子的每一次进步</span></p>
-                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="CheckCircle" size={16} color="#4CAF50" /> 及时兑现承诺的奖励</span></p>
-                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="CheckCircle" size={16} color="#4CAF50" /> 关注过程而非结果</span></p>
-                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="CheckCircle" size={16} color="#4CAF50" /> 建议60%以上奖励设为亲子时光</span></p>
+                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✅ 庆祝孩子的每一次进步</span></p>
+                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✅ 及时兑现承诺的奖励</span></p>
+                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✅ 关注过程而非结果</span></p>
+                    <p><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✅ 建议60%以上奖励设为亲子时光</span></p>
                   </div>
                 </div>
               </div>
@@ -699,7 +697,7 @@ export default function Onboarding() {
             className="btn btn-primary"
             style={{ flex: 2 }}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>开始使用 <AppIcon name="Sparkles" size={18} /></span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>开始使用 🌟</span>
           </button>
         )}
       </div>
@@ -741,7 +739,7 @@ export default function Onboarding() {
               }}
             >
               <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                <div><AppIcon name="Cake" size={36} color="var(--color-primary)" /></div>
+                <div><span style={{ fontSize: '2.2rem' }}>🎂</span></div>
                 <div style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: 4 }}>选择宝贝的生日</div>
               </div>
 

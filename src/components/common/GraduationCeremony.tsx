@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AppIcon } from './AppIcon'
 
 interface GraduationCeremonyProps {
   show: boolean
@@ -88,7 +87,7 @@ export default function GraduationCeremony({ show, taskName, onClose }: Graduati
                 fontSize: 80,
               }}
             >
-              <AppIcon name="Trophy" size={80} color="#FFB800" />
+              🏆
             </motion.div>
           </div>
 

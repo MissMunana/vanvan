@@ -12,8 +12,6 @@ import { useSound } from '../../hooks/useSound'
 import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { HABIT_STAGE_INFO } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
-import { AppIcon } from '../../components/common/AppIcon'
-
 export default function Home() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
@@ -190,7 +188,7 @@ export default function Home() {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <AppIcon name={child.avatar} size={24} color="var(--color-primary)" />
+            <span style={{ fontSize: '1.5rem' }}>{child.avatar}</span>
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -247,7 +245,7 @@ export default function Home() {
                 borderBottom: '1px solid var(--color-border)',
               }}
             >
-              <AppIcon name={c.avatar} size={20} />
+              {c.avatar}
               <span style={{ flex: 1, fontWeight: c.childId === currentChildId ? 700 : 400 }}>{c.name}</span>
               {c.childId === currentChildId && (
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>当前</span>
@@ -289,21 +287,21 @@ export default function Home() {
           left: 15,
           opacity: 0.6,
           animation: 'float 3s ease-in-out infinite',
-        }}><AppIcon name="Star" size={24} color="rgba(255,255,255,0.9)" /></div>
+        }}>⭐</div>
         <div style={{
           position: 'absolute',
           top: 20,
           right: 20,
           opacity: 0.5,
           animation: 'float 3s ease-in-out infinite 1s',
-        }}><AppIcon name="Sparkles" size={20} color="rgba(255,255,255,0.9)" /></div>
+        }}>✨</div>
         <div style={{
           position: 'absolute',
           bottom: 15,
           left: 30,
           opacity: 0.4,
           animation: 'float 3s ease-in-out infinite 0.5s',
-        }}><AppIcon name="Star" size={16} color="rgba(255,255,255,0.9)" /></div>
+        }}>🌟</div>
 
         <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: 4 }}>
           {draggingId ? '松手即可加分!' : '我的积分'}
@@ -513,12 +511,12 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
         gap: 12,
         padding: '12px 16px',
       }}>
-        <AppIcon name={task.icon} size={24} color="var(--color-primary)" />
+        <span style={{ fontSize: '1.5rem' }}>{task.icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             {task.name}
             {stageInfo && (
-              <span title={stageInfo.description}><AppIcon name={stageInfo.icon} size={14} /></span>
+              <span title={stageInfo.description}>{stageInfo.icon}</span>
             )}
           </div>
           {task.consecutiveDays > 0 && (
@@ -550,7 +548,7 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
               boxShadow: '0 2px 8px rgba(255,184,0,0.4)',
             }}
           >
-            <AppIcon name="Check" size={18} color="white" />
+            ✓
           </motion.button>
         </div>
       </div>

@@ -6,7 +6,6 @@ import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useBadgeStore } from '../../stores/badgeStore'
 import { Modal } from '../../components/common/Modal'
-import { AppIcon } from '../../components/common/AppIcon'
 import { formatAge } from '../../hooks/useAgeGroup'
 import LineChart from '../../components/charts/LineChart'
 import PieChart from '../../components/charts/PieChart'
@@ -205,7 +204,7 @@ export default function Profile() {
             textAlign: 'left',
           }}
         >
-          <AppIcon name="Medal" size={22} color="var(--color-primary)" />
+          <span style={{ fontSize: '1.3rem' }}>🏅</span>
           <span style={{ flex: 1, fontWeight: 600 }}>我的勋章</span>
           <span style={{ fontSize: '0.85rem', color: 'var(--color-primary)', fontWeight: 600 }}>
             {badgeCount}/{BADGE_LIST.length}
@@ -224,7 +223,7 @@ export default function Profile() {
             textAlign: 'left',
           }}
         >
-          <AppIcon name="BarChart3" size={22} color="var(--color-text-secondary)" />
+          <span style={{ fontSize: '1.3rem' }}>📊</span>
           <span style={{ flex: 1, fontWeight: 600 }}>积分历史</span>
           <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
         </button>
@@ -240,7 +239,7 @@ export default function Profile() {
             textAlign: 'left',
           }}
         >
-          <AppIcon name="Users" size={22} color="var(--color-text-secondary)" />
+          <span style={{ fontSize: '1.3rem' }}>👨‍👩‍👧</span>
           <span style={{ flex: 1, fontWeight: 600 }}>家长控制台</span>
           <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
         </button>
@@ -256,7 +255,7 @@ export default function Profile() {
             textAlign: 'left',
           }}
         >
-          <AppIcon name="Info" size={22} color="var(--color-text-secondary)" />
+          <span style={{ fontSize: '1.3rem' }}>ℹ️</span>
           <span style={{ flex: 1, fontWeight: 600 }}>关于</span>
           <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
         </button>
@@ -269,7 +268,7 @@ export default function Profile() {
         title="关于"
       >
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <div style={{ marginBottom: 12 }}><AppIcon name="Star" size={48} color="var(--color-primary)" /></div>
+          <div style={{ marginBottom: 12, fontSize: '3rem' }}>⭐</div>
           <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 4 }}>小星星成长宝</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
             V1.5 体验优化版

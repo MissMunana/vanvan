@@ -1,12 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AppIcon } from '../common/AppIcon'
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页', icon: 'Home' },
-  { path: '/health', label: '健康', icon: 'HeartPulse' },
-  { path: '/shop', label: '商城', icon: 'Gift' },
-  { path: '/knowledge', label: '知识', icon: 'BookOpen' },
-  { path: '/profile', label: '我的', icon: 'User' },
+  { path: '/', label: '首页', icon: '🏠' },
+  { path: '/health', label: '健康', icon: '📊' },
+  { path: '/shop', label: '商城', icon: '🎁' },
+  { path: '/knowledge', label: '知识', icon: '📖' },
+  { path: '/profile', label: '我的', icon: '👤' },
 ]
 
 export function BottomNav() {
@@ -70,7 +69,7 @@ export function BottomNav() {
                   color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
                 }}
               >
-                <AppIcon name={item.icon} size={22} />
+                <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
               </span>
               <span style={{
                 fontSize: '0.7rem',

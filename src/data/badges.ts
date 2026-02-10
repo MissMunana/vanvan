@@ -30,7 +30,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'starter',
     name: '启动者',
-    icon: 'Sprout',
+    icon: '🌱',
     description: '第一次完成任务',
     category: 'habit',
     check: ({ tasks }) => tasks.some((t) => (t.totalCompletions || 0) > 0),
@@ -38,7 +38,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'persister',
     name: '坚持者',
-    icon: 'Flame',
+    icon: '🔥',
     description: '任意任务连续完成7天',
     category: 'habit',
     check: ({ tasks }) => tasks.some((t) => t.consecutiveDays >= 7),
@@ -46,7 +46,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'expert',
     name: '习惯达人',
-    icon: 'Star',
+    icon: '⭐',
     description: '任意任务连续完成30天',
     category: 'habit',
     check: ({ tasks }) => tasks.some((t) => t.consecutiveDays >= 30),
@@ -54,7 +54,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'master',
     name: '习惯大师',
-    icon: 'Trophy',
+    icon: '🏆',
     description: '任意任务连续完成66天',
     category: 'habit',
     check: ({ tasks }) => tasks.some((t) => t.consecutiveDays >= 66),
@@ -64,7 +64,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'rich100',
     name: '小富翁',
-    icon: 'Coins',
+    icon: '💰',
     description: '累计获得100积分',
     category: 'points',
     check: ({ logs, child }) => {
@@ -77,7 +77,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'rich500',
     name: '大富翁',
-    icon: 'Gem',
+    icon: '💎',
     description: '累计获得500积分',
     category: 'points',
     check: ({ logs, child }) => {
@@ -90,7 +90,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'rich1000',
     name: '积分王',
-    icon: 'Crown',
+    icon: '👑',
     description: '累计获得1000积分',
     category: 'points',
     check: ({ logs, child }) => {
@@ -105,7 +105,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'allrounder',
     name: '全能选手',
-    icon: 'Target',
+    icon: '🎯',
     description: '4个分类各完成过至少1次',
     category: 'special',
     check: ({ tasks }) => {
@@ -116,7 +116,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'perfect_week',
     name: '全勤之星',
-    icon: 'Sparkles',
+    icon: '🌟',
     description: '连续7天每天至少完成1个任务',
     category: 'special',
     check: ({ logs, child }) => {
@@ -136,7 +136,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
   {
     badgeId: 'improver',
     name: '进步之星',
-    icon: 'Rocket',
+    icon: '🚀',
     description: '本周完成任务数超过上周的1.5倍',
     category: 'special',
     check: ({ logs, child }) => {

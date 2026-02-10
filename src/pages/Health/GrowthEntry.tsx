@@ -5,7 +5,6 @@ import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { getAgeInMonths, calculateBMI, estimatePercentile, checkGrowthAlert } from '../../utils/growthUtils'
 import { getToday } from '../../utils/generateId'
-import { AppIcon } from '../../components/common/AppIcon'
 
 interface GrowthEntryProps {
   open: boolean
@@ -175,7 +174,7 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
 
         {alerts.length > 0 && (
           <div style={{ background: '#FFF3E0', padding: '8px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: '#E65100' }}>
-            {alerts.map((a, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={14} /> {a}</div>)}
+            {alerts.map((a, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>⚠️ {a}</div>)}
             <div style={{ marginTop: 4 }}>建议带孩子到儿保科进行评估</div>
           </div>
         )}

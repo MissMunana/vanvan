@@ -1,9 +1,7 @@
-import { AppIcon } from '../../components/common/AppIcon'
-
 export default function Knowledge() {
   return (
     <div className="page" style={{ textAlign: 'center', paddingTop: 80 }}>
-      <div style={{ marginBottom: 16 }}><AppIcon name="BookOpen" size={64} color="var(--color-primary)" /></div>
+      <div style={{ fontSize: '4rem', marginBottom: 16 }}>📖</div>
       <h2 style={{ marginBottom: 8, color: 'var(--color-text)' }}>知识库</h2>
       <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
         即将推出，敬请期待...

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
-import { AppIcon } from '../../components/common/AppIcon'
+
 import {
   MILESTONES,
   MILESTONE_CATEGORY_INFO,
@@ -17,9 +17,9 @@ import { getAgeInMonths } from '../../utils/growthUtils'
 type ViewFilter = 'current' | 'all'
 
 const STATUS_CONFIG: Record<MilestoneStatus, { label: string; icon: string; color: string; bg: string; border: string }> = {
-  not_started: { label: '未开始', icon: 'Square', color: '#9E9E9E', bg: 'rgba(158,158,158,0.08)', border: 'rgba(158,158,158,0.19)' },
-  in_progress: { label: '进行中', icon: 'RefreshCw', color: '#FF9800', bg: 'rgba(255,152,0,0.08)', border: 'rgba(255,152,0,0.19)' },
-  achieved: { label: '已达成', icon: 'CheckCircle', color: '#4CAF50', bg: 'rgba(76,175,80,0.08)', border: 'rgba(76,175,80,0.19)' },
+  not_started: { label: '未开始', icon: '⬜', color: '#9E9E9E', bg: 'rgba(158,158,158,0.08)', border: 'rgba(158,158,158,0.19)' },
+  in_progress: { label: '进行中', icon: '🔄', color: '#FF9800', bg: 'rgba(255,152,0,0.08)', border: 'rgba(255,152,0,0.19)' },
+  achieved: { label: '已达成', icon: '✅', color: '#4CAF50', bg: 'rgba(76,175,80,0.08)', border: 'rgba(76,175,80,0.19)' },
 }
 
 export default function MilestoneTracker() {
@@ -88,7 +88,7 @@ export default function MilestoneTracker() {
       {/* Summary card */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Star" size={16} color="#FFB800" /> {child.name} 的发育进度（{ageMonths}月龄）</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⭐ {child.name} 的发育进度（{ageMonths}月龄）</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-around' }}>
           <StatItem label="当前阶段" value={`${stats.total}`} sub="个里程碑" color="var(--color-text)" />
@@ -152,11 +152,11 @@ export default function MilestoneTracker() {
       {filter === 'current' && upcomingMilestones.length > 0 && (
         <div className="card" style={{ marginBottom: 16, background: '#FFF8E1', border: '1px solid #FFE082' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 8, color: '#F57F17' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Eye" size={14} color="#F57F17" /> 即将到来</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>🔮 即将到来</span>
           </div>
           {upcomingMilestones.map((m) => (
             <div key={m.id} style={{ fontSize: '0.8rem', padding: '4px 0', display: 'flex', gap: 8, alignItems: 'center' }}>
-              <AppIcon name={m.icon} size={16} />
+              <span>{m.icon}</span>
               <span>{m.name}</span>
               <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
                 （{m.startMonth}-{m.endMonth}月龄）
@@ -191,7 +191,7 @@ export default function MilestoneTracker() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <AppIcon name={group.info.icon} size={20} color={group.info.color} />
+                <span style={{ fontSize: '1.2rem' }}>{group.info.icon}</span>
                 <span style={{ fontWeight: 700, fontSize: '0.85rem', color: group.info.color }}>
                   {group.info.label}
                 </span>
@@ -266,7 +266,7 @@ function MilestoneItem({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AppIcon name={milestone.icon} size={20} />
+            <span style={{ fontSize: '1.2rem' }}>{milestone.icon}</span>
             <div>
               <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                 {milestone.name}
@@ -289,12 +289,12 @@ function MilestoneItem({
             whiteSpace: 'nowrap',
           }}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name={config.icon} size={14} color={config.color} /> {config.label}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{config.icon} {config.label}</span>
         </button>
       </div>
       {isPast && status === 'not_started' && (
         <div style={{ fontSize: '0.7rem', color: '#FF9800', marginTop: 4, paddingLeft: 32 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={12} /> 已超过典型发展窗口期，请关注</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⚠️ 已超过典型发展窗口期，请关注</span>
         </div>
       )}
     </div>

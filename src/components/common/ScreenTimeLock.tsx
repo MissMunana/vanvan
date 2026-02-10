@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AppIcon } from './AppIcon'
 
 interface ScreenTimeLockProps {
   show: boolean
@@ -51,7 +50,7 @@ export default function ScreenTimeLock({ show, type, parentPin, onUnlock }: Scre
             transition={{ type: 'spring', damping: 15 }}
             style={{ fontSize: 64, marginBottom: 20 }}
           >
-            <AppIcon name={type === 'night' ? 'Moon' : 'Eye'} size={64} color="white" />
+            {type === 'night' ? '🌙' : '👀'}
           </motion.div>
 
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>
