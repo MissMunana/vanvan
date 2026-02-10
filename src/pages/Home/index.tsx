@@ -56,10 +56,14 @@ export default function Home() {
   const pendingExchanges = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId), [exchanges, childId])
 
   const todayTasks = useMemo(() => {
-    return tasks.filter((t) => !t.completedToday).slice(0, 4)
+    return tasks.filter((t) => !t.completedToday)
   }, [tasks])
 
-  const completedCount = tasks.filter((t) => t.completedToday).length
+  const completedTasks = useMemo(() => {
+    return tasks.filter((t) => t.completedToday)
+  }, [tasks])
+
+  const completedCount = completedTasks.length
 
   const handleComplete = useCallback((taskId: string, taskName: string, _basePoints: number) => {
     if (!child) return
@@ -245,7 +249,7 @@ export default function Home() {
       </motion.div>
 
       {/* Today's progress */}
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card" onClick={() => navigate('/tasks')} style={{ marginBottom: 16, cursor: 'pointer' }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -287,46 +291,91 @@ export default function Home() {
         )}
       </div>
 
-      {/* Pending tasks with drag support */}
-      {todayTasks.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 10,
-          }}>
-            <span style={{ fontWeight: 700 }}>待完成任务</span>
-            <button
-              onClick={() => navigate('/tasks')}
-              style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}
-            >
-              查看全部 →
-            </button>
-          </div>
-          {todayTasks.map((task) => (
-            <DraggableTaskCard
-              key={task.taskId}
-              task={task}
-              onComplete={() => handleComplete(task.taskId, task.name, task.points)}
-              onDragStart={() => setDraggingId(task.taskId)}
-              onDrag={(info) => setDropHighlight(isInDropZone(info))}
-              onDragEnd={(info) => handleDragEnd(task.taskId, task.name, task.points, info)}
-              isDragging={draggingId === task.taskId}
-            />
-          ))}
-          {draggingId && (
-            <div style={{
-              textAlign: 'center',
-              fontSize: '0.75rem',
-              color: 'var(--color-text-secondary)',
-              marginTop: 4,
-            }}>
-              拖到积分池即可加分
-            </div>
-          )}
+      {/* Task section - always visible */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 10,
+        }}>
+          <span style={{ fontWeight: 700 }}>今日任务</span>
+          <button
+            onClick={() => navigate('/tasks')}
+            style={{ fontSize: '0.85rem', color: 'var(--color-primary)' }}
+          >
+            查看全部 →
+          </button>
         </div>
-      )}
+
+        {tasks.length === 0 ? (
+          <div
+            className="card"
+            onClick={() => navigate('/tasks')}
+            style={{ textAlign: 'center', padding: 24, cursor: 'pointer' }}
+          >
+            <div style={{ fontSize: '2rem', marginBottom: 8 }}>📋</div>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+              暂无任务，请家长在控制台添加
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Uncompleted tasks (draggable) */}
+            {todayTasks.map((task) => (
+              <DraggableTaskCard
+                key={task.taskId}
+                task={task}
+                onComplete={() => handleComplete(task.taskId, task.name, task.points)}
+                onDragStart={() => setDraggingId(task.taskId)}
+                onDrag={(info) => setDropHighlight(isInDropZone(info))}
+                onDragEnd={(info) => handleDragEnd(task.taskId, task.name, task.points, info)}
+                isDragging={draggingId === task.taskId}
+                onNavigate={() => navigate('/tasks')}
+              />
+            ))}
+            {draggingId && (
+              <div style={{
+                textAlign: 'center',
+                fontSize: '0.75rem',
+                color: 'var(--color-text-secondary)',
+                marginTop: 4,
+              }}>
+                拖到积分池即可加分
+              </div>
+            )}
+
+            {/* Completed tasks */}
+            {completedTasks.map((task) => (
+              <div
+                key={task.taskId}
+                className="card"
+                onClick={() => navigate('/tasks')}
+                style={{ opacity: 0.55, cursor: 'pointer' }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '12px 16px',
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>{task.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontWeight: 600,
+                      textDecoration: 'line-through',
+                      color: 'var(--color-text-secondary)',
+                    }}>
+                      {task.name}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '1.1rem', color: 'var(--color-success)' }}>✅</span>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
 
       {/* Weekly stats */}
       <div className="card">
@@ -376,9 +425,10 @@ interface DraggableTaskCardProps {
   onDrag: (info: PanInfo) => void
   onDragEnd: (info: PanInfo) => void
   isDragging: boolean
+  onNavigate: () => void
 }
 
-function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, isDragging }: DraggableTaskCardProps) {
+function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, isDragging, onNavigate }: DraggableTaskCardProps) {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const scale = useTransform([x, y], ([latestX, latestY]: number[]) => {
@@ -425,6 +475,7 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
       }}
       className="card"
       whileTap={canDrag ? undefined : { scale: 0.97 }}
+      onClick={() => { if (!canDrag) onNavigate() }}
     >
       <div style={{
         display: 'flex',
