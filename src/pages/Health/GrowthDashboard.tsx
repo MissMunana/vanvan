@@ -79,7 +79,7 @@ export default function GrowthDashboard() {
       {/* Latest data card */}
       {latest ? (
         <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
             最近测量：{latest.date}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-around' }}>
@@ -95,27 +95,22 @@ export default function GrowthDashboard() {
           </div>
         </div>
       ) : (
-        <div className="card" style={{ textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-          还没有生长记录，点击下方按钮添加
+        <div className="card">
+          <div className="empty-state" style={{ padding: '20px 0' }}>
+            <div className="empty-state-icon">📏</div>
+            <div className="empty-state-text">还没有生长记录，点击下方按钮添加</div>
+          </div>
         </div>
       )}
 
       {/* Metric tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+      <div className="toggle-group" style={{ marginBottom: 12 }}>
         {visibleTabs.map((tab) => (
           <button
             key={tab.key}
+            className={`toggle-btn${metric === tab.key ? ' active' : ''}`}
             onClick={() => setMetric(tab.key)}
-            style={{
-              flex: 1,
-              padding: '6px 0',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '0.8rem',
-              fontWeight: metric === tab.key ? 700 : 400,
-              background: metric === tab.key ? 'var(--color-health)' : 'transparent',
-              color: metric === tab.key ? 'white' : 'var(--color-text-secondary)',
-              border: metric === tab.key ? 'none' : '1px solid var(--color-border)',
-            }}
+            style={metric === tab.key ? { background: 'var(--color-health)' } : undefined}
           >
             {tab.label}
           </button>
@@ -134,13 +129,11 @@ export default function GrowthDashboard() {
       {/* Growth velocity */}
       {velocity.length > 0 && (metric === 'height' || metric === 'weight') && (
         <div className="card" style={{ marginTop: 12 }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>
-            生长速度
-          </div>
+          <div className="section-header">生长速度</div>
           {velocity.map((v, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '4px 0', borderBottom: i < velocity.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', padding: '4px 0', borderBottom: i < velocity.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
               <span style={{ color: 'var(--color-text-secondary)' }}>{v.period}</span>
-              <span style={{ fontWeight: 600 }}>
+              <span style={{ fontWeight: 'var(--font-semibold)' as any }}>
                 {v.velocity > 0 ? '+' : ''}{v.velocity}{metric === 'height' ? 'cm' : 'kg'}/月
               </span>
             </div>
@@ -151,43 +144,37 @@ export default function GrowthDashboard() {
       {/* History */}
       {records.length > 0 && (
         <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>历史记录</div>
-          {[...records].reverse().map((r) => (
-            <div key={r.recordId} className="card" style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{r.date}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                  {r.height !== null && `身高${r.height}cm `}
-                  {r.weight !== null && `体重${r.weight}kg `}
-                  {r.bmi !== null && `BMI${r.bmi}`}
+          <div className="section-header">历史记录</div>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            {[...records].reverse().map((r) => (
+              <div key={r.recordId} className="record-item">
+                <div>
+                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' as any }}>{r.date}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                    {r.height !== null && `身高${r.height}cm `}
+                    {r.weight !== null && `体重${r.weight}kg `}
+                    {r.bmi !== null && `BMI${r.bmi}`}
+                  </div>
                 </div>
+                <button
+                  className="btn-delete"
+                  onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteGrowthRecord(r.recordId) }}
+                >
+                  删除
+                </button>
               </div>
-              <button
-                onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteGrowthRecord(r.recordId) }}
-                style={{ fontSize: '0.75rem', color: 'var(--color-danger)', padding: '4px 8px' }}
-              >
-                删除
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {/* Add button */}
       <button
-        className="btn btn-block"
+        className="btn btn-health btn-block"
         onClick={() => setShowEntry(true)}
-        style={{
-          marginTop: 16,
-          background: 'var(--color-health)',
-          color: 'white',
-          fontWeight: 700,
-          padding: '14px 0',
-          borderRadius: 'var(--radius-lg)',
-          fontSize: '1rem',
-        }}
+        style={{ marginTop: 16, padding: '14px 0', borderRadius: 'var(--radius-lg)', fontSize: 'var(--text-lg)' }}
       >
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>📏 添加测量记录</span>
+        📏 添加测量记录
       </button>
 
       <GrowthEntry open={showEntry} onClose={() => setShowEntry(false)} />
@@ -197,9 +184,9 @@ export default function GrowthDashboard() {
 
 function StatItem({ label, value, percentile }: { label: string; value: string; percentile: number | null }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{label}</div>
-      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-health-dark)' }}>{value}</div>
+    <div className="stat-item">
+      <div className="stat-item-label">{label}</div>
+      <div className="stat-item-value" style={{ color: 'var(--color-health-dark)' }}>{value}</div>
       {percentile !== null && (
         <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)' }}>P{percentile}</div>
       )}

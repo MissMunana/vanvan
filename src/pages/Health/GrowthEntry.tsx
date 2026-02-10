@@ -111,13 +111,13 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
     <Modal open={open} onClose={onClose} title="添加生长记录">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <label style={labelStyle}>测量日期</label>
+          <label className="form-label">测量日期</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} max={getToday()} />
-          <div style={hintStyle}>月龄：{ageInMonths}个月</div>
+          <div className="form-hint">月龄：{ageInMonths}个月</div>
         </div>
 
         <div>
-          <label style={labelStyle}>身高 (cm)</label>
+          <label className="form-label">身高 (cm)</label>
           <input
             type="number"
             inputMode="decimal"
@@ -129,12 +129,12 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
             max="200"
           />
           {percentiles.height !== null && (
-            <div style={hintStyle}>百分位：P{percentiles.height}</div>
+            <div className="form-hint">百分位：P{percentiles.height}</div>
           )}
         </div>
 
         <div>
-          <label style={labelStyle}>体重 (kg)</label>
+          <label className="form-label">体重 (kg)</label>
           <input
             type="number"
             inputMode="decimal"
@@ -146,13 +146,13 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
             max="100"
           />
           {percentiles.weight !== null && (
-            <div style={hintStyle}>百分位：P{percentiles.weight}</div>
+            <div className="form-hint">百分位：P{percentiles.weight}</div>
           )}
         </div>
 
         {showHeadCirc && (
           <div>
-            <label style={labelStyle}>头围 (cm)</label>
+            <label className="form-label">头围 (cm)</label>
             <input
               type="number"
               inputMode="decimal"
@@ -167,20 +167,20 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
         )}
 
         {bmi !== null && (
-          <div style={{ ...hintStyle, background: 'var(--color-health-light)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
+          <div className="form-hint" style={{ background: 'var(--color-health-light)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
             BMI：{bmi}{percentiles.bmi !== null && ` (P${percentiles.bmi})`}
           </div>
         )}
 
         {alerts.length > 0 && (
-          <div style={{ background: '#FFF3E0', padding: '8px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: '#E65100' }}>
+          <div className="alert alert-warning">
             {alerts.map((a, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>⚠️ {a}</div>)}
             <div style={{ marginTop: 4 }}>建议带孩子到儿保科进行评估</div>
           </div>
         )}
 
         <div>
-          <label style={labelStyle}>备注（可选）</label>
+          <label className="form-label">备注（可选）</label>
           <input
             type="text"
             placeholder="例如：体检数据"
@@ -190,10 +190,10 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
         </div>
 
         <button
-          className="btn btn-primary btn-block"
+          className="btn btn-health btn-block"
           onClick={handleSave}
           disabled={!canSave}
-          style={{ marginTop: 4, background: 'var(--color-health)' }}
+          style={{ marginTop: 4 }}
         >
           保存记录
         </button>
@@ -202,15 +202,3 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
   )
 }
 
-const labelStyle: React.CSSProperties = {
-  fontSize: '0.85rem',
-  fontWeight: 600,
-  marginBottom: 4,
-  display: 'block',
-}
-
-const hintStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  color: 'var(--color-text-secondary)',
-  marginTop: 4,
-}

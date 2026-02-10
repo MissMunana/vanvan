@@ -13,8 +13,7 @@ interface SubTabBarProps<T extends string> {
 
 export default function SubTabBar<T extends string>({ tabs, active, onChange, color = 'var(--color-health)' }: SubTabBarProps<T>) {
   return (
-    <div style={{
-      display: 'flex',
+    <div className="toggle-group" style={{
       gap: 4,
       marginBottom: 16,
       overflowX: 'auto',
@@ -25,6 +24,7 @@ export default function SubTabBar<T extends string>({ tabs, active, onChange, co
         return (
           <button
             key={tab.key}
+            className={`toggle-btn${isActive ? ' active' : ''}`}
             onClick={() => onChange(tab.key)}
             style={{
               flex: '1 0 auto',
@@ -34,13 +34,8 @@ export default function SubTabBar<T extends string>({ tabs, active, onChange, co
               gap: 4,
               padding: '8px 12px',
               borderRadius: 'var(--radius-md)',
-              fontSize: '0.85rem',
-              fontWeight: isActive ? 700 : 400,
-              background: isActive ? color : 'var(--color-card)',
-              color: isActive ? 'white' : 'var(--color-text-secondary)',
-              border: isActive ? 'none' : '1px solid var(--color-border)',
-              transition: 'all 0.2s',
               whiteSpace: 'nowrap',
+              ...(isActive ? { background: color } : {}),
             }}
           >
             {tab.icon}
