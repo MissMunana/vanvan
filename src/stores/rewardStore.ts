@@ -73,13 +73,19 @@ export const useRewardStore = create<RewardStore>()(
     }),
     {
       name: 'star-rewards',
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, _version: number) => {
         const state = persistedState as { rewards: Reward[] }
-        const iconMap = new Map(REWARD_TEMPLATES.map((t) => [t.name, t.icon]))
+        const nameToIcon = new Map(REWARD_TEMPLATES.map((t) => [t.name, t.icon]))
+        const lucideToEmoji: Record<string, string> = {
+          Castle: '🏰', Dice5: '🎲', TreePine: '🎡', CakeSlice: '🧁',
+          Clapperboard: '🍿', Moon: '💫', IceCreamBowl: '🍦', IceCreamCone: '🍦', Tv: '🎠',
+          Pencil: '🖍️', Palette: '🎨', Puzzle: '🧩', Crown: '👑', Gift: '🎁', Heart: '💖',
+        }
         state.rewards = state.rewards.map((reward) => {
-          const newIcon = iconMap.get(reward.name)
-          return newIcon ? { ...reward, icon: newIcon } : reward
+          const byName = nameToIcon.get(reward.name)
+          const byLucide = lucideToEmoji[reward.icon]
+          return { ...reward, icon: byName || byLucide || reward.icon }
         })
         return state
       },

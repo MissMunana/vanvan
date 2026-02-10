@@ -177,15 +177,24 @@ export const useTaskStore = create<TaskStore>()(
     }),
     {
       name: 'star-tasks',
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, _version: number) => {
         const state = persistedState as { tasks: Task[] }
-        const iconMap = new Map(TASK_TEMPLATES.map((t) => [t.name, t.icon]))
+        const nameToIcon = new Map(TASK_TEMPLATES.map((t) => [t.name, t.icon]))
+        // Lucide icon names → emoji fallback for data persisted before emoji migration
+        const lucideToEmoji: Record<string, string> = {
+          Smile: '😁', Shirt: '🎀', ToyBrick: '🧸', Droplets: '🫧',
+          UtensilsCrossed: '🍙', Bed: '🌤️', BookOpen: '📒', BookOpenCheck: '🦉',
+          Backpack: '🎒', Ear: '🧚', Lightbulb: '💡', Heart: '💖',
+          HandHeart: '🤗', Gift: '💝', Timer: '🐢', Leaf: '🌱',
+          Sparkles: '✨', Soup: '🥣', WashingMachine: '🧺',
+        }
         state.tasks = state.tasks.map((task) => {
-          const newIcon = iconMap.get(task.name)
+          const byName = nameToIcon.get(task.name)
+          const byLucide = lucideToEmoji[task.icon]
           return {
             ...task,
-            icon: newIcon || task.icon,
+            icon: byName || byLucide || task.icon,
             stage: (task as any).stage || 'start',
             totalCompletions: (task as any).totalCompletions || 0,
           }

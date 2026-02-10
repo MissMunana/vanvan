@@ -14,6 +14,7 @@ export interface Child {
   ageGroup: '3-5' | '6-8' | '9-12'
   avatar: string
   totalPoints: number
+  themeColor?: string
   settings: {
     soundEnabled: boolean
     vibrationEnabled: boolean
@@ -21,6 +22,8 @@ export interface Child {
   }
   createdAt: string
 }
+
+export const CHILD_THEME_COLORS = ['#FFB800', '#4ECDC4', '#FF6B6B', '#A8A8E6', '#95E1D3']
 
 export interface AppState {
   currentChildId: string | null
@@ -234,6 +237,8 @@ export interface MilestoneRecord {
   status: MilestoneStatus
   achievedDate: string | null
   note: string
+  photoTaken?: boolean
+  photoNote?: string
   createdAt: string
 }
 

@@ -31,7 +31,7 @@ interface HealthStore {
   deleteVaccinationRecord: (recordId: string) => void
   getChildVaccinationRecords: (childId: string) => VaccinationRecord[]
 
-  updateMilestoneStatus: (childId: string, milestoneId: string, status: MilestoneStatus, note?: string) => void
+  updateMilestoneStatus: (childId: string, milestoneId: string, status: MilestoneStatus, note?: string, extra?: { photoTaken?: boolean; photoNote?: string }) => void
   getChildMilestoneRecords: (childId: string) => MilestoneRecord[]
   getMilestoneStatus: (childId: string, milestoneId: string) => MilestoneRecord | undefined
 
@@ -181,7 +181,7 @@ export const useHealthStore = create<HealthStore>()(
           .sort((a, b) => a.date.localeCompare(b.date))
       },
 
-      updateMilestoneStatus: (childId, milestoneId, status, note) => {
+      updateMilestoneStatus: (childId, milestoneId, status, note, extra) => {
         set((state) => {
           const existing = state.milestoneRecords.find(
             (r) => r.childId === childId && r.milestoneId === milestoneId
@@ -195,6 +195,8 @@ export const useHealthStore = create<HealthStore>()(
                       status,
                       achievedDate: status === 'achieved' ? new Date().toISOString().split('T')[0] : r.achievedDate,
                       note: note ?? r.note,
+                      ...(extra?.photoTaken !== undefined ? { photoTaken: extra.photoTaken } : {}),
+                      ...(extra?.photoNote !== undefined ? { photoNote: extra.photoNote } : {}),
                     }
                   : r
               ),
@@ -207,6 +209,8 @@ export const useHealthStore = create<HealthStore>()(
             status,
             achievedDate: status === 'achieved' ? new Date().toISOString().split('T')[0] : null,
             note: note ?? '',
+            photoTaken: extra?.photoTaken,
+            photoNote: extra?.photoNote,
             createdAt: new Date().toISOString(),
           }
           return { milestoneRecords: [...state.milestoneRecords, record].slice(-MAX_RECORDS) }

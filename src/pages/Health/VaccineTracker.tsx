@@ -6,9 +6,34 @@ import { Modal } from '../../components/common/Modal'
 
 import { PLANNED_VACCINES, OPTIONAL_VACCINES, ALL_VACCINES, type VaccineScheduleItem } from '../../data/vaccineSchedule'
 import { getAgeInMonths } from '../../utils/growthUtils'
-import type { VaccinationRecord } from '../../types'
+import type { VaccinationRecord, VaccineReaction } from '../../types'
 
 type ViewMode = 'schedule' | 'history'
+
+const REACTION_TYPES = [
+  { value: 'fever', label: '发热' },
+  { value: 'redness', label: '接种部位红肿' },
+  { value: 'pain', label: '接种部位疼痛' },
+  { value: 'fussiness', label: '哭闹/烦躁' },
+  { value: 'rash', label: '皮疹' },
+  { value: 'lethargy', label: '精神不振' },
+  { value: 'other', label: '其他' },
+]
+
+const SEVERITY_OPTIONS: { value: VaccineReaction['severity']; label: string }[] = [
+  { value: 'mild', label: '轻微' },
+  { value: 'moderate', label: '中等' },
+  { value: 'severe', label: '严重' },
+]
+
+function getVaccineStatus(ageMonths: number, recommendedAgeMonths: number, done: boolean): { label: string; color: string; bg: string } | null {
+  if (done) return null
+  const diff = ageMonths - recommendedAgeMonths
+  if (diff < -1) return null
+  if (diff <= 1) return { label: '应接种', color: '#4CAF50', bg: 'rgba(76,175,80,0.1)' }
+  if (diff <= 3) return { label: '即将超期', color: '#FF9800', bg: 'rgba(255,152,0,0.1)' }
+  return { label: '已超期', color: '#FF5252', bg: 'rgba(255,82,82,0.1)' }
+}
 
 export default function VaccineTracker() {
   const child = useAppStore((s) => s.getCurrentChild())
@@ -24,6 +49,7 @@ export default function VaccineTracker() {
   const [batchNumber, setBatchNumber] = useState('')
   const [site, setSite] = useState('')
   const [note, setNote] = useState('')
+  const [reactions, setReactions] = useState<VaccineReaction[]>([])
 
   const records = useMemo(() => {
     if (!child) return []
@@ -47,6 +73,7 @@ export default function VaccineTracker() {
     setBatchNumber('')
     setSite('')
     setNote('')
+    setReactions([])
     setShowRecord(true)
   }
 
@@ -63,7 +90,7 @@ export default function VaccineTracker() {
       batchNumber,
       site,
       vaccinator: '',
-      reactions: [],
+      reactions,
       note,
     })
 
@@ -110,6 +137,37 @@ export default function VaccineTracker() {
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📝 接种记录 ({records.length})</span>
         </button>
       </div>
+
+      {/* Vaccine reminder banner (1-C) */}
+      {viewMode === 'schedule' && (() => {
+        const allVaccines = [...PLANNED_VACCINES, ...OPTIONAL_VACCINES]
+        const dueCount = allVaccines.filter((v) => {
+          const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
+          const status = getVaccineStatus(ageMonths, v.recommendedAgeMonths, done)
+          return status?.label === '应接种'
+        }).length
+        const overdueCount = allVaccines.filter((v) => {
+          const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
+          const status = getVaccineStatus(ageMonths, v.recommendedAgeMonths, done)
+          return status?.label === '已超期' || status?.label === '即将超期'
+        }).length
+
+        if (dueCount === 0 && overdueCount === 0) return null
+        return (
+          <div style={{
+            marginBottom: 12, padding: '10px 14px', borderRadius: 'var(--radius-md)',
+            background: overdueCount > 0 ? '#FFF3E0' : '#E8F5E9',
+            border: `1px solid ${overdueCount > 0 ? '#FFE0B2' : '#C8E6C9'}`,
+          }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: overdueCount > 0 ? '#E65100' : '#2E7D32' }}>
+              {overdueCount > 0 ? '⚠️' : '💡'}{' '}
+              {dueCount > 0 && `${dueCount}项疫苗待接种`}
+              {dueCount > 0 && overdueCount > 0 && '，'}
+              {overdueCount > 0 && `${overdueCount}项已超期或即将超期`}
+            </div>
+          </div>
+        )
+      })()}
 
       {viewMode === 'schedule' ? (
         <VaccineScheduleView
@@ -184,6 +242,35 @@ export default function VaccineTracker() {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
+            </div>
+
+            {/* Reaction tracking */}
+            <div>
+              <label style={labelStyle}>接种后不良反应（选填）</label>
+              {reactions.map((r, idx) => (
+                <div key={idx} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 10px', marginBottom: 6,
+                  background: 'rgba(255,152,0,0.06)', borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.78rem',
+                }}>
+                  <span style={{ flex: 1 }}>
+                    {REACTION_TYPES.find((t) => t.value === r.type)?.label ?? r.type}
+                    {' · '}
+                    <span style={{ color: r.severity === 'severe' ? '#FF5252' : r.severity === 'moderate' ? '#FF9800' : '#4CAF50' }}>
+                      {SEVERITY_OPTIONS.find((s) => s.value === r.severity)?.label}
+                    </span>
+                    {r.duration && ` · ${r.duration}`}
+                  </span>
+                  <button
+                    onClick={() => setReactions((prev) => prev.filter((_, i) => i !== idx))}
+                    style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '2px 6px' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <ReactionAdder onAdd={(r) => setReactions((prev) => [...prev, r])} />
             </div>
 
             <button
@@ -300,6 +387,7 @@ function VaccineScheduleView({
                   key={v.id}
                   vaccine={v}
                   done={done}
+                  ageMonths={ageMonths}
                   onRecord={() => onRecord(v)}
                 />
               )
@@ -314,7 +402,7 @@ function VaccineScheduleView({
         {OPTIONAL_VACCINES.map((v) => {
           const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
           return (
-            <VaccineRow key={v.id} vaccine={v} done={done} onRecord={() => onRecord(v)} />
+            <VaccineRow key={v.id} vaccine={v} done={done} ageMonths={ageMonths} onRecord={() => onRecord(v)} />
           )
         })}
       </div>
@@ -325,12 +413,16 @@ function VaccineScheduleView({
 function VaccineRow({
   vaccine,
   done,
+  ageMonths,
   onRecord,
 }: {
   vaccine: VaccineScheduleItem
   done: boolean
+  ageMonths: number
   onRecord: () => void
 }) {
+  const status = getVaccineStatus(ageMonths, vaccine.recommendedAgeMonths, done)
+
   return (
     <div style={{
       display: 'flex',
@@ -340,11 +432,20 @@ function VaccineRow({
       borderBottom: '1px solid var(--color-border)',
     }}>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{done ? '✅' : '⬜'} {vaccine.name}</span>
           {vaccine.totalDoses > 1 && (
             <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
               （第{vaccine.doseNumber}/{vaccine.totalDoses}剂）
+            </span>
+          )}
+          {status && (
+            <span style={{
+              fontSize: '0.6rem', fontWeight: 700,
+              padding: '1px 6px', borderRadius: 8,
+              color: status.color, background: status.bg,
+            }}>
+              {status.label}
             </span>
           )}
         </div>
@@ -407,6 +508,20 @@ function VaccineHistoryView({
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>📝 {r.note}</span>
                 </div>
               )}
+              {r.reactions && r.reactions.length > 0 && (
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                  {r.reactions.map((rx, i) => (
+                    <span key={i} style={{
+                      fontSize: '0.68rem', padding: '2px 8px', borderRadius: 8,
+                      background: rx.severity === 'severe' ? 'rgba(255,82,82,0.1)' : rx.severity === 'moderate' ? 'rgba(255,152,0,0.1)' : 'rgba(76,175,80,0.1)',
+                      color: rx.severity === 'severe' ? '#FF5252' : rx.severity === 'moderate' ? '#FF9800' : '#4CAF50',
+                    }}>
+                      {REACTION_TYPES.find((t) => t.value === rx.type)?.label ?? rx.type}
+                      {rx.duration && ` · ${rx.duration}`}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               onClick={() => { if (window.confirm('确定要删除这条接种记录吗？')) onDelete(r.recordId) }}
@@ -427,6 +542,111 @@ function ProgressStat({ label, value, total, color }: { label: string; value: nu
       <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{label}</div>
       <div style={{ fontSize: '1.2rem', fontWeight: 700, color }}>
         {value}<span style={{ fontSize: '0.75rem', fontWeight: 400 }}>/{total}</span>
+      </div>
+    </div>
+  )
+}
+
+function ReactionAdder({ onAdd }: { onAdd: (r: VaccineReaction) => void }) {
+  const [open, setOpen] = useState(false)
+  const [type, setType] = useState('fever')
+  const [severity, setSeverity] = useState<VaccineReaction['severity']>('mild')
+  const [duration, setDuration] = useState('')
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          fontSize: '0.78rem', color: 'var(--color-vaccine)',
+          padding: '6px 0', background: 'none', border: 'none',
+        }}
+      >
+        + 添加不良反应
+      </button>
+    )
+  }
+
+  return (
+    <div style={{
+      padding: 10, borderRadius: 'var(--radius-sm)',
+      border: '1px solid var(--color-border)', marginTop: 4,
+    }}>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>反应类型</div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {REACTION_TYPES.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setType(t.value)}
+              style={{
+                padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)',
+                background: type === t.value ? 'var(--color-vaccine)' : 'var(--color-bg-secondary)',
+                color: type === t.value ? 'white' : 'var(--color-text)',
+                border: 'none',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>严重程度</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {SEVERITY_OPTIONS.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => setSeverity(s.value)}
+              style={{
+                padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-sm)',
+                background: severity === s.value ? (s.value === 'severe' ? '#FF5252' : s.value === 'moderate' ? '#FF9800' : '#4CAF50') : 'var(--color-bg-secondary)',
+                color: severity === s.value ? 'white' : 'var(--color-text)',
+                border: 'none',
+              }}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>持续时间（选填）</div>
+        <input
+          type="text"
+          placeholder="例如：24小时"
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+          style={{ fontSize: '0.8rem' }}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => {
+            onAdd({ type, severity, duration })
+            setOpen(false)
+            setType('fever')
+            setSeverity('mild')
+            setDuration('')
+          }}
+          style={{
+            flex: 1, padding: '6px 0', fontSize: '0.78rem', fontWeight: 600,
+            background: 'var(--color-vaccine)', color: 'white',
+            borderRadius: 'var(--radius-sm)', border: 'none',
+          }}
+        >
+          添加
+        </button>
+        <button
+          onClick={() => setOpen(false)}
+          style={{
+            padding: '6px 12px', fontSize: '0.78rem',
+            background: 'var(--color-bg-secondary)', color: 'var(--color-text-secondary)',
+            borderRadius: 'var(--radius-sm)', border: 'none',
+          }}
+        >
+          取消
+        </button>
       </div>
     </div>
   )

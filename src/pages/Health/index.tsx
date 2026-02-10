@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { HealthTab } from '../../types'
 import SubTabBar from '../../components/Layout/SubTabBar'
 import MedicalDisclaimer from '../../components/common/MedicalDisclaimer'
@@ -17,11 +18,21 @@ const HEALTH_TABS: { key: HealthTab; label: string; icon: string }[] = [
 ]
 
 export default function Health() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<HealthTab>('growth')
 
   return (
     <div className="page">
-      <MedicalDisclaimer compact />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <MedicalDisclaimer compact />
+        <button
+          onClick={() => navigate('/health-report')}
+          className="btn btn-outline"
+          style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+        >
+          🖨️ 就医报告
+        </button>
+      </div>
       <SubTabBar tabs={HEALTH_TABS} active={activeTab} onChange={setActiveTab} />
 
       {activeTab === 'growth' && <GrowthDashboard />}
