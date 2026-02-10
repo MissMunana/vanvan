@@ -1,7 +1,5 @@
 export type MilestoneCategory = 'gross_motor' | 'fine_motor' | 'language' | 'social'
 
-export type MilestoneStatus = 'not_started' | 'in_progress' | 'achieved'
-
 export interface MilestoneDefinition {
   id: string
   name: string

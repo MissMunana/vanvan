@@ -85,11 +85,15 @@ export default function GrowthCurveChart({
   const chartW = width - PAD.left - PAD.right
   const chartH = height - PAD.top - PAD.bottom
 
-  const toX = (age: number) =>
-    PAD.left + ((age - ageRange[0]) / (ageRange[1] - ageRange[0])) * chartW
+  const toX = (age: number) => {
+    const range = ageRange[1] - ageRange[0]
+    return range === 0 ? PAD.left + chartW / 2 : PAD.left + ((age - ageRange[0]) / range) * chartW
+  }
 
-  const toY = (val: number) =>
-    PAD.top + (1 - (val - valueRange[0]) / (valueRange[1] - valueRange[0])) * chartH
+  const toY = (val: number) => {
+    const range = valueRange[1] - valueRange[0]
+    return range === 0 ? PAD.top + chartH / 2 : PAD.top + (1 - (val - valueRange[0]) / range) * chartH
+  }
 
   const buildPath = (rows: WHOPercentileRow[], key: keyof WHOPercentileRow) => {
     return rows

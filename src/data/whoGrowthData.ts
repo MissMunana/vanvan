@@ -458,6 +458,7 @@ export function interpolateRow(ageMonths: number, data: WHOPercentileRow[]): WHO
   if (!upper) return lower
 
   // Interpolate
+  if (lower.ageMonths === upper.ageMonths) return lower
   const ratio = (ageMonths - lower.ageMonths) / (upper.ageMonths - lower.ageMonths)
 
   const lerp = (a: number, b: number) => Math.round((a + (b - a) * ratio) * 10) / 10

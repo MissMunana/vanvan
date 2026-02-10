@@ -6,6 +6,7 @@ import { usePointStore } from '../../stores/pointStore'
 import { useRewardStore } from '../../stores/rewardStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useBadgeStore } from '../../stores/badgeStore'
+import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
@@ -1286,6 +1287,7 @@ function Settings() {
     useRewardStore.getState().deleteByChildId(showDeleteChild)
     useExchangeStore.getState().deleteByChildId(showDeleteChild)
     useBadgeStore.getState().deleteByChildId(showDeleteChild)
+    useHealthStore.getState().deleteByChildId(showDeleteChild)
     deleteChildFromApp(showDeleteChild)
     setShowDeleteChild(null)
     setDeletePin('')

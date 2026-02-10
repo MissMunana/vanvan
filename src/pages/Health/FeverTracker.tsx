@@ -40,7 +40,7 @@ export default function FeverTracker() {
   }, [child, medicationRecords])
 
   const temp = parseFloat(temperature)
-  const feverLevel = temp > 0 ? getFeverLevel(temp) : null
+  const feverLevel = temp >= 35 && temp <= 43 ? getFeverLevel(temp) : null
   const feverInfo = feverLevel ? FEVER_LEVEL_INFO[feverLevel] : null
 
   const toggleSymptom = useCallback((sym: SymptomTag) => {

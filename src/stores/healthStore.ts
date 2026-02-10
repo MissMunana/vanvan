@@ -13,7 +13,7 @@ interface HealthStore {
   milestoneRecords: MilestoneRecord[]
 
   addGrowthRecord: (data: Omit<GrowthRecord, 'recordId' | 'createdAt'>) => void
-  updateGrowthRecord: (recordId: string, updates: Partial<GrowthRecord>) => void
+  updateGrowthRecord: (recordId: string, updates: Partial<Omit<GrowthRecord, 'recordId' | 'childId' | 'createdAt'>>) => void
   deleteGrowthRecord: (recordId: string) => void
   getChildGrowthRecords: (childId: string) => GrowthRecord[]
 
