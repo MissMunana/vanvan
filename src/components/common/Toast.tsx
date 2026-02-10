@@ -44,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         gap: 8,
         pointerEvents: 'none',
         width: '90%',
-        maxWidth: 400,
+        maxWidth: 'var(--toast-max-width)',
       }}>
         <AnimatePresence>
           {toasts.map((toast) => (

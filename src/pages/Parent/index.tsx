@@ -253,7 +253,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'var(--grid-parent-cols)', gap: 12 }}>
         <div className="card" style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--color-primary)' }}>
             {weeklyStats.tasksCompleted}

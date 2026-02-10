@@ -213,7 +213,13 @@ export default function Print() {
         @media print {
           .no-print { display: none !important; }
           body { background: white !important; }
-          #print-area { max-width: none; margin: 0; padding: 20mm; }
+          #print-area {
+            max-width: none;
+            margin: 0;
+            padding: 20mm;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
       `}</style>
     </div>

@@ -29,17 +29,16 @@ export function BottomNav() {
           animation: nav-bounce 0.4s ease-out forwards;
         }
       `}</style>
-      <nav style={{
+      <nav className="bottom-nav" style={{
         position: 'fixed',
         bottom: 0,
         left: '50%',
         transform: 'translateX(-50%)',
         width: '100%',
-        maxWidth: 480,
+        maxWidth: 'var(--content-max-width)',
         height: 'calc(var(--nav-height) + var(--safe-bottom))',
         background: 'white',
         borderTop: '1px solid var(--color-border)',
-        display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'space-around',
         paddingTop: 6,

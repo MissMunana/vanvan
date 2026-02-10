@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { BottomNav } from './components/Layout/BottomNav'
+import { SideNav } from './components/Layout/SideNav'
+import { useIsTablet } from './hooks/useMediaQuery'
 import { useAppStore } from './stores/appStore'
 import { useTaskStore } from './stores/taskStore'
 import { useScreenTime } from './hooks/useScreenTime'
@@ -46,21 +48,25 @@ export default function App() {
     return <Onboarding />
   }
 
+  const isTablet = useIsTablet()
   const hiddenNavRoutes = ['/print']
   const showNav = !hiddenNavRoutes.includes(location.pathname)
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/parent" element={<Parent />} />
-        <Route path="/badges" element={<Badges />} />
-        <Route path="/print" element={<Print />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {isTablet && showNav && <SideNav />}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/parent" element={<Parent />} />
+          <Route path="/badges" element={<Badges />} />
+          <Route path="/print" element={<Print />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
       {showNav && <BottomNav />}
       <InstallPrompt />
       <ScreenTimeLock

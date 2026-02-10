@@ -56,7 +56,7 @@ export default function InstallPrompt() {
             left: '50%',
             transform: 'translateX(-50%)',
             width: 'calc(100% - 32px)',
-            maxWidth: 420,
+            maxWidth: 'min(480px, calc(100vw - 32px))',
             background: '#fff',
             borderRadius: 16,
             padding: '16px 20px',
