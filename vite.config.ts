@@ -4,11 +4,21 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'child_process'
 
 const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+const buildTime = new Date().toLocaleString('zh-CN', {
+  timeZone: 'Asia/Shanghai',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+})
 
 // https://vite.dev/config/
 export default defineConfig({
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
+    __BUILD_TIME__: JSON.stringify(buildTime),
   },
   plugins: [
     react(),

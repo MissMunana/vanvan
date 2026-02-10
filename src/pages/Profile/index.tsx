@@ -301,7 +301,7 @@ export default function Profile() {
             V1.5 体验优化版
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
-            更新于 2026-02-10
+            更新于 {typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : '未知'}
           </div>
           <div style={{
             display: 'inline-block',
