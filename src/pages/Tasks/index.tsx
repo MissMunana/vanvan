@@ -173,36 +173,20 @@ export default function Tasks() {
         paddingBottom: 4,
       }}>
         <button
+          className={`chip-filter${activeCategory === 'all' ? ' active' : ''}`}
           onClick={() => setActiveCategory('all')}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 20,
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-            background: activeCategory === 'all' ? 'var(--color-primary)' : 'white',
-            color: activeCategory === 'all' ? 'white' : 'var(--color-text)',
-            border: '1px solid var(--color-border)',
-          }}
+          style={activeCategory === 'all' ? { background: 'var(--color-primary)' } : undefined}
         >
           全部
         </button>
         {categories.map(([key, info]) => (
           <button
             key={key}
+            className={`chip-filter${activeCategory === key ? ' active' : ''}`}
             onClick={() => setActiveCategory(key)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 20,
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              background: activeCategory === key ? 'var(--color-primary)' : 'white',
-              color: activeCategory === key ? 'white' : 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-            }}
+            style={activeCategory === key ? { background: 'var(--color-primary)' } : undefined}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{info.icon} {info.label}</span>
+            {info.icon} {info.label}
           </button>
         ))}
       </div>
@@ -310,14 +294,10 @@ export default function Tasks() {
       </div>
 
       {displayTasks.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 0',
-          color: 'var(--color-text-secondary)',
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: 12 }}>📋</div>
+        <div className="empty-state">
+          <div className="empty-state-icon">📋</div>
           <div>还没有任务哦</div>
-          <div style={{ fontSize: '0.85rem', marginTop: 4 }}>让家长在家长控制台添加任务吧</div>
+          <div className="empty-state-text" style={{ marginTop: 4 }}>让家长在家长控制台添加任务吧</div>
         </div>
       )}
 

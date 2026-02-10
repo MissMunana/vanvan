@@ -18,18 +18,6 @@ export function BottomNav() {
 
   return (
     <>
-      <style>{`
-        @keyframes nav-bounce {
-          0% { transform: scale(1); }
-          30% { transform: scale(1.3); }
-          50% { transform: scale(0.9); }
-          70% { transform: scale(1.15); }
-          100% { transform: scale(1.1); }
-        }
-        .nav-icon-active {
-          animation: nav-bounce 0.4s ease-out forwards;
-        }
-      `}</style>
       <nav className="bottom-nav" style={{
         position: 'fixed',
         bottom: 0,

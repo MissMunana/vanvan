@@ -105,36 +105,20 @@ export default function VaccineTracker() {
   return (
     <div>
       {/* View toggle */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div className="toggle-group" style={{ marginBottom: 16 }}>
         <button
+          className={`toggle-btn${viewMode === 'schedule' ? ' active' : ''}`}
           onClick={() => setViewMode('schedule')}
-          style={{
-            flex: 1,
-            padding: '8px 0',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.85rem',
-            fontWeight: viewMode === 'schedule' ? 700 : 400,
-            background: viewMode === 'schedule' ? 'var(--color-vaccine)' : 'transparent',
-            color: viewMode === 'schedule' ? 'white' : 'var(--color-text-secondary)',
-            border: viewMode === 'schedule' ? 'none' : '1px solid var(--color-border)',
-          }}
+          style={viewMode === 'schedule' ? { background: 'var(--color-vaccine)' } : undefined}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📋 接种日程</span>
+          📋 接种日程
         </button>
         <button
+          className={`toggle-btn${viewMode === 'history' ? ' active' : ''}`}
           onClick={() => setViewMode('history')}
-          style={{
-            flex: 1,
-            padding: '8px 0',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.85rem',
-            fontWeight: viewMode === 'history' ? 700 : 400,
-            background: viewMode === 'history' ? 'var(--color-vaccine)' : 'transparent',
-            color: viewMode === 'history' ? 'white' : 'var(--color-text-secondary)',
-            border: viewMode === 'history' ? 'none' : '1px solid var(--color-border)',
-          }}
+          style={viewMode === 'history' ? { background: 'var(--color-vaccine)' } : undefined}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>📝 接种记录 ({records.length})</span>
+          📝 接种记录 ({records.length})
         </button>
       </div>
 
@@ -184,8 +168,8 @@ export default function VaccineTracker() {
         {selectedVaccine && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{
-              background: 'rgba(66, 165, 245, 0.06)',
-              border: '1px solid rgba(66, 165, 245, 0.19)',
+              background: 'var(--color-health-light)',
+              border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-md)',
               padding: 12,
             }}>
@@ -198,12 +182,12 @@ export default function VaccineTracker() {
             </div>
 
             <div>
-              <label style={labelStyle}>接种日期</label>
+              <label className="form-label">接种日期</label>
               <input type="date" value={recordDate} onChange={(e) => setRecordDate(e.target.value)} min={child.birthday} max={new Date().toISOString().split('T')[0]} />
             </div>
 
             <div>
-              <label style={labelStyle}>批号（选填）</label>
+              <label className="form-label">批号（选填）</label>
               <input
                 type="text"
                 placeholder="疫苗批号"
@@ -213,7 +197,7 @@ export default function VaccineTracker() {
             </div>
 
             <div>
-              <label style={labelStyle}>接种部位（选填）</label>
+              <label className="form-label">接种部位（选填）</label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {['左上臂', '右上臂', '左大腿', '右大腿', '口服'].map((s) => (
                   <button
@@ -235,7 +219,7 @@ export default function VaccineTracker() {
             </div>
 
             <div>
-              <label style={labelStyle}>备注（选填）</label>
+              <label className="form-label">备注（选填）</label>
               <input
                 type="text"
                 placeholder="例如：无不良反应"
@@ -276,7 +260,7 @@ export default function VaccineTracker() {
             <button
               className="btn btn-block"
               onClick={handleSaveRecord}
-              style={{ background: 'var(--color-vaccine)', color: 'white', fontWeight: 700 }}
+              style={{ background: 'var(--color-vaccine)', color: 'white' }}
             >
               保存接种记录
             </button>
@@ -320,7 +304,7 @@ function VaccineScheduleView({
     <div>
       {/* Progress summary */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>接种进度</div>
+        <div className="section-header" style={{ marginBottom: 8 }}>接种进度</div>
         <div style={{ display: 'flex', justifyContent: 'space-around' }}>
           <ProgressStat
             label="已接种"
@@ -335,28 +319,19 @@ function VaccineScheduleView({
               return !!v
             }).length}
             total={PLANNED_VACCINES.length}
-            color="#4CAF50"
+            color="var(--color-success)"
           />
         </div>
-        <div style={{
-          marginTop: 10,
-          height: 6,
-          borderRadius: 3,
-          background: '#F0F0F0',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            height: '100%',
+        <div className="progress-bar" style={{ marginTop: 10 }}>
+          <div className="progress-bar-fill" style={{
             width: `${(completedVaccineIds.size / ALL_VACCINES.length) * 100}%`,
             background: 'var(--color-vaccine)',
-            borderRadius: 3,
-            transition: 'width 0.3s',
           }} />
         </div>
       </div>
 
       {/* Planned vaccines schedule */}
-      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>🏥 国家免疫规划疫苗</span></div>
+      <div className="section-header">🏥 国家免疫规划疫苗</div>
       {groupedPlanned.map((group) => {
         const isPast = ageMonths > group.months + 3
         const isCurrent = ageMonths >= group.months - 1 && ageMonths <= group.months + 3
@@ -369,7 +344,7 @@ function VaccineScheduleView({
             style={{
               padding: '10px 14px',
               marginBottom: 8,
-              borderLeft: isCurrent ? '3px solid var(--color-vaccine)' : allDone ? '3px solid #4CAF50' : '3px solid transparent',
+              borderLeft: isCurrent ? '3px solid var(--color-vaccine)' : allDone ? '3px solid var(--color-success)' : '3px solid transparent',
               opacity: isPast && allDone ? 0.6 : 1,
             }}
           >
@@ -378,7 +353,7 @@ function VaccineScheduleView({
                 {group.label}
                 {isCurrent && <span style={{ fontSize: '0.65rem', color: 'var(--color-vaccine)', marginLeft: 6 }}>← 当前</span>}
               </span>
-              {allDone && <span style={{ fontSize: '0.7rem', color: '#4CAF50' }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✅ 已完成</span></span>}
+              {allDone && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>✅ 已完成</span>}
             </div>
             {group.vaccines.map((v) => {
               const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
@@ -397,7 +372,7 @@ function VaccineScheduleView({
       })}
 
       {/* Optional vaccines */}
-      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginTop: 16, marginBottom: 8 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>💡 非免疫规划疫苗（自费）</span></div>
+      <div className="section-header" style={{ marginTop: 16 }}>💡 非免疫规划疫苗（自费）</div>
       <div className="card" style={{ padding: '10px 14px' }}>
         {OPTIONAL_VACCINES.map((v) => {
           const done = completedVaccineIds.has(`${v.name}_${v.doseNumber}`)
@@ -482,8 +457,11 @@ function VaccineHistoryView({
 }) {
   if (records.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-        暂无接种记录
+      <div className="card">
+        <div className="empty-state" style={{ padding: '20px 0' }}>
+          <div className="empty-state-icon">💉</div>
+          <div className="empty-state-text">暂无接种记录</div>
+        </div>
       </div>
     )
   }
@@ -524,8 +502,8 @@ function VaccineHistoryView({
               )}
             </div>
             <button
+              className="btn-delete"
               onClick={() => { if (window.confirm('确定要删除这条接种记录吗？')) onDelete(r.recordId) }}
-              style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '4px 8px' }}
             >
               删除
             </button>
@@ -538,10 +516,10 @@ function VaccineHistoryView({
 
 function ProgressStat({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{label}</div>
-      <div style={{ fontSize: '1.2rem', fontWeight: 700, color }}>
-        {value}<span style={{ fontSize: '0.75rem', fontWeight: 400 }}>/{total}</span>
+    <div className="stat-item">
+      <div className="stat-item-label">{label}</div>
+      <div className="stat-item-value" style={{ color }}>
+        {value}<span style={{ fontSize: '0.75rem', fontWeight: 'var(--font-normal)' as any }}>/{total}</span>
       </div>
     </div>
   )

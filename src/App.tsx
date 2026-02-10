@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { BottomNav } from './components/Layout/BottomNav'
 import { SideNav } from './components/Layout/SideNav'
 import { TopBar } from './components/Layout/TopBar'
@@ -75,19 +76,30 @@ export default function App() {
       {isTablet && showNav && <SideNav />}
       {showTopBar && <TopBar />}
       <div style={{ flex: 1, minWidth: 0, paddingTop: showTopBar ? 52 : 0 }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/health" element={<Health />} />
-          <Route path="/knowledge" element={<Knowledge />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/parent" element={<Parent />} />
-          <Route path="/badges" element={<Badges />} />
-          <Route path="/print" element={<Print />} />
-          <Route path="/health-report" element={<HealthReport />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            style={{ flex: 1, minHeight: 0 }}
+          >
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/health" element={<Health />} />
+              <Route path="/knowledge" element={<Knowledge />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/parent" element={<Parent />} />
+              <Route path="/badges" element={<Badges />} />
+              <Route path="/print" element={<Print />} />
+              <Route path="/health-report" element={<HealthReport />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
       </div>
       {showNav && <BottomNav />}
       <InstallPrompt />

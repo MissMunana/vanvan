@@ -114,7 +114,7 @@ export default function FeverTracker() {
     <div>
       {/* Temperature input */}
       <div className="card" style={{ textAlign: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>🌡️ 记录体温</span></div>
+        <div className="section-header" style={{ justifyContent: 'center', marginBottom: 12 }}>🌡️ 记录体温</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
           <input
             type="number"
@@ -155,21 +155,14 @@ export default function FeverTracker() {
 
         {/* Measure method */}
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: 6 }}>测量方式</div>
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: 6 }}>测量方式</div>
+          <div className="toggle-group" style={{ justifyContent: 'center' }}>
             {METHODS.map((m) => (
               <button
                 key={m}
+                className={`toggle-btn${method === m ? ' active' : ''}`}
                 onClick={() => setMethod(m)}
-                style={{
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.8rem',
-                  fontWeight: method === m ? 700 : 400,
-                  background: method === m ? 'var(--color-health)' : 'var(--color-card)',
-                  color: method === m ? 'white' : 'var(--color-text-secondary)',
-                  border: method === m ? 'none' : '1px solid var(--color-border)',
-                }}
+                style={method === m ? { background: 'var(--color-health)' } : undefined}
               >
                 {MEASURE_METHOD_INFO[m].label}
               </button>
@@ -179,7 +172,7 @@ export default function FeverTracker() {
 
         {/* Symptoms */}
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: 6 }}>伴随症状（可选）</div>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', marginBottom: 6 }}>伴随症状（可选）</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
             {SYMPTOMS.map((sym) => {
               const info = SYMPTOM_TAG_INFO[sym]
@@ -187,17 +180,10 @@ export default function FeverTracker() {
               return (
                 <button
                   key={sym}
+                  className={`symptom-chip${selected ? ' selected' : ''}`}
                   onClick={() => toggleSymptom(sym)}
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    fontSize: '0.75rem',
-                    background: selected ? '#FFE0B2' : 'var(--color-card)',
-                    border: selected ? '1px solid #FFB74D' : '1px solid var(--color-border)',
-                    color: selected ? '#E65100' : 'var(--color-text-secondary)',
-                  }}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{info.icon} {info.label}</span>
+                  {info.icon} {info.label}
                 </button>
               )
             })}
@@ -206,26 +192,16 @@ export default function FeverTracker() {
 
         {/* Medical attention warnings */}
         {seekMedicalAttention.length > 0 && (
-          <div style={{
-            background: '#FFEBEE',
-            border: '1px solid #FFCDD2',
-            borderRadius: 'var(--radius-sm)',
-            padding: '10px 12px',
-            marginBottom: 12,
-            fontSize: '0.8rem',
-            color: '#C62828',
-            textAlign: 'left',
-          }}>
+          <div className="alert alert-danger" style={{ textAlign: 'left', marginBottom: 12 }}>
             <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>🚨 就医提醒</strong>
             {seekMedicalAttention.map((w, i) => <div key={i} style={{ marginTop: 4 }}>• {w}</div>)}
           </div>
         )}
 
         <button
-          className="btn btn-block"
+          className="btn btn-health btn-block"
           onClick={handleRecord}
           disabled={!temperature}
-          style={{ background: 'var(--color-health)', color: 'white', fontWeight: 700 }}
         >
           记录体温
         </button>
@@ -234,20 +210,18 @@ export default function FeverTracker() {
       {/* Temperature chart */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>体温曲线</span>
-          <div style={{ display: 'flex', gap: 4 }}>
+          <span className="section-header" style={{ marginBottom: 0 }}>体温曲线</span>
+          <div className="toggle-group" style={{ gap: 4, flex: 'none' }}>
             {(['24h', '3d', '7d'] as const).map((tw) => (
               <button
                 key={tw}
+                className={`toggle-btn${timeWindow === tw ? ' active' : ''}`}
                 onClick={() => setTimeWindow(tw)}
                 style={{
                   padding: '3px 8px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.7rem',
-                  fontWeight: timeWindow === tw ? 700 : 400,
-                  background: timeWindow === tw ? 'var(--color-health)' : 'transparent',
-                  color: timeWindow === tw ? 'white' : 'var(--color-text-secondary)',
-                  border: timeWindow === tw ? 'none' : '1px solid var(--color-border)',
+                  fontSize: 'var(--text-xs)',
+                  flex: 'none',
+                  ...(timeWindow === tw ? { background: 'var(--color-health)' } : {}),
                 }}
               >
                 {tw === '24h' ? '24小时' : tw === '3d' ? '3天' : '7天'}
@@ -261,35 +235,37 @@ export default function FeverTracker() {
       {/* Recent records */}
       {records.length > 0 && (
         <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>最近记录</div>
-          {[...records].reverse().slice(0, 10).map((r) => {
-            const level = getFeverLevel(r.temperature)
-            const color = FEVER_LEVEL_INFO[level].color
-            const time = new Date(r.measureTime)
-            return (
-              <div key={r.recordId} className="card" style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 700, color }}>{r.temperature}℃</span>
-                    <span style={{ fontSize: '0.7rem', color, background: color + '15', padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}>
-                      {FEVER_LEVEL_INFO[level].label}
-                    </span>
+          <div className="section-header">最近记录</div>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            {[...records].reverse().slice(0, 10).map((r) => {
+              const level = getFeverLevel(r.temperature)
+              const color = FEVER_LEVEL_INFO[level].color
+              const time = new Date(r.measureTime)
+              return (
+                <div key={r.recordId} className="record-item">
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' as any, color }}>{r.temperature}℃</span>
+                      <span style={{ fontSize: 'var(--text-xs)', color, background: color + '15', padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}>
+                        {FEVER_LEVEL_INFO[level].label}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                      {time.toLocaleDateString()} {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {' · '}{MEASURE_METHOD_INFO[r.measureMethod].label}
+                      {r.symptoms.length > 0 && ` · ${r.symptoms.map((s) => SYMPTOM_TAG_INFO[s].label).join('、')}`}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
-                    {time.toLocaleDateString()} {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    {' · '}{MEASURE_METHOD_INFO[r.measureMethod].label}
-                    {r.symptoms.length > 0 && ` · ${r.symptoms.map((s) => SYMPTOM_TAG_INFO[s].label).join('、')}`}
-                  </div>
+                  <button
+                    className="btn-delete"
+                    onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteTemperatureRecord(r.recordId) }}
+                  >
+                    删除
+                  </button>
                 </div>
-                <button
-                  onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteTemperatureRecord(r.recordId) }}
-                  style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '4px 8px' }}
-                >
-                  删除
-                </button>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

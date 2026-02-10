@@ -91,36 +91,20 @@ export default function Shop() {
         paddingBottom: 4,
       }}>
         <button
+          className={`chip-filter${activeCategory === 'all' ? ' active' : ''}`}
           onClick={() => setActiveCategory('all')}
-          style={{
-            padding: '6px 14px',
-            borderRadius: 20,
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            whiteSpace: 'nowrap',
-            background: activeCategory === 'all' ? 'var(--color-primary)' : 'white',
-            color: activeCategory === 'all' ? 'white' : 'var(--color-text)',
-            border: '1px solid var(--color-border)',
-          }}
+          style={activeCategory === 'all' ? { background: 'var(--color-primary)' } : undefined}
         >
           全部
         </button>
         {categories.map(([key, info]) => (
           <button
             key={key}
+            className={`chip-filter${activeCategory === key ? ' active' : ''}`}
             onClick={() => setActiveCategory(key)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 20,
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              background: activeCategory === key ? 'var(--color-primary)' : 'white',
-              color: activeCategory === key ? 'white' : 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-            }}
+            style={activeCategory === key ? { background: 'var(--color-primary)' } : undefined}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{info.icon} {info.label}</span>
+            {info.icon} {info.label}
           </button>
         ))}
       </div>
@@ -185,19 +169,10 @@ export default function Shop() {
               <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: 6 }}>{reward.name}</div>
 
               {/* Progress bar */}
-              <div style={{
-                height: 4,
-                background: '#f0f0f0',
-                borderRadius: 2,
-                overflow: 'hidden',
-                marginBottom: 6,
-              }}>
-                <div style={{
+              <div className="progress-bar" style={{ height: 4, marginBottom: 6 }}>
+                <div className="progress-bar-fill" style={{
                   width: `${progress * 100}%`,
-                  height: '100%',
                   background: canAfford ? 'var(--color-success)' : 'var(--color-primary)',
-                  borderRadius: 2,
-                  transition: 'width 0.5s ease',
                 }} />
               </div>
 
@@ -214,14 +189,10 @@ export default function Shop() {
       </div>
 
       {allRewards.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 0',
-          color: 'var(--color-text-secondary)',
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: 12 }}>🎁</div>
+        <div className="empty-state">
+          <div className="empty-state-icon">🎁</div>
           <div>还没有奖励哦</div>
-          <div style={{ fontSize: '0.85rem', marginTop: 4 }}>让家长在家长控制台添加奖励吧</div>
+          <div className="empty-state-text" style={{ marginTop: 4 }}>让家长在家长控制台添加奖励吧</div>
         </div>
       )}
 

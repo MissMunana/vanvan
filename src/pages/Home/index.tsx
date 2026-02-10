@@ -330,25 +330,25 @@ export default function Home() {
 
       {/* Weekly stats */}
       <div className="card">
-        <div style={{ fontWeight: 700, marginBottom: 12 }}>本周统计</div>
-        <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center' }}>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+        <div className="section-header" style={{ marginBottom: 12 }}>本周统计</div>
+        <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+          <div className="stat-item">
+            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-primary)' }}>
               {weeklyStats.tasksCompleted}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>完成任务</div>
+            <div className="stat-item-label">完成任务</div>
           </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success)' }}>
+          <div className="stat-item">
+            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-success)' }}>
               {weeklyStats.pointsEarned}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>获得积分</div>
+            <div className="stat-item-label">获得积分</div>
           </div>
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-info)' }}>
+          <div className="stat-item">
+            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-info)' }}>
               {weeklyStats.pointsSpent}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>消费积分</div>
+            <div className="stat-item-label">消费积分</div>
           </div>
         </div>
       </div>

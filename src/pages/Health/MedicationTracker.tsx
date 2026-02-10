@@ -113,7 +113,7 @@ export default function MedicationTracker() {
     <div>
       {/* Quick add buttons */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>💊 快捷记录</span></div>
+        <div className="section-header" style={{ marginBottom: 12 }}>💊 快捷记录</div>
         <div style={{ display: 'flex', gap: 10 }}>
           <QuickDrugButton
             label="布洛芬"
@@ -135,34 +135,39 @@ export default function MedicationTracker() {
       {/* Medication history */}
       {records.length > 0 && (
         <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>用药记录</div>
-          {records.slice(0, 20).map((r) => {
-            const time = new Date(r.administrationTime)
-            return (
-              <div key={r.recordId} className="card" style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>💊 {r.drugName.split('(')[0].trim()}</span>
+          <div className="section-header">用药记录</div>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            {records.slice(0, 20).map((r) => {
+              const time = new Date(r.administrationTime)
+              return (
+                <div key={r.recordId} className="record-item">
+                  <div>
+                    <div style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-semibold)' as any }}>
+                      💊 {r.drugName.split('(')[0].trim()}
+                    </div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                      {r.note} · {time.toLocaleDateString()} {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
-                    {r.note} · {time.toLocaleDateString()} {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+                  <button
+                    className="btn-delete"
+                    onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteMedicationRecord(r.recordId) }}
+                  >
+                    删除
+                  </button>
                 </div>
-                <button
-                  onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteMedicationRecord(r.recordId) }}
-                  style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '4px 8px' }}
-                >
-                  删除
-                </button>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
       {records.length === 0 && (
-        <div className="card" style={{ textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-          暂无用药记录
+        <div className="card">
+          <div className="empty-state" style={{ padding: '20px 0' }}>
+            <div className="empty-state-icon">💊</div>
+            <div className="empty-state-text">暂无用药记录</div>
+          </div>
         </div>
       )}
 
@@ -171,21 +176,14 @@ export default function MedicationTracker() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Interval warning */}
           {!intervalCheck.safe && (
-            <div style={{
-              background: '#FFEBEE',
-              border: '1px solid #FFCDD2',
-              borderRadius: 'var(--radius-sm)',
-              padding: '10px 12px',
-              fontSize: '0.8rem',
-              color: '#C62828',
-            }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⚠️ 距离上次用药还需等待 <strong>{formatMinutes(intervalCheck.minutesRemaining)}</strong></span>
+            <div className="alert alert-danger">
+              ⚠️ 距离上次用药还需等待 <strong>{formatMinutes(intervalCheck.minutesRemaining)}</strong>
             </div>
           )}
 
           {/* Weight input */}
           <div>
-            <label style={labelStyle}>孩子体重 (kg)</label>
+            <label className="form-label">孩子体重 (kg)</label>
             <input
               type="number"
               inputMode="decimal"
@@ -208,7 +206,7 @@ export default function MedicationTracker() {
 
           {/* Formulation */}
           <div>
-            <label style={labelStyle}>制剂选择</label>
+            <label className="form-label">制剂选择</label>
             <select
               value={formulationIdx}
               onChange={(e) => setFormulationIdx(Number(e.target.value))}
@@ -238,7 +236,7 @@ export default function MedicationTracker() {
               {dosageResult.warnings.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                   {dosageResult.warnings.map((w, i) => (
-                    <div key={i} style={{ fontSize: '0.75rem', color: '#C62828', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>⚠️ {w}</div>
+                    <div key={i} style={{ fontSize: '0.75rem', color: 'var(--color-alert-danger-text)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>⚠️ {w}</div>
                   ))}
                 </div>
               )}
@@ -250,10 +248,9 @@ export default function MedicationTracker() {
           </div>
 
           <button
-            className="btn btn-block"
+            className="btn btn-health btn-block"
             onClick={() => dosageResult && handleSaveMedication(selectedFormulation, dosageResult)}
             disabled={!dosageResult || !intervalCheck.safe}
-            style={{ background: 'var(--color-health)', color: 'white', fontWeight: 700 }}
           >
             保存用药记录
           </button>
@@ -291,7 +288,7 @@ function QuickDrugButton({
       <div style={{ fontSize: '0.9rem', fontWeight: 700, color }}>{label}</div>
       <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{subtitle}</div>
       {!intervalCheck.safe && (
-        <div style={{ fontSize: '0.65rem', color: '#C62828', marginTop: 4 }}>
+        <div style={{ fontSize: '0.65rem', color: 'var(--color-alert-danger-text)', marginTop: 4 }}>
           还需等 {formatMinutes(intervalCheck.minutesRemaining)}
         </div>
       )}
@@ -317,9 +314,3 @@ function formatMinutes(minutes: number): string {
   return `${minutes}分钟`
 }
 
-const labelStyle: React.CSSProperties = {
-  fontSize: '0.85rem',
-  fontWeight: 600,
-  marginBottom: 4,
-  display: 'block',
-}

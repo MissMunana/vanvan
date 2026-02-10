@@ -99,62 +99,35 @@ export default function MilestoneTracker() {
     <div>
       {/* Summary card */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⭐ {child.name} 的发育进度（{ageMonths}月龄）</span>
-        </div>
+        <div className="section-header" style={{ marginBottom: 8 }}>⭐ {child.name} 的发育进度（{ageMonths}月龄）</div>
         <div style={{ display: 'flex', justifyContent: 'space-around' }}>
           <StatItem label="当前阶段" value={`${stats.total}`} sub="个里程碑" color="var(--color-text)" />
-          <StatItem label="已达成" value={`${stats.achieved}`} sub={`/ ${stats.total}`} color="#4CAF50" />
-          <StatItem label="进行中" value={`${stats.inProgress}`} sub="项" color="#FF9800" />
+          <StatItem label="已达成" value={`${stats.achieved}`} sub={`/ ${stats.total}`} color="var(--color-success)" />
+          <StatItem label="进行中" value={`${stats.inProgress}`} sub="项" color="var(--color-warning)" />
         </div>
         {stats.total > 0 && (
-          <div style={{
-            marginTop: 10,
-            height: 6,
-            borderRadius: 3,
-            background: '#F0F0F0',
-            overflow: 'hidden',
-          }}>
-            <div style={{
-              height: '100%',
+          <div className="progress-bar" style={{ marginTop: 10 }}>
+            <div className="progress-bar-fill" style={{
               width: `${(stats.achieved / stats.total) * 100}%`,
-              background: '#4CAF50',
-              borderRadius: 3,
-              transition: 'width 0.3s',
+              background: 'var(--color-success)',
             }} />
           </div>
         )}
       </div>
 
       {/* Filter toggle */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div className="toggle-group" style={{ marginBottom: 16 }}>
         <button
+          className={`toggle-btn${filter === 'current' ? ' active' : ''}`}
           onClick={() => setFilter('current')}
-          style={{
-            flex: 1,
-            padding: '8px 0',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.85rem',
-            fontWeight: filter === 'current' ? 700 : 400,
-            background: filter === 'current' ? 'var(--color-health)' : 'transparent',
-            color: filter === 'current' ? 'white' : 'var(--color-text-secondary)',
-            border: filter === 'current' ? 'none' : '1px solid var(--color-border)',
-          }}
+          style={filter === 'current' ? { background: 'var(--color-health)' } : undefined}
         >
           当前阶段
         </button>
         <button
+          className={`toggle-btn${filter === 'all' ? ' active' : ''}`}
           onClick={() => setFilter('all')}
-          style={{
-            flex: 1,
-            padding: '8px 0',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.85rem',
-            fontWeight: filter === 'all' ? 700 : 400,
-            background: filter === 'all' ? 'var(--color-health)' : 'transparent',
-            color: filter === 'all' ? 'white' : 'var(--color-text-secondary)',
-            border: filter === 'all' ? 'none' : '1px solid var(--color-border)',
-          }}
+          style={filter === 'all' ? { background: 'var(--color-health)' } : undefined}
         >
           全部里程碑
         </button>
@@ -162,15 +135,15 @@ export default function MilestoneTracker() {
 
       {/* Upcoming milestones */}
       {filter === 'current' && upcomingMilestones.length > 0 && (
-        <div className="card" style={{ marginBottom: 16, background: '#FFF8E1', border: '1px solid #FFE082' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 8, color: '#F57F17' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>🔮 即将到来</span>
+        <div className="alert alert-info" style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)' as any, marginBottom: 8 }}>
+            🔮 即将到来
           </div>
           {upcomingMilestones.map((m) => (
-            <div key={m.id} style={{ fontSize: '0.8rem', padding: '4px 0', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div key={m.id} style={{ fontSize: 'var(--text-sm)', padding: '4px 0', display: 'flex', gap: 8, alignItems: 'center' }}>
               <span>{m.icon}</span>
               <span>{m.name}</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
                 （{m.startMonth}-{m.endMonth}月龄）
               </span>
             </div>
@@ -238,8 +211,11 @@ export default function MilestoneTracker() {
       })}
 
       {displayMilestones.length === 0 && (
-        <div className="card" style={{ textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-          暂无匹配的里程碑
+        <div className="card">
+          <div className="empty-state" style={{ padding: '20px 0' }}>
+            <div className="empty-state-icon">⭐</div>
+            <div className="empty-state-text">暂无匹配的里程碑</div>
+          </div>
         </div>
       )}
     </div>
@@ -281,7 +257,7 @@ function MilestoneItem({
         padding: '10px 14px',
         marginBottom: 6,
         opacity: isFuture ? 0.5 : 1,
-        borderLeft: isInRange && status !== 'achieved' ? '3px solid #FF9800' : status === 'achieved' ? '3px solid #4CAF50' : '3px solid transparent',
+        borderLeft: isInRange && status !== 'achieved' ? '3px solid var(--color-warning)' : status === 'achieved' ? '3px solid var(--color-success)' : '3px solid transparent',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -352,8 +328,8 @@ function MilestoneItem({
         </div>
       )}
       {isPast && status === 'not_started' && (
-        <div style={{ fontSize: '0.7rem', color: '#FF9800', marginTop: 4, paddingLeft: 32 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⚠️ 已超过典型发展窗口期，请关注</span>
+        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning)', marginTop: 4, paddingLeft: 32 }}>
+          ⚠️ 已超过典型发展窗口期，请关注
         </div>
       )}
     </div>
@@ -362,10 +338,10 @@ function MilestoneItem({
 
 function StatItem({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>{label}</div>
-      <div style={{ fontSize: '1.2rem', fontWeight: 700, color }}>
-        {value}<span style={{ fontSize: '0.7rem', fontWeight: 400, color: 'var(--color-text-secondary)' }}>{sub}</span>
+    <div className="stat-item">
+      <div className="stat-item-label">{label}</div>
+      <div className="stat-item-value" style={{ color }}>
+        {value}<span style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-normal)' as any, color: 'var(--color-text-secondary)' }}>{sub}</span>
       </div>
     </div>
   )
