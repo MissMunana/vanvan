@@ -12,6 +12,7 @@ import { useSound } from '../../hooks/useSound'
 import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { HABIT_STAGE_INFO } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
+import { Modal } from '../../components/common/Modal'
 export default function Home() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
@@ -32,6 +33,7 @@ export default function Home() {
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dropHighlight, setDropHighlight] = useState(false)
   const [graduation, setGraduation] = useState<{ show: boolean; taskName: string }>({ show: false, taskName: '' })
+  const [statsModal, setStatsModal] = useState<'tasks' | 'points' | 'spent' | null>(null)
   const planetRef = useRef<HTMLDivElement>(null)
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
@@ -52,6 +54,36 @@ export default function Home() {
       pointsSpent: weekLogs.filter((l) => l.type === 'spend').reduce((sum, l) => sum + Math.abs(l.points), 0),
     }
   }, [logs, childId])
+
+  const weekStartStr = useMemo(() => {
+    const now = new Date()
+    const weekStart = new Date(now)
+    weekStart.setDate(now.getDate() - now.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    return weekStart.toISOString()
+  }, [])
+
+  const weeklyLogs = useMemo(() => {
+    return logs.filter((l) => l.childId === childId && l.createdAt >= weekStartStr)
+  }, [logs, childId, weekStartStr])
+
+  const taskMap = useMemo(() => {
+    const map = new Map<string, { icon: string; name: string }>()
+    allTasks.forEach((t) => map.set(t.taskId, { icon: t.icon, name: t.name }))
+    return map
+  }, [allTasks])
+
+  const weeklyCompletedLogs = useMemo(() => {
+    return weeklyLogs.filter((l) => l.type === 'earn' && l.taskId)
+  }, [weeklyLogs])
+
+  const weeklyEarnedLogs = useMemo(() => {
+    return weeklyLogs.filter((l) => l.type === 'earn' || (l.type === 'adjust' && l.points > 0))
+  }, [weeklyLogs])
+
+  const weeklySpentLogs = useMemo(() => {
+    return weeklyLogs.filter((l) => l.type === 'spend')
+  }, [weeklyLogs])
 
   const pendingExchanges = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId), [exchanges, childId])
 
@@ -254,19 +286,19 @@ export default function Home() {
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="section-header" style={{ marginBottom: 12 }}>本周统计</div>
         <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-          <div className="stat-item">
+          <div className="stat-item" onClick={() => setStatsModal('tasks')} style={{ cursor: 'pointer' }}>
             <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-primary)' }}>
               {weeklyStats.tasksCompleted}
             </div>
             <div className="stat-item-label">完成任务</div>
           </div>
-          <div className="stat-item">
+          <div className="stat-item" onClick={() => setStatsModal('points')} style={{ cursor: 'pointer' }}>
             <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-success)' }}>
               {weeklyStats.pointsEarned}
             </div>
             <div className="stat-item-label">获得积分</div>
           </div>
-          <div className="stat-item">
+          <div className="stat-item" onClick={() => setStatsModal('spent')} style={{ cursor: 'pointer' }}>
             <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-info)' }}>
               {weeklyStats.pointsSpent}
             </div>
@@ -430,6 +462,206 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Weekly completed tasks modal */}
+      <Modal open={statsModal === 'tasks'} onClose={() => setStatsModal(null)} title="本周完成任务">
+        <div style={{
+          background: 'linear-gradient(135deg, #FFE082 0%, #FFB800 100%)',
+          borderRadius: 16,
+          padding: '16px 20px',
+          textAlign: 'center',
+          color: 'white',
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800 }}>{weeklyStats.tasksCompleted}</div>
+          <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+            {weeklyStats.tasksCompleted > 0 ? '太厉害了，继续加油!' : '本周还没有完成任务哦'}
+          </div>
+        </div>
+        <div style={{ maxHeight: '50vh', overflow: 'auto' }}>
+          {weeklyCompletedLogs.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">🎯</div>
+              <div className="empty-state-text">快去完成第一个任务吧!</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {weeklyCompletedLogs.map((log) => {
+                const task = taskMap.get(log.taskId!)
+                return (
+                  <div key={log.logId} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 14px',
+                    background: 'var(--color-primary-light)',
+                    borderRadius: 12,
+                  }}>
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      background: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.3rem',
+                      flexShrink: 0,
+                      boxShadow: 'var(--shadow-sm)',
+                    }}>
+                      {task?.icon || '⭐'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                        {task?.name || log.reason}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                        {new Date(log.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {log.emotion && ` · ${log.emotion}`}
+                      </div>
+                    </div>
+                    <span style={{ fontWeight: 700, color: 'var(--color-success)', fontSize: '0.95rem', flexShrink: 0 }}>
+                      +{log.points}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Weekly earned points modal */}
+      <Modal open={statsModal === 'points'} onClose={() => setStatsModal(null)} title="本周获得积分">
+        <div style={{
+          background: 'linear-gradient(135deg, #81C784 0%, #4CAF50 100%)',
+          borderRadius: 16,
+          padding: '16px 20px',
+          textAlign: 'center',
+          color: 'white',
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800 }}>+{weeklyStats.pointsEarned}</div>
+          <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+            {weeklyStats.pointsEarned > 0 ? '积分越来越多啦!' : '完成任务就能获得积分'}
+          </div>
+        </div>
+        <div style={{ maxHeight: '50vh', overflow: 'auto' }}>
+          {weeklyEarnedLogs.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">✨</div>
+              <div className="empty-state-text">完成任务就能获得积分哦!</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {weeklyEarnedLogs.map((log) => {
+                const task = log.taskId ? taskMap.get(log.taskId) : null
+                return (
+                  <div key={log.logId} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '10px 14px',
+                    background: 'var(--color-alert-success-bg)',
+                    borderRadius: 12,
+                  }}>
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      background: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.3rem',
+                      flexShrink: 0,
+                      boxShadow: 'var(--shadow-sm)',
+                    }}>
+                      {task?.icon || (log.type === 'adjust' ? '🎁' : '⭐')}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                        {log.reason}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                        {new Date(log.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {log.emotion && ` · ${log.emotion}`}
+                      </div>
+                    </div>
+                    <span style={{ fontWeight: 700, color: 'var(--color-success)', fontSize: '0.95rem', flexShrink: 0 }}>
+                      +{log.points}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Weekly spent points modal */}
+      <Modal open={statsModal === 'spent'} onClose={() => setStatsModal(null)} title="本周消费积分">
+        <div style={{
+          background: 'linear-gradient(135deg, #64B5F6 0%, #2196F3 100%)',
+          borderRadius: 16,
+          padding: '16px 20px',
+          textAlign: 'center',
+          color: 'white',
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800 }}>{weeklyStats.pointsSpent}</div>
+          <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>
+            {weeklyStats.pointsSpent > 0 ? '用积分换到了好东西!' : '攒够积分就能兑换奖励'}
+          </div>
+        </div>
+        <div style={{ maxHeight: '50vh', overflow: 'auto' }}>
+          {weeklySpentLogs.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">🛍️</div>
+              <div className="empty-state-text">去积分商店看看有什么好东西吧!</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {weeklySpentLogs.map((log) => (
+                <div key={log.logId} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '10px 14px',
+                  background: 'var(--color-alert-info-bg)',
+                  borderRadius: 12,
+                }}>
+                  <div style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 10,
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.3rem',
+                    flexShrink: 0,
+                    boxShadow: 'var(--shadow-sm)',
+                  }}>
+                    🎁
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                      {log.reason}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                      {new Date(log.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  <span style={{ fontWeight: 700, color: 'var(--color-info)', fontSize: '0.95rem', flexShrink: 0 }}>
+                    -{Math.abs(log.points)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }
