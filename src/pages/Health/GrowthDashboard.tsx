@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { AppIcon } from '../../components/common/AppIcon'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import type { GrowthMetric } from '../../types'
@@ -181,7 +182,7 @@ export default function GrowthDashboard() {
           fontSize: '1rem',
         }}
       >
-        📏 添加测量记录
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><AppIcon name="Ruler" size={18} /> 添加测量记录</span>
       </button>
 
       <GrowthEntry open={showEntry} onClose={() => setShowEntry(false)} />

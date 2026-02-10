@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
+import { AppIcon } from '../../components/common/AppIcon'
 import type { MeasureMethod, SymptomTag } from '../../types'
 import { FEVER_LEVEL_INFO, SYMPTOM_TAG_INFO, MEASURE_METHOD_INFO } from '../../types'
 import { getFeverLevel } from '../../utils/growthUtils'
@@ -86,7 +87,7 @@ export default function FeverTracker() {
     }
 
     return warnings
-  }, [child, temp, records, selectedSymptoms])
+  }, [child, temp, ageMonths, records, selectedSymptoms])
 
   const handleRecord = () => {
     if (!child || !temp || temp < 35 || temp > 43) {
@@ -115,7 +116,7 @@ export default function FeverTracker() {
     <div>
       {/* Temperature input */}
       <div className="card" style={{ textAlign: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}>🌡️ 记录体温</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Thermometer" size={16} /> 记录体温</span></div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
           <input
             type="number"
@@ -198,7 +199,7 @@ export default function FeverTracker() {
                     color: selected ? '#E65100' : 'var(--color-text-secondary)',
                   }}
                 >
-                  {info.icon} {info.label}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name={info.icon} size={14} /> {info.label}</span>
                 </button>
               )
             })}
@@ -217,7 +218,7 @@ export default function FeverTracker() {
             color: '#C62828',
             textAlign: 'left',
           }}>
-            <strong>🚨 就医提醒</strong>
+            <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={14} /> 就医提醒</strong>
             {seekMedicalAttention.map((w, i) => <div key={i} style={{ marginTop: 4 }}>• {w}</div>)}
           </div>
         )}

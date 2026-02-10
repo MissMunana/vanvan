@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AppIcon } from './AppIcon'
 
 interface MedicalDisclaimerProps {
   compact?: boolean
@@ -22,7 +23,7 @@ export default function MedicalDisclaimer({ compact = false }: MedicalDisclaimer
           lineHeight: 1.5,
         }}
       >
-        <span style={{ marginRight: 4 }}>⚠️</span>
+        <span style={{ marginRight: 4, display: 'inline-flex', verticalAlign: 'middle' }}><AppIcon name="AlertTriangle" size={14} color="#E65100" /></span>
         {expanded
           ? '本功能提供的所有信息和计算结果仅供参考，不构成医疗建议。儿童用药请务必遵医嘱，具体用药方案以医生处方为准。如孩子出现紧急症状，请立即就医。'
           : '医疗免责声明（点击展开）'}
@@ -41,7 +42,7 @@ export default function MedicalDisclaimer({ compact = false }: MedicalDisclaimer
       color: '#E65100',
       lineHeight: 1.6,
     }}>
-      <div style={{ fontWeight: 700, marginBottom: 6 }}>⚠️ 重要提示</div>
+      <div style={{ fontWeight: 700, marginBottom: 6 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={16} color="#E65100" /> 重要提示</span></div>
       <p>本功能提供的所有信息和计算结果仅供参考，不构成医疗建议。</p>
       <p>儿童用药请务必遵医嘱，具体用药方案以医生处方为准。</p>
       <p>如孩子出现紧急症状，请立即就医。</p>

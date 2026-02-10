@@ -110,16 +110,16 @@ export interface AgeGroupConfig {
 }
 
 export const CATEGORY_INFO: Record<TaskCategory, { label: string; icon: string }> = {
-  life: { label: '生活习惯', icon: '🌈' },
-  study: { label: '学习习惯', icon: '📖' },
-  manner: { label: '礼貌行为', icon: '🌸' },
-  chore: { label: '家务帮助', icon: '🏠' },
+  life: { label: '生活习惯', icon: 'Rainbow' },
+  study: { label: '学习习惯', icon: 'BookOpen' },
+  manner: { label: '礼貌行为', icon: 'Flower2' },
+  chore: { label: '家务帮助', icon: 'Home' },
 }
 
 export const REWARD_CATEGORY_INFO: Record<RewardCategory, { label: string; icon: string }> = {
-  time: { label: '亲子时光', icon: '🥰' },
-  privilege: { label: '小特权', icon: '👑' },
-  material: { label: '实物奖励', icon: '🎁' },
+  time: { label: '亲子时光', icon: 'Heart' },
+  privilege: { label: '小特权', icon: 'Crown' },
+  material: { label: '实物奖励', icon: 'Gift' },
 }
 
 export type BadgeCategory = 'habit' | 'points' | 'special'
@@ -139,10 +139,10 @@ export interface UnlockedBadge {
 }
 
 export const HABIT_STAGE_INFO: Record<HabitStage, { label: string; icon: string; description: string }> = {
-  start: { label: '启动期', icon: '🌰', description: '1-7天，积分×1.5' },
-  persist: { label: '坚持期', icon: '🌱', description: '8-21天，正常积分' },
-  stable: { label: '稳定期', icon: '🌿', description: '22-66天，积分×0.8' },
-  graduated: { label: '已毕业', icon: '🌸', description: '66天+，习惯大师' },
+  start: { label: '启动期', icon: 'Nut', description: '1-7天，积分×1.5' },
+  persist: { label: '坚持期', icon: 'Sprout', description: '8-21天，正常积分' },
+  stable: { label: '稳定期', icon: 'Leaf', description: '22-66天，积分×0.8' },
+  graduated: { label: '已毕业', icon: 'Flower2', description: '66天+，习惯大师' },
 }
 
 // ============ V2.0 健康管理模块类型 ============
@@ -245,15 +245,15 @@ export const FEVER_LEVEL_INFO: Record<FeverLevel, { label: string; color: string
 }
 
 export const SYMPTOM_TAG_INFO: Record<SymptomTag, { label: string; icon: string }> = {
-  cough: { label: '咳嗽', icon: '🤧' },
-  runny_nose: { label: '流涕', icon: '🤒' },
-  vomiting: { label: '呕吐', icon: '🤮' },
-  diarrhea: { label: '腹泻', icon: '💩' },
-  rash: { label: '皮疹', icon: '🔴' },
-  lethargy: { label: '精神差', icon: '😴' },
-  headache: { label: '头痛', icon: '🤕' },
-  sore_throat: { label: '嗓子痛', icon: '😣' },
-  other: { label: '其他', icon: '📝' },
+  cough: { label: '咳嗽', icon: 'Wind' },
+  runny_nose: { label: '流涕', icon: 'Thermometer' },
+  vomiting: { label: '呕吐', icon: 'Frown' },
+  diarrhea: { label: '腹泻', icon: 'CircleAlert' },
+  rash: { label: '皮疹', icon: 'CircleDot' },
+  lethargy: { label: '精神差', icon: 'Moon' },
+  headache: { label: '头痛', icon: 'Brain' },
+  sore_throat: { label: '嗓子痛', icon: 'Mic' },
+  other: { label: '其他', icon: 'FileText' },
 }
 
 export const MEASURE_METHOD_INFO: Record<MeasureMethod, { label: string }> = {

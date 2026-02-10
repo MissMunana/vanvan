@@ -165,7 +165,7 @@ export const useHealthStore = create<HealthStore>()(
           createdAt: new Date().toISOString(),
         }
         set((state) => ({
-          vaccinationRecords: [...state.vaccinationRecords, record],
+          vaccinationRecords: [...state.vaccinationRecords, record].slice(-MAX_RECORDS),
         }))
       },
 
@@ -209,7 +209,7 @@ export const useHealthStore = create<HealthStore>()(
             note: note ?? '',
             createdAt: new Date().toISOString(),
           }
-          return { milestoneRecords: [...state.milestoneRecords, record] }
+          return { milestoneRecords: [...state.milestoneRecords, record].slice(-MAX_RECORDS) }
         })
       },
 

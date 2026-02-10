@@ -3,6 +3,7 @@ import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
+import { AppIcon } from '../../components/common/AppIcon'
 import {
   IBUPROFEN_FORMULATIONS,
   ACETAMINOPHEN_FORMULATIONS,
@@ -112,7 +113,7 @@ export default function MedicationTracker() {
     <div>
       {/* Quick add buttons */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}>💊 快捷记录</div>
+        <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Pill" size={16} /> 快捷记录</span></div>
         <div style={{ display: 'flex', gap: 10 }}>
           <QuickDrugButton
             label="布洛芬"
@@ -141,7 +142,7 @@ export default function MedicationTracker() {
               <div key={r.recordId} className="card" style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                    💊 {r.drugName.split('(')[0].trim()}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Pill" size={14} /> {r.drugName.split('(')[0].trim()}</span>
                   </div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
                     {r.note} · {time.toLocaleDateString()} {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -178,7 +179,7 @@ export default function MedicationTracker() {
               fontSize: '0.8rem',
               color: '#C62828',
             }}>
-              ⚠️ 距离上次用药还需等待 <strong>{formatMinutes(intervalCheck.minutesRemaining)}</strong>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={14} /> 距离上次用药还需等待 <strong>{formatMinutes(intervalCheck.minutesRemaining)}</strong></span>
             </div>
           )}
 
@@ -237,7 +238,7 @@ export default function MedicationTracker() {
               {dosageResult.warnings.length > 0 && (
                 <div style={{ marginTop: 8 }}>
                   {dosageResult.warnings.map((w, i) => (
-                    <div key={i} style={{ fontSize: '0.75rem', color: '#C62828', marginTop: 2 }}>⚠️ {w}</div>
+                    <div key={i} style={{ fontSize: '0.75rem', color: '#C62828', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={12} /> {w}</div>
                   ))}
                 </div>
               )}
@@ -245,7 +246,7 @@ export default function MedicationTracker() {
           )}
 
           <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', textAlign: 'center' }}>
-            ⚠️ 请遵医嘱用药，本计算仅供参考
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="AlertTriangle" size={12} /> 请遵医嘱用药，本计算仅供参考</span>
           </div>
 
           <button

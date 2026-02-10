@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { AppIcon } from './AppIcon'
 
 interface Star {
   id: number
@@ -60,7 +61,7 @@ export function PointAnimation({ trigger, points }: PointAnimationProps) {
               left: '50%',
             }}
           >
-            ⭐
+            <AppIcon name="Star" size={24} color="#FFB800" />
           </motion.div>
         ))}
       </AnimatePresence>

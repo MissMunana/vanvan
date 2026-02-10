@@ -125,8 +125,8 @@ export default function VaccineTracker() {
         {selectedVaccine && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{
-              background: 'var(--color-vaccine)10',
-              border: '1px solid var(--color-vaccine)30',
+              background: 'rgba(66, 165, 245, 0.06)',
+              border: '1px solid rgba(66, 165, 245, 0.19)',
               borderRadius: 'var(--radius-md)',
               padding: 12,
             }}>
@@ -140,7 +140,7 @@ export default function VaccineTracker() {
 
             <div>
               <label style={labelStyle}>接种日期</label>
-              <input type="date" value={recordDate} onChange={(e) => setRecordDate(e.target.value)} />
+              <input type="date" value={recordDate} onChange={(e) => setRecordDate(e.target.value)} min={child.birthday} max={new Date().toISOString().split('T')[0]} />
             </div>
 
             <div>
@@ -358,9 +358,9 @@ function VaccineRow({
             padding: '4px 10px',
             fontSize: '0.7rem',
             borderRadius: 'var(--radius-sm)',
-            background: 'var(--color-vaccine)15',
+            background: 'rgba(66, 165, 245, 0.08)',
             color: 'var(--color-vaccine)',
-            border: '1px solid var(--color-vaccine)30',
+            border: '1px solid rgba(66, 165, 245, 0.19)',
             whiteSpace: 'nowrap',
           }}
         >
