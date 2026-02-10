@@ -11,7 +11,7 @@ export default function VaccineTracker() {
   const child = useAppStore((s) => s.getCurrentChild())
   const addVaccinationRecord = useHealthStore((s) => s.addVaccinationRecord)
   const deleteVaccinationRecord = useHealthStore((s) => s.deleteVaccinationRecord)
-  const getChildVaccinationRecords = useHealthStore((s) => s.getChildVaccinationRecords)
+  const vaccinationRecords = useHealthStore((s) => s.vaccinationRecords)
   const { showToast } = useToast()
 
   const [viewMode, setViewMode] = useState<ViewMode>('schedule')
@@ -24,8 +24,10 @@ export default function VaccineTracker() {
 
   const records = useMemo(() => {
     if (!child) return []
-    return getChildVaccinationRecords(child.childId)
-  }, [child, getChildVaccinationRecords])
+    return vaccinationRecords
+      .filter((r) => r.childId === child.childId)
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [child, vaccinationRecords])
 
   const completedVaccineIds = useMemo(() => {
     return new Set(records.map((r) => `${r.vaccineName}_${r.doseNumber}`))
@@ -406,7 +408,7 @@ function VaccineHistoryView({
               )}
             </div>
             <button
-              onClick={() => onDelete(r.recordId)}
+              onClick={() => { if (window.confirm('确定要删除这条接种记录吗？')) onDelete(r.recordId) }}
               style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '4px 8px' }}
             >
               删除

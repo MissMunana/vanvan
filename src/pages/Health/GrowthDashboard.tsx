@@ -15,15 +15,17 @@ const METRIC_TABS: { key: GrowthMetric; label: string }[] = [
 
 export default function GrowthDashboard() {
   const child = useAppStore((s) => s.getCurrentChild())
-  const getChildGrowthRecords = useHealthStore((s) => s.getChildGrowthRecords)
+  const growthRecords = useHealthStore((s) => s.growthRecords)
   const deleteGrowthRecord = useHealthStore((s) => s.deleteGrowthRecord)
   const [metric, setMetric] = useState<GrowthMetric>('height')
   const [showEntry, setShowEntry] = useState(false)
 
   const records = useMemo(() => {
     if (!child) return []
-    return getChildGrowthRecords(child.childId)
-  }, [child, getChildGrowthRecords])
+    return growthRecords
+      .filter((r) => r.childId === child.childId)
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [child, growthRecords])
 
   const latest = records.length > 0 ? records[records.length - 1] : null
 
@@ -53,7 +55,13 @@ export default function GrowthDashboard() {
     return calculateGrowthVelocity(points)
   }, [chartPoints, metric])
 
-  const showHeadCirc = child && child.age <= 3
+  const ageYears = useMemo(() => {
+    if (!child) return 0
+    const now = new Date()
+    const birth = new Date(child.birthday)
+    return (now.getFullYear() - birth.getFullYear()) + (now.getMonth() - birth.getMonth()) / 12
+  }, [child])
+  const showHeadCirc = child && ageYears <= 3
   const visibleTabs = showHeadCirc ? METRIC_TABS : METRIC_TABS.filter((t) => t.key !== 'headCircumference')
 
   if (!child) {
@@ -149,7 +157,7 @@ export default function GrowthDashboard() {
                 </div>
               </div>
               <button
-                onClick={() => deleteGrowthRecord(r.recordId)}
+                onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteGrowthRecord(r.recordId) }}
                 style={{ fontSize: '0.75rem', color: 'var(--color-danger)', padding: '4px 8px' }}
               >
                 删除

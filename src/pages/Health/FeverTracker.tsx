@@ -13,9 +13,9 @@ const SYMPTOMS: SymptomTag[] = ['cough', 'runny_nose', 'vomiting', 'diarrhea', '
 export default function FeverTracker() {
   const child = useAppStore((s) => s.getCurrentChild())
   const addTemperatureRecord = useHealthStore((s) => s.addTemperatureRecord)
-  const getChildTemperatureRecords = useHealthStore((s) => s.getChildTemperatureRecords)
+  const temperatureRecords = useHealthStore((s) => s.temperatureRecords)
   const deleteTemperatureRecord = useHealthStore((s) => s.deleteTemperatureRecord)
-  const getChildMedicationRecords = useHealthStore((s) => s.getChildMedicationRecords)
+  const medicationRecords = useHealthStore((s) => s.medicationRecords)
   const { showToast } = useToast()
 
   const [temperature, setTemperature] = useState('')
@@ -26,13 +26,17 @@ export default function FeverTracker() {
 
   const records = useMemo(() => {
     if (!child) return []
-    return getChildTemperatureRecords(child.childId)
-  }, [child, getChildTemperatureRecords])
+    return temperatureRecords
+      .filter((r) => r.childId === child.childId)
+      .sort((a, b) => a.measureTime.localeCompare(b.measureTime))
+  }, [child, temperatureRecords])
 
   const medications = useMemo(() => {
     if (!child) return []
-    return getChildMedicationRecords(child.childId)
-  }, [child, getChildMedicationRecords])
+    return medicationRecords
+      .filter((r) => r.childId === child.childId)
+      .sort((a, b) => b.administrationTime.localeCompare(a.administrationTime))
+  }, [child, medicationRecords])
 
   const temp = parseFloat(temperature)
   const feverLevel = temp > 0 ? getFeverLevel(temp) : null
@@ -44,10 +48,16 @@ export default function FeverTracker() {
     )
   }, [])
 
+  const ageMonths = useMemo(() => {
+    if (!child) return 0
+    const now = new Date()
+    const birth = new Date(child.birthday)
+    return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+  }, [child])
+
   const seekMedicalAttention = useMemo(() => {
     if (!child || !temp) return []
     const warnings: string[] = []
-    const ageMonths = child.age * 12
 
     if (ageMonths < 3 && temp >= 38) {
       warnings.push('3月龄以下婴儿体温≥38℃，请立即就医')
@@ -273,7 +283,7 @@ export default function FeverTracker() {
                   </div>
                 </div>
                 <button
-                  onClick={() => deleteTemperatureRecord(r.recordId)}
+                  onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteTemperatureRecord(r.recordId) }}
                   style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '4px 8px' }}
                 >
                   删除

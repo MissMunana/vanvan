@@ -13,8 +13,8 @@ export function getAgeInMonths(birthday: string, measureDate: string): number {
   return Math.max(0, months)
 }
 
-export function calculateBMI(heightCm: number, weightKg: number): number {
-  if (heightCm <= 0 || weightKg <= 0) return 0
+export function calculateBMI(heightCm: number, weightKg: number): number | null {
+  if (heightCm <= 0 || weightKg <= 0) return null
   const heightM = heightCm / 100
   return Math.round((weightKg / (heightM * heightM)) * 10) / 10
 }
@@ -64,7 +64,8 @@ export function estimatePercentile(
 
   for (let i = 0; i < bands.length - 1; i++) {
     if (value >= bands[i].v && value <= bands[i + 1].v) {
-      const ratio = (value - bands[i].v) / (bands[i + 1].v - bands[i].v)
+      const denom = bands[i + 1].v - bands[i].v
+      const ratio = denom === 0 ? 0.5 : (value - bands[i].v) / denom
       return Math.round(bands[i].p + ratio * (bands[i + 1].p - bands[i].p))
     }
   }

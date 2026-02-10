@@ -3,7 +3,6 @@ import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
-import MedicalDisclaimer from '../../components/common/MedicalDisclaimer'
 import {
   IBUPROFEN_FORMULATIONS,
   ACETAMINOPHEN_FORMULATIONS,
@@ -18,10 +17,10 @@ type DrugType = 'ibuprofen' | 'acetaminophen'
 export default function MedicationTracker() {
   const child = useAppStore((s) => s.getCurrentChild())
   const addMedicationRecord = useHealthStore((s) => s.addMedicationRecord)
-  const getChildMedicationRecords = useHealthStore((s) => s.getChildMedicationRecords)
+  const medicationRecords = useHealthStore((s) => s.medicationRecords)
   const deleteMedicationRecord = useHealthStore((s) => s.deleteMedicationRecord)
   const checkMedicationInterval = useHealthStore((s) => s.checkMedicationInterval)
-  const getChildGrowthRecords = useHealthStore((s) => s.getChildGrowthRecords)
+  const growthRecords = useHealthStore((s) => s.growthRecords)
   const { showToast } = useToast()
 
   const [showCalc, setShowCalc] = useState(false)
@@ -31,16 +30,20 @@ export default function MedicationTracker() {
 
   const records = useMemo(() => {
     if (!child) return []
-    return getChildMedicationRecords(child.childId)
-  }, [child, getChildMedicationRecords])
+    return medicationRecords
+      .filter((r) => r.childId === child.childId)
+      .sort((a, b) => b.administrationTime.localeCompare(a.administrationTime))
+  }, [child, medicationRecords])
 
   // Auto-fill weight from latest growth record
   const latestWeight = useMemo(() => {
     if (!child) return null
-    const growth = getChildGrowthRecords(child.childId)
+    const growth = growthRecords
+      .filter((r) => r.childId === child.childId)
+      .sort((a, b) => a.date.localeCompare(b.date))
     const latest = growth.length > 0 ? growth[growth.length - 1] : null
     return latest?.weight ?? null
-  }, [child, getChildGrowthRecords])
+  }, [child, growthRecords])
 
   const formulations = drugType === 'ibuprofen' ? IBUPROFEN_FORMULATIONS : ACETAMINOPHEN_FORMULATIONS
   const selectedFormulation = formulations[formulationIdx] || formulations[0]
@@ -53,10 +56,17 @@ export default function MedicationTracker() {
       : calculateAcetaminophenDose(w, selectedFormulation)
   }, [weight, drugType, selectedFormulation])
 
-  const intervalCheck = useMemo(() => {
+  const ibuprofenInterval = useMemo(() => {
     if (!child) return { safe: true, minutesRemaining: 0 }
-    return checkMedicationInterval(child.childId, drugType)
-  }, [child, drugType, checkMedicationInterval])
+    return checkMedicationInterval(child.childId, 'ibuprofen')
+  }, [child, medicationRecords, checkMedicationInterval])
+
+  const acetaminophenInterval = useMemo(() => {
+    if (!child) return { safe: true, minutesRemaining: 0 }
+    return checkMedicationInterval(child.childId, 'acetaminophen')
+  }, [child, medicationRecords, checkMedicationInterval])
+
+  const intervalCheck = drugType === 'ibuprofen' ? ibuprofenInterval : acetaminophenInterval
 
   const openCalc = (type: DrugType) => {
     setDrugType(type)
@@ -73,11 +83,15 @@ export default function MedicationTracker() {
       return
     }
 
+    const dosageForm = formulation.id.includes('drops') ? 'suspension_drops'
+      : formulation.id.includes('gran') ? 'granules'
+      : 'suspension'
+
     addMedicationRecord({
       childId: child.childId,
       drugName: formulation.name,
       genericName: drugType,
-      dosageForm: 'suspension',
+      dosageForm,
       singleDose: result.recommendedDoseVolume,
       doseUnit: result.unit,
       administrationTime: new Date().toISOString(),
@@ -96,8 +110,6 @@ export default function MedicationTracker() {
 
   return (
     <div>
-      <MedicalDisclaimer />
-
       {/* Quick add buttons */}
       <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}>💊 快捷记录</div>
@@ -106,14 +118,14 @@ export default function MedicationTracker() {
             label="布洛芬"
             subtitle="(美林)"
             color="#FF9800"
-            intervalCheck={checkMedicationInterval(child.childId, 'ibuprofen')}
+            intervalCheck={ibuprofenInterval}
             onClick={() => openCalc('ibuprofen')}
           />
           <QuickDrugButton
             label="对乙酰氨基酚"
             subtitle="(泰诺林)"
             color="#2196F3"
-            intervalCheck={checkMedicationInterval(child.childId, 'acetaminophen')}
+            intervalCheck={acetaminophenInterval}
             onClick={() => openCalc('acetaminophen')}
           />
         </div>
@@ -136,7 +148,7 @@ export default function MedicationTracker() {
                   </div>
                 </div>
                 <button
-                  onClick={() => deleteMedicationRecord(r.recordId)}
+                  onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteMedicationRecord(r.recordId) }}
                   style={{ fontSize: '0.7rem', color: 'var(--color-danger)', padding: '4px 8px' }}
                 >
                   删除

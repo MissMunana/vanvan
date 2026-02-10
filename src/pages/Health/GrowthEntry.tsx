@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
@@ -21,6 +21,16 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
   const [weight, setWeight] = useState('')
   const [headCirc, setHeadCirc] = useState('')
   const [note, setNote] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      setDate(getToday())
+      setHeight('')
+      setWeight('')
+      setHeadCirc('')
+      setNote('')
+    }
+  }, [open])
 
   const ageInMonths = useMemo(() => {
     if (!child) return 0

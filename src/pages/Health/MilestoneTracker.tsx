@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<MilestoneStatus, { label: string; icon: string; colo
 export default function MilestoneTracker() {
   const child = useAppStore((s) => s.getCurrentChild())
   const updateMilestoneStatus = useHealthStore((s) => s.updateMilestoneStatus)
-  const getChildMilestoneRecords = useHealthStore((s) => s.getChildMilestoneRecords)
+  const allMilestoneRecords = useHealthStore((s) => s.milestoneRecords)
   const { showToast } = useToast()
 
   const [filter, setFilter] = useState<ViewFilter>('current')
@@ -38,8 +38,8 @@ export default function MilestoneTracker() {
 
   const milestoneRecords = useMemo(() => {
     if (!child) return []
-    return getChildMilestoneRecords(child.childId)
-  }, [child, getChildMilestoneRecords])
+    return allMilestoneRecords.filter((r) => r.childId === child.childId)
+  }, [child, allMilestoneRecords])
 
   const getStatus = (milestoneId: string): MilestoneStatus => {
     const record = milestoneRecords.find((r) => r.milestoneId === milestoneId)

@@ -30,7 +30,8 @@ export default function TemperatureChart({
   height = 200,
 }: TemperatureChartProps) {
   const hours = WINDOW_HOURS[timeWindow]
-  const now = Date.now()
+  // Snap to nearest minute to stabilize useMemo deps
+  const now = useMemo(() => Math.floor(Date.now() / 60000) * 60000, [timeWindow, records])
   const startTime = now - hours * 3600000
 
   const filteredRecords = useMemo(() => {
