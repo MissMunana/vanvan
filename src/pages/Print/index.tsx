@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
+import { AppIcon } from '../../components/common/AppIcon'
 
 type TemplateStyle = 'bear' | 'space' | 'clean'
 
 const STYLES: Record<TemplateStyle, { label: string; icon: string; bgColor: string; accentColor: string }> = {
-  bear: { label: '小熊森林', icon: '🐻', bgColor: '#FFF9EC', accentColor: '#8D6E63' },
-  space: { label: '星际探险', icon: '🚀', bgColor: '#E8EAF6', accentColor: '#3F51B5' },
-  clean: { label: '简约清新', icon: '📋', bgColor: '#FFFFFF', accentColor: '#607D8B' },
+  bear: { label: '小熊森林', icon: 'PawPrint', bgColor: '#FFF9EC', accentColor: '#8D6E63' },
+  space: { label: '星际探险', icon: 'Rocket', bgColor: '#E8EAF6', accentColor: '#3F51B5' },
+  clean: { label: '简约清新', icon: 'ClipboardList', bgColor: '#FFFFFF', accentColor: '#607D8B' },
 }
 
 function getWeekDates() {
@@ -80,7 +81,7 @@ export default function Print() {
                 textAlign: 'center',
               }}
             >
-              {s.icon} {s.label}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name={s.icon} size={16} /> {s.label}</span>
             </button>
           ))}
         </div>
@@ -89,7 +90,7 @@ export default function Print() {
           onClick={() => window.print()}
           className="btn btn-primary btn-block"
         >
-          🖨️ 打印
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Printer" size={18} /> 打印</span>
         </button>
       </div>
 
@@ -112,7 +113,7 @@ export default function Print() {
           borderBottom: `3px dashed ${styleConfig.accentColor}40`,
         }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: styleConfig.accentColor }}>
-            ⭐ {child.name} 的小星星任务表 ⭐
+            ★ {child.name} 的小星星任务表 ★
           </div>
           <div style={{ fontSize: 14, color: '#888', marginTop: 4 }}>
             本周日期：{weekRange}
@@ -157,7 +158,7 @@ export default function Print() {
                   borderBottom: '1px solid #e0e0e0',
                   fontWeight: 600,
                 }}>
-                  {task.icon} {task.name}
+                  {task.name}
                 </td>
                 {DAY_LABELS.map((d) => (
                   <td key={d} style={{
@@ -183,13 +184,13 @@ export default function Print() {
         <div style={{ marginTop: 20, display: 'flex', gap: 20 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: styleConfig.accentColor, marginBottom: 6 }}>
-              本周累计星星：_________ ⭐
+              本周累计星星：_________ ★
             </div>
           </div>
         </div>
         <div style={{ marginTop: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: styleConfig.accentColor, marginBottom: 6 }}>
-            📝 爸爸妈妈寄语：
+            爸爸妈妈寄语：
           </div>
           <div style={{
             height: 60,
@@ -204,7 +205,7 @@ export default function Print() {
           fontSize: 12,
           color: '#bbb',
         }}>
-          完成任务后，在方格里画 ⭐ 或贴小贴纸吧！
+          完成任务后，在方格里画 ★ 或贴小贴纸吧！
         </div>
       </div>
 

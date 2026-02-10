@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AppIcon } from '../../components/common/AppIcon'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import type { GrowthMetric } from '../../types'
 import GrowthCurveChart from '../../components/charts/GrowthCurveChart'
 import GrowthEntry from './GrowthEntry'
-import { calculateGrowthVelocity } from '../../utils/growthUtils'
+import { calculateGrowthVelocity, getAgeInMonths } from '../../utils/growthUtils'
 
 const METRIC_TABS: { key: GrowthMetric; label: string }[] = [
   { key: 'height', label: '身高' },
@@ -56,14 +56,19 @@ export default function GrowthDashboard() {
     return calculateGrowthVelocity(points)
   }, [chartPoints, metric])
 
-  const ageYears = useMemo(() => {
+  const ageMonths = useMemo(() => {
     if (!child) return 0
-    const now = new Date()
-    const birth = new Date(child.birthday)
-    return (now.getFullYear() - birth.getFullYear()) + (now.getMonth() - birth.getMonth()) / 12
+    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
   }, [child])
-  const showHeadCirc = child && ageYears <= 3
+  const showHeadCirc = child && ageMonths <= 36
   const visibleTabs = showHeadCirc ? METRIC_TABS : METRIC_TABS.filter((t) => t.key !== 'headCircumference')
+
+  // Reset metric if current tab is no longer visible (e.g. switching to older child)
+  useEffect(() => {
+    if (!visibleTabs.some((t) => t.key === metric)) {
+      setMetric('height')
+    }
+  }, [visibleTabs, metric])
 
   if (!child) {
     return <div style={{ textAlign: 'center', padding: 20, color: 'var(--color-text-secondary)' }}>请先选择孩子</div>

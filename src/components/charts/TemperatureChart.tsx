@@ -176,8 +176,8 @@ export default function TemperatureChart({
         return (
           <g key={`med-${i}`}>
             <line x1={x} x2={x} y1={PAD.top} y2={height - PAD.bottom} stroke="#7E57C2" strokeWidth={0.8} strokeDasharray="2,2" />
-            <text x={x} y={PAD.top - 4} textAnchor="middle" fontSize={10}>
-              💊
+            <text x={x} y={PAD.top - 4} textAnchor="middle" fontSize={10} fill="#7E57C2">
+              Rx
             </text>
           </g>
         )

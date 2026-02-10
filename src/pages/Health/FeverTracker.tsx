@@ -5,7 +5,7 @@ import { useToast } from '../../components/common/Toast'
 import { AppIcon } from '../../components/common/AppIcon'
 import type { MeasureMethod, SymptomTag } from '../../types'
 import { FEVER_LEVEL_INFO, SYMPTOM_TAG_INFO, MEASURE_METHOD_INFO } from '../../types'
-import { getFeverLevel } from '../../utils/growthUtils'
+import { getFeverLevel, getAgeInMonths } from '../../utils/growthUtils'
 import TemperatureChart from '../../components/charts/TemperatureChart'
 
 const METHODS: MeasureMethod[] = ['ear', 'forehead', 'armpit']
@@ -51,9 +51,7 @@ export default function FeverTracker() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    const now = new Date()
-    const birth = new Date(child.birthday)
-    return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
   }, [child])
 
   const seekMedicalAttention = useMemo(() => {

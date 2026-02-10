@@ -5,6 +5,8 @@ import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { AppIcon } from '../../components/common/AppIcon'
 import { PLANNED_VACCINES, OPTIONAL_VACCINES, ALL_VACCINES, type VaccineScheduleItem } from '../../data/vaccineSchedule'
+import { getAgeInMonths } from '../../utils/growthUtils'
+import type { VaccinationRecord } from '../../types'
 
 type ViewMode = 'schedule' | 'history'
 
@@ -36,9 +38,7 @@ export default function VaccineTracker() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    const now = new Date()
-    const birth = new Date(child.birthday)
-    return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
   }, [child])
 
   const openRecordModal = (vaccine: VaccineScheduleItem) => {
@@ -376,7 +376,7 @@ function VaccineHistoryView({
   records,
   onDelete,
 }: {
-  records: ReturnType<typeof useHealthStore.getState>['vaccinationRecords']
+  records: VaccinationRecord[]
   onDelete: (recordId: string) => void
 }) {
   if (records.length === 0) {

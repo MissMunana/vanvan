@@ -941,7 +941,7 @@ function ExchangeReview() {
                   style={{ flex: 1 }}
                   onClick={() => handleApprove(exchange)}
                 >
-                  ✓ 同意
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><AppIcon name="Check" size={14} /> 同意</span>
                 </button>
                 <button
                   className="btn btn-outline btn-sm"

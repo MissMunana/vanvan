@@ -46,13 +46,13 @@ export default function App() {
 
   useScreenTime(screenTimeConfig, onLimitReached, onNightLock)
 
-  if (!onboardingCompleted) {
-    return <Onboarding />
-  }
-
   const isTablet = useIsTablet()
   const hiddenNavRoutes = ['/print']
   const showNav = !hiddenNavRoutes.includes(location.pathname)
+
+  if (!onboardingCompleted) {
+    return <Onboarding />
+  }
 
   return (
     <>

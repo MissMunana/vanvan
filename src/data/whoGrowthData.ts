@@ -380,16 +380,16 @@ export function estimatePercentile(value: number, row: WHOPercentileRow): number
 
   // Below P3
   if (value <= row.p3) {
-    // Extrapolate below P3 (clamp to 0.1)
-    const slope = (10 - 3) / (row.p10 - row.p3)
+    const denom = row.p10 - row.p3
+    const slope = denom === 0 ? 1 : (10 - 3) / denom
     const estimated = 3 - (row.p3 - value) * slope
     return Math.max(0.1, Math.round(estimated * 10) / 10)
   }
 
   // Above P97
   if (value >= row.p97) {
-    // Extrapolate above P97 (clamp to 99.9)
-    const slope = (97 - 90) / (row.p97 - row.p90)
+    const denom = row.p97 - row.p90
+    const slope = denom === 0 ? 1 : (97 - 90) / denom
     const estimated = 97 + (value - row.p97) * slope
     return Math.min(99.9, Math.round(estimated * 10) / 10)
   }
@@ -399,7 +399,8 @@ export function estimatePercentile(value: number, row: WHOPercentileRow): number
     const [pLow, vLow] = points[i]
     const [pHigh, vHigh] = points[i + 1]
     if (value >= vLow && value <= vHigh) {
-      const ratio = (value - vLow) / (vHigh - vLow)
+      const denom = vHigh - vLow
+      const ratio = denom === 0 ? 0.5 : (value - vLow) / denom
       const percentile = pLow + ratio * (pHigh - pLow)
       return Math.round(percentile * 10) / 10
     }

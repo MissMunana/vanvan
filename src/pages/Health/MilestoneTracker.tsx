@@ -12,6 +12,7 @@ import {
   type MilestoneDefinition,
 } from '../../data/milestones'
 import type { MilestoneStatus } from '../../types'
+import { getAgeInMonths } from '../../utils/growthUtils'
 
 type ViewFilter = 'current' | 'all'
 
@@ -32,9 +33,7 @@ export default function MilestoneTracker() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    const now = new Date()
-    const birth = new Date(child.birthday)
-    return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
   }, [child])
 
   const milestoneRecords = useMemo(() => {
