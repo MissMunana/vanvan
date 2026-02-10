@@ -449,7 +449,7 @@ function TaskManager() {
     name: '',
     category: 'life' as TaskCategory,
     points: 10,
-    icon: 'Star',
+    icon: '⭐',
     description: '',
   })
 
@@ -468,7 +468,7 @@ function TaskManager() {
       frequency: 'daily',
     })
     setShowAdd(false)
-    setNewTask({ name: '', category: 'life', points: 10, icon: 'Star', description: '' })
+    setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '' })
     showToast('任务已添加')
   }
 
@@ -510,7 +510,7 @@ function TaskManager() {
     setShowImport(false)
   }
 
-  const ICONS = ['Star', 'Smile', 'BookOpen', 'Heart', 'Sparkles', 'Dumbbell', 'Target', 'Flame', 'NotebookPen', 'Backpack', 'UtensilsCrossed', 'Droplets', 'Shirt', 'ToyBrick']
+  const ICONS = ['🌟', '⭐', '🌙', '✨', '💫', '🔮', '🪐', '🦄', '🌠', '🌈', '☁️', '🫧', '🎀', '🧸', '🎵', '🍭']
 
   return (
     <div>
@@ -676,7 +676,7 @@ function RewardManager() {
     name: '',
     category: 'time' as RewardCategory,
     points: 20,
-    icon: 'Gift',
+    icon: '🎁',
     description: '',
   })
 
@@ -696,7 +696,7 @@ function RewardManager() {
       isActive: true,
     })
     setShowAdd(false)
-    setNewReward({ name: '', category: 'time', points: 20, icon: 'Gift', description: '' })
+    setNewReward({ name: '', category: 'time', points: 20, icon: '🎁', description: '' })
     showToast('奖励已添加')
   }
 

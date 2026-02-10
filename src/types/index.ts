@@ -110,16 +110,16 @@ export interface AgeGroupConfig {
 }
 
 export const CATEGORY_INFO: Record<TaskCategory, { label: string; icon: string }> = {
-  life: { label: '生活习惯', icon: '🌈' },
-  study: { label: '学习习惯', icon: '📖' },
-  manner: { label: '礼貌行为', icon: '🌸' },
-  chore: { label: '家务帮助', icon: '🏠' },
+  life: { label: '生活习惯', icon: '🌙' },
+  study: { label: '学习习惯', icon: '🔮' },
+  manner: { label: '礼貌行为', icon: '🦄' },
+  chore: { label: '家务帮助', icon: '⭐' },
 }
 
 export const REWARD_CATEGORY_INFO: Record<RewardCategory, { label: string; icon: string }> = {
-  time: { label: '亲子时光', icon: '🥰' },
-  privilege: { label: '小特权', icon: '👑' },
-  material: { label: '实物奖励', icon: '🎁' },
+  time: { label: '亲子时光', icon: '🌟' },
+  privilege: { label: '小特权', icon: '🪐' },
+  material: { label: '实物奖励', icon: '💫' },
 }
 
 export type BadgeCategory = 'habit' | 'points' | 'special'
