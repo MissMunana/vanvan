@@ -268,7 +268,7 @@ export default function Profile() {
         title="关于"
       >
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 12 }}>⭐</div>
+          <div style={{ marginBottom: 12, fontSize: '3rem' }}>⭐</div>
           <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 4 }}>小星星成长宝</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
             V1.5 体验优化版

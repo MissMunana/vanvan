@@ -1,10 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页', icon: '✨' },
-  { path: '/tasks', label: '任务', icon: '🎯' },
-  { path: '/shop', label: '商城', icon: '🎪' },
-  { path: '/profile', label: '我的', icon: '🐻' },
+  { path: '/', label: '首页', icon: '🏠' },
+  { path: '/tasks', label: '任务', icon: '📋' },
+  { path: '/shop', label: '商城', icon: '🎁' },
+  { path: '/profile', label: '我的', icon: '👤' },
   { path: '/parent', label: '家长', icon: '🔒' },
 ]
 
@@ -35,7 +35,7 @@ export function SideNav() {
         alignItems: 'center',
         gap: 8,
       }}>
-        <span style={{ fontSize: '1.5rem' }}>⭐</span>
+        ⭐
         <span>小星星成长宝</span>
       </div>
 
@@ -62,7 +62,7 @@ export function SideNav() {
                 transition: 'background 0.2s',
               }}
             >
-              <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+              <span>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           )

@@ -11,7 +11,6 @@ import { useSound } from '../../hooks/useSound'
 import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { CATEGORY_INFO, HABIT_STAGE_INFO, type TaskCategory } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
-
 const EMOTIONS = [
   { emoji: '😊', label: '开心' },
   { emoji: '💪', label: '自豪' },
@@ -203,7 +202,7 @@ export default function Tasks() {
               border: '1px solid var(--color-border)',
             }}
           >
-            {info.icon} {info.label}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{info.icon} {info.label}</span>
           </button>
         ))}
       </div>
@@ -240,10 +239,9 @@ export default function Tasks() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.5rem',
                   flexShrink: 0,
                 }}>
-                  {task.completedToday ? '✅' : task.icon}
+                  <span style={{ fontSize: '1.8rem' }}>{task.completedToday ? '✅' : task.icon}</span>
                 </div>
 
                 {/* Task info */}
@@ -258,7 +256,7 @@ export default function Tasks() {
                   }}>
                     {task.name}
                     {stageInfo && (
-                      <span style={{ fontSize: '0.7rem' }} title={stageInfo.description}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }} title={stageInfo.description}>
                         {stageInfo.icon}
                       </span>
                     )}
@@ -269,7 +267,7 @@ export default function Tasks() {
                       color: 'var(--color-warning)',
                       marginTop: 2,
                     }}>
-                      🔥 已连续 {task.consecutiveDays} 天
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>🔥 已连续 {task.consecutiveDays} 天</span>
                       {stageInfo && <span> · {stageInfo.label}</span>}
                     </div>
                   )}
@@ -346,7 +344,7 @@ export default function Tasks() {
                 width: '100%',
               }}
             >
-              <span style={{ fontSize: '1.5rem' }}>{e.emoji}</span>
+              <span style={{ fontSize: '1.8rem' }}>{e.emoji}</span>
               <span style={{ fontWeight: 600 }}>{e.label}</span>
             </button>
           ))}

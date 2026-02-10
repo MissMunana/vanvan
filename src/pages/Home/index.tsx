@@ -12,7 +12,6 @@ import { useSound } from '../../hooks/useSound'
 import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { HABIT_STAGE_INFO } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
-
 export default function Home() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
@@ -188,9 +187,8 @@ export default function Home() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.5rem',
           }}>
-            {child.avatar}
+            <span style={{ fontSize: '1.5rem' }}>{child.avatar}</span>
           </div>
           <div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -247,7 +245,7 @@ export default function Home() {
                 borderBottom: '1px solid var(--color-border)',
               }}
             >
-              <span style={{ fontSize: '1.3rem' }}>{c.avatar}</span>
+              {c.avatar}
               <span style={{ flex: 1, fontWeight: c.childId === currentChildId ? 700 : 400 }}>{c.name}</span>
               {c.childId === currentChildId && (
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>当前</span>
@@ -287,7 +285,6 @@ export default function Home() {
           position: 'absolute',
           top: 10,
           left: 15,
-          fontSize: '1.5rem',
           opacity: 0.6,
           animation: 'float 3s ease-in-out infinite',
         }}>⭐</div>
@@ -295,7 +292,6 @@ export default function Home() {
           position: 'absolute',
           top: 20,
           right: 20,
-          fontSize: '1.2rem',
           opacity: 0.5,
           animation: 'float 3s ease-in-out infinite 1s',
         }}>✨</div>
@@ -303,7 +299,6 @@ export default function Home() {
           position: 'absolute',
           bottom: 15,
           left: 30,
-          fontSize: '1rem',
           opacity: 0.4,
           animation: 'float 3s ease-in-out infinite 0.5s',
         }}>🌟</div>
@@ -521,9 +516,7 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
           <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
             {task.name}
             {stageInfo && (
-              <span style={{ fontSize: '0.7rem' }} title={stageInfo.description}>
-                {stageInfo.icon}
-              </span>
+              <span title={stageInfo.description}>{stageInfo.icon}</span>
             )}
           </div>
           {task.consecutiveDays > 0 && (

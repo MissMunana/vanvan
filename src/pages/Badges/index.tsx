@@ -4,7 +4,6 @@ import { useAppStore } from '../../stores/appStore'
 import { useBadgeStore } from '../../stores/badgeStore'
 import { BADGE_LIST } from '../../data/badges'
 import { Modal } from '../../components/common/Modal'
-
 export default function Badges() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
@@ -83,11 +82,10 @@ export default function Badges() {
                     }}
                   >
                     <div style={{
-                      fontSize: '2.2rem',
                       filter: isUnlocked ? 'none' : 'grayscale(1) opacity(0.3)',
                       transition: 'filter 0.3s',
                     }}>
-                      {badge.icon}
+                      <span style={{ fontSize: '2.2rem' }}>{badge.icon}</span>
                     </div>
                     <div style={{
                       fontSize: '0.75rem',
@@ -135,11 +133,10 @@ export default function Badges() {
         {selectedDef && (
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
             <div style={{
-              fontSize: '4rem',
               marginBottom: 12,
               filter: unlockedIds.has(selectedDef.badgeId) ? 'none' : 'grayscale(1) opacity(0.4)',
             }}>
-              {selectedDef.icon}
+              <span style={{ fontSize: '4rem' }}>{selectedDef.icon}</span>
             </div>
             <div style={{
               fontSize: '0.95rem',

@@ -67,7 +67,7 @@ export default function InstallPrompt() {
             zIndex: 9999,
           }}
         >
-          <span style={{ fontSize: 32, lineHeight: 1 }}>⭐</span>
+          <span style={{ fontSize: 32 }}>⭐</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: '#333' }}>
               添加到主屏幕

@@ -6,6 +6,7 @@ import { usePointStore } from '../../stores/pointStore'
 import { useRewardStore } from '../../stores/rewardStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useBadgeStore } from '../../stores/badgeStore'
+import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
@@ -185,7 +186,7 @@ export default function Parent() {
               minWidth: 52,
             }}
           >
-            <span style={{ fontSize: '1.1rem' }}>{tab.icon}</span>
+            {tab.icon}
             {tab.label}
           </button>
         ))}
@@ -448,7 +449,7 @@ function TaskManager() {
     name: '',
     category: 'life' as TaskCategory,
     points: 10,
-    icon: '⭐',
+    icon: 'Star',
     description: '',
   })
 
@@ -467,7 +468,7 @@ function TaskManager() {
       frequency: 'daily',
     })
     setShowAdd(false)
-    setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '' })
+    setNewTask({ name: '', category: 'life', points: 10, icon: 'Star', description: '' })
     showToast('任务已添加')
   }
 
@@ -509,7 +510,7 @@ function TaskManager() {
     setShowImport(false)
   }
 
-  const ICONS = ['⭐', '🦷', '📚', '😊', '🧹', '💪', '🎯', '🌟', '📝', '🎒', '🍚', '🧼', '👕', '🧸']
+  const ICONS = ['Star', 'Smile', 'BookOpen', 'Heart', 'Sparkles', 'Dumbbell', 'Target', 'Flame', 'NotebookPen', 'Backpack', 'UtensilsCrossed', 'Droplets', 'Shirt', 'ToyBrick']
 
   return (
     <div>
@@ -524,7 +525,7 @@ function TaskManager() {
           alignItems: 'center',
           gap: 12,
         }}>
-          <span style={{ fontSize: '1.3rem' }}>{task.icon}</span>
+          {task.icon}
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600 }}>{task.name}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
@@ -595,6 +596,7 @@ function TaskManager() {
                   width: 40, height: 40, borderRadius: 8, fontSize: '1.2rem',
                   border: newTask.icon === icon ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                   background: newTask.icon === icon ? 'var(--color-primary-light)' : 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>{icon}</button>
               ))}
             </div>
@@ -642,6 +644,7 @@ function TaskManager() {
                     width: 40, height: 40, borderRadius: 8, fontSize: '1.2rem',
                     border: editingTask.icon === icon ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                     background: editingTask.icon === icon ? 'var(--color-primary-light)' : 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>{icon}</button>
                 ))}
               </div>
@@ -673,7 +676,7 @@ function RewardManager() {
     name: '',
     category: 'time' as RewardCategory,
     points: 20,
-    icon: '🎁',
+    icon: 'Gift',
     description: '',
   })
 
@@ -693,7 +696,7 @@ function RewardManager() {
       isActive: true,
     })
     setShowAdd(false)
-    setNewReward({ name: '', category: 'time', points: 20, icon: '🎁', description: '' })
+    setNewReward({ name: '', category: 'time', points: 20, icon: 'Gift', description: '' })
     showToast('奖励已添加')
   }
 
@@ -734,7 +737,7 @@ function RewardManager() {
     }
   }
 
-  const ICONS = ['🎁', '📖', '🎲', '🌳', '🧁', '🎬', '🌙', '🍕', '📺', '✏️', '📕', '🧩', '👑', '💕']
+  const ICONS = ['Gift', 'Castle', 'Dice5', 'TreePine', 'CakeSlice', 'Clapperboard', 'Moon', 'IceCreamCone', 'Tv', 'Pencil', 'Palette', 'Puzzle', 'Crown', 'Heart']
 
   return (
     <div>
@@ -749,7 +752,7 @@ function RewardManager() {
           alignItems: 'center',
           gap: 12,
         }}>
-          <span style={{ fontSize: '1.3rem' }}>{reward.icon}</span>
+          {reward.icon}
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600 }}>{reward.name}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
@@ -815,6 +818,7 @@ function RewardManager() {
                   width: 40, height: 40, borderRadius: 8, fontSize: '1.2rem',
                   border: newReward.icon === icon ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                   background: newReward.icon === icon ? 'var(--color-primary-light)' : 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>{icon}</button>
               ))}
             </div>
@@ -855,6 +859,7 @@ function RewardManager() {
                     width: 40, height: 40, borderRadius: 8, fontSize: '1.2rem',
                     border: editingReward.icon === icon ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                     background: editingReward.icon === icon ? 'var(--color-primary-light)' : 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>{icon}</button>
                 ))}
               </div>
@@ -921,7 +926,7 @@ function ExchangeReview() {
           {pending.map((exchange) => (
             <div key={exchange.exchangeId} className="card">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <span style={{ fontSize: '1.5rem' }}>{exchange.rewardIcon}</span>
+                {exchange.rewardIcon}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600 }}>{exchange.rewardName}</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
@@ -935,7 +940,7 @@ function ExchangeReview() {
                   style={{ flex: 1 }}
                   onClick={() => handleApprove(exchange)}
                 >
-                  ✓ 同意
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>✓ 同意</span>
                 </button>
                 <button
                   className="btn btn-outline btn-sm"
@@ -966,7 +971,7 @@ function ExchangeReview() {
               gap: 12,
               opacity: 0.8,
             }}>
-              <span style={{ fontSize: '1.3rem' }}>{exchange.rewardIcon}</span>
+              {exchange.rewardIcon}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{exchange.rewardName}</div>
                 <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
@@ -1218,7 +1223,7 @@ function Settings() {
 
   const [editingChild, setEditingChild] = useState<{ childId: string; name: string; gender: 'male' | 'female'; birthday: string; avatar: string } | null>(null)
   const [showAddChild, setShowAddChild] = useState(false)
-  const [newChild, setNewChild] = useState({ name: '', gender: 'male' as 'male' | 'female', birthday: '', avatar: '🐱' })
+  const [newChild, setNewChild] = useState({ name: '', gender: 'male' as 'male' | 'female', birthday: '', avatar: 'Cat' })
   const [showPinChange, setShowPinChange] = useState(false)
   const [pinForm, setPinForm] = useState({ oldPin: '', newPin: '', confirmPin: '' })
   const [pinChangeError, setPinChangeError] = useState('')
@@ -1264,7 +1269,7 @@ function Settings() {
     })
     setCurrentChild(childId)
     setShowAddChild(false)
-    setNewChild({ name: '', gender: 'male', birthday: '', avatar: '🐱' })
+    setNewChild({ name: '', gender: 'male', birthday: '', avatar: 'Cat' })
     showToast('孩子已添加')
   }
 
@@ -1281,6 +1286,7 @@ function Settings() {
     useRewardStore.getState().deleteByChildId(showDeleteChild)
     useExchangeStore.getState().deleteByChildId(showDeleteChild)
     useBadgeStore.getState().deleteByChildId(showDeleteChild)
+    useHealthStore.getState().deleteByChildId(showDeleteChild)
     deleteChildFromApp(showDeleteChild)
     setShowDeleteChild(null)
     setDeletePin('')
@@ -1348,7 +1354,7 @@ function Settings() {
           alignItems: 'center',
           gap: 12,
         }}>
-          <span style={{ fontSize: '1.5rem' }}>{c.avatar}</span>
+          {c.avatar}
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600 }}>{c.name}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
@@ -1405,7 +1411,7 @@ function Settings() {
             alignItems: 'center',
             gap: 12,
           }}>
-            <span style={{ fontSize: '1.3rem' }}>🔊</span>
+            🔊
             <span style={{ flex: 1, fontWeight: 600 }}>音效</span>
             <button
               onClick={handleSoundToggle}
@@ -1447,7 +1453,7 @@ function Settings() {
           textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: '1.3rem' }}>🔑</span>
+        🔐
         <span style={{ flex: 1, fontWeight: 600 }}>修改家长密码</span>
         <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
       </button>
@@ -1459,7 +1465,7 @@ function Settings() {
         alignItems: 'center',
         gap: 12,
       }}>
-        <span style={{ fontSize: '1.3rem' }}>ℹ️</span>
+        ℹ️
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600 }}>小星星成长宝</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
@@ -1481,7 +1487,7 @@ function Settings() {
           textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: '1.3rem' }}>🚪</span>
+        🚪
         <span style={{ flex: 1, fontWeight: 600 }}>退出登录</span>
         <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
       </button>
@@ -1496,7 +1502,7 @@ function Settings() {
           textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: '1.3rem' }}>⚠️</span>
+        ⚠️
         <span style={{ flex: 1, fontWeight: 600, color: 'var(--color-text-secondary)' }}>注销账号</span>
         <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
       </button>
@@ -1540,7 +1546,7 @@ function Settings() {
                       background: editingChild.gender === g ? 'var(--color-primary-light)' : 'white',
                     }}
                   >
-                    {g === 'male' ? '👦 男孩' : '👧 女孩'}
+                    {g === 'male' ? '男孩' : '女孩'}
                   </button>
                 ))}
               </div>
@@ -1572,8 +1578,9 @@ function Settings() {
                       width: 44, height: 44, borderRadius: 10, fontSize: '1.3rem',
                       border: editingChild.avatar === a ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                       background: editingChild.avatar === a ? 'var(--color-primary-light)' : 'white',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
-                  >{a}</button>
+                  ><span style={{ fontSize: '1.3rem' }}>{a}</span></button>
                 ))}
               </div>
             </div>
@@ -1616,7 +1623,7 @@ function Settings() {
                     background: newChild.gender === g ? 'var(--color-primary-light)' : 'white',
                   }}
                 >
-                  {g === 'male' ? '👦 男孩' : '👧 女孩'}
+                  {g === 'male' ? '男孩' : '女孩'}
                 </button>
               ))}
             </div>
@@ -1648,8 +1655,9 @@ function Settings() {
                     width: 44, height: 44, borderRadius: 10, fontSize: '1.3rem',
                     border: newChild.avatar === a ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                     background: newChild.avatar === a ? 'var(--color-primary-light)' : 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
-                >{a}</button>
+                ><span style={{ fontSize: '1.3rem' }}>{a}</span></button>
               ))}
             </div>
           </div>

@@ -7,7 +7,6 @@ import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { REWARD_CATEGORY_INFO, type RewardCategory } from '../../types'
 import type { Reward } from '../../types'
-
 export default function Shop() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
@@ -54,7 +53,7 @@ export default function Shop() {
       points: reward.points,
     })
 
-    showToast('兑换申请已提交，等待家长确认 🎉')
+    showToast('兑换申请已提交，等待家长确认')
     setSelectedReward(null)
   }
 
@@ -80,7 +79,7 @@ export default function Shop() {
         color: 'white',
       }}>
         <span style={{ fontWeight: 600 }}>我的积分</span>
-        <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>⭐ {child.totalPoints}</span>
+        <span style={{ fontSize: '1.5rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: 6 }}>⭐ {child.totalPoints}</span>
       </div>
 
       {/* Category filter */}
@@ -121,7 +120,7 @@ export default function Shop() {
               border: '1px solid var(--color-border)',
             }}
           >
-            {info.icon} {info.label}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{info.icon} {info.label}</span>
           </button>
         ))}
       </div>
@@ -182,7 +181,7 @@ export default function Shop() {
                   等待确认
                 </div>
               )}
-              <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>{reward.icon}</div>
+              <div style={{ marginBottom: 8 }}><span style={{ fontSize: '2.5rem' }}>{reward.icon}</span></div>
               <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: 6 }}>{reward.name}</div>
 
               {/* Progress bar */}
@@ -207,7 +206,7 @@ export default function Shop() {
                 color: canAfford ? 'var(--color-success)' : 'var(--color-primary)',
                 fontSize: '0.9rem',
               }}>
-                ⭐ {reward.points}分
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⭐ {reward.points}分</span>
               </div>
             </motion.button>
           )
@@ -234,7 +233,7 @@ export default function Shop() {
       >
         {selectedReward && (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 12 }}>{selectedReward.icon}</div>
+            <div style={{ marginBottom: 12 }}><span style={{ fontSize: '3rem' }}>{selectedReward.icon}</span></div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 4 }}>
               {selectedReward.name}
             </div>
@@ -250,7 +249,7 @@ export default function Shop() {
             }}>
               <div style={{ fontSize: '0.85rem', marginBottom: 4 }}>需要消耗</div>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-primary)' }}>
-                ⭐ {selectedReward.points} 积分
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>⭐ {selectedReward.points} 积分</span>
               </div>
               <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
                 当前积分: {child.totalPoints}
@@ -262,7 +261,7 @@ export default function Shop() {
                 className="btn btn-primary btn-block"
                 onClick={() => handleExchange(selectedReward)}
               >
-                我想要! 🌟
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>我想要! 🌟</span>
               </button>
             ) : (
               <div>
@@ -272,7 +271,7 @@ export default function Shop() {
                   fontWeight: 600,
                   marginBottom: 12,
                 }}>
-                  还差{selectedReward.points - child.totalPoints}分就够啦! 加油! 💪
+                  还差{selectedReward.points - child.totalPoints}分就够啦! 加油!
                 </div>
                 <button
                   className="btn btn-outline btn-block"

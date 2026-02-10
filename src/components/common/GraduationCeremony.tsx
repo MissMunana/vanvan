@@ -98,7 +98,7 @@ export default function GraduationCeremony({ show, taskName, onClose }: Graduati
             style={{ textAlign: 'center', color: 'white', marginTop: 16 }}
           >
             <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
-              🎉 习惯毕业啦！
+              习惯毕业啦！
             </div>
             <div style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.9 }}>
               恭喜你！<strong>「{taskName}」</strong>
