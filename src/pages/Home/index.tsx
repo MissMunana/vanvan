@@ -55,6 +55,8 @@ export default function Home() {
 
   const pendingExchanges = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId), [exchanges, childId])
 
+  const MAX_DISPLAY = 6
+
   const todayTasks = useMemo(() => {
     return tasks.filter((t) => !t.completedToday)
   }, [tasks])
@@ -248,6 +250,31 @@ export default function Home() {
         </div>
       </motion.div>
 
+      {/* Weekly stats */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="section-header" style={{ marginBottom: 12 }}>本周统计</div>
+        <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+          <div className="stat-item">
+            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-primary)' }}>
+              {weeklyStats.tasksCompleted}
+            </div>
+            <div className="stat-item-label">完成任务</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-success)' }}>
+              {weeklyStats.pointsEarned}
+            </div>
+            <div className="stat-item-label">获得积分</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-info)' }}>
+              {weeklyStats.pointsSpent}
+            </div>
+            <div className="stat-item-label">消费积分</div>
+          </div>
+        </div>
+      </div>
+
       {/* Today's progress */}
       <div className="card" onClick={() => navigate('/tasks')} style={{ marginBottom: 16, cursor: 'pointer' }}>
         <div style={{
@@ -321,8 +348,8 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Uncompleted tasks (draggable) */}
-            {todayTasks.map((task) => (
+            {/* Uncompleted tasks (draggable), limited to MAX_DISPLAY total with completed */}
+            {todayTasks.slice(0, MAX_DISPLAY).map((task) => (
               <DraggableTaskCard
                 key={task.taskId}
                 task={task}
@@ -345,8 +372,8 @@ export default function Home() {
               </div>
             )}
 
-            {/* Completed tasks */}
-            {completedTasks.map((task) => (
+            {/* Completed tasks, fill remaining slots up to MAX_DISPLAY */}
+            {completedTasks.slice(0, Math.max(0, MAX_DISPLAY - todayTasks.length)).map((task) => (
               <div
                 key={task.taskId}
                 className="card"
@@ -373,33 +400,22 @@ export default function Home() {
                 </div>
               </div>
             ))}
+            {tasks.length > MAX_DISPLAY && (
+              <button
+                onClick={() => navigate('/tasks')}
+                style={{
+                  width: '100%',
+                  padding: '10px 0',
+                  fontSize: '0.85rem',
+                  color: 'var(--color-primary)',
+                  textAlign: 'center',
+                }}
+              >
+                还有 {tasks.length - MAX_DISPLAY} 个任务，查看全部 →
+              </button>
+            )}
           </>
         )}
-      </div>
-
-      {/* Weekly stats */}
-      <div className="card">
-        <div className="section-header" style={{ marginBottom: 12 }}>本周统计</div>
-        <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-          <div className="stat-item">
-            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-primary)' }}>
-              {weeklyStats.tasksCompleted}
-            </div>
-            <div className="stat-item-label">完成任务</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-success)' }}>
-              {weeklyStats.pointsEarned}
-            </div>
-            <div className="stat-item-label">获得积分</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-item-value" style={{ fontSize: 'var(--text-3xl)', color: 'var(--color-info)' }}>
-              {weeklyStats.pointsSpent}
-            </div>
-            <div className="stat-item-label">消费积分</div>
-          </div>
-        </div>
       </div>
 
       {/* Pending exchanges notification */}
