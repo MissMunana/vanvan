@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { HealthTab } from '../../types'
 import SubTabBar from '../../components/Layout/SubTabBar'
@@ -32,6 +33,7 @@ function getTabContent(tab: HealthTab) {
 }
 
 export default function Health() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<HealthTab>('growth')
   const prevTabRef = useRef<number>(0)
   const direction = TAB_INDEX[activeTab] >= prevTabRef.current ? 1 : -1
@@ -43,7 +45,16 @@ export default function Health() {
 
   return (
     <div className="page">
-      <MedicalDisclaimer compact />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <MedicalDisclaimer compact />
+        <button
+          onClick={() => navigate('/health-report')}
+          className="btn btn-outline"
+          style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+        >
+          🖨️ 就医报告
+        </button>
+      </div>
       <SubTabBar tabs={HEALTH_TABS} active={activeTab} onChange={handleTabChange} />
 
       <AnimatePresence mode="wait" initial={false}>

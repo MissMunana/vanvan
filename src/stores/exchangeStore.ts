@@ -58,6 +58,27 @@ export const useExchangeStore = create<ExchangeStore>()(
         set((state) => ({ exchanges: state.exchanges.filter((e) => e.childId !== childId) }))
       },
     }),
-    { name: 'star-exchanges' }
+    {
+      name: 'star-exchanges',
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        const state = persistedState as { exchanges: Exchange[] }
+        const lucideToEmoji: Record<string, string> = {
+          Castle: '🏰', Dice5: '🎲', TreePine: '🎡', CakeSlice: '🧁',
+          Clapperboard: '🍿', Moon: '💫', IceCreamBowl: '🍦', IceCreamCone: '🍦', Tv: '🎠',
+          Pencil: '🖍️', Palette: '🎨', Puzzle: '🧩', Crown: '👑',
+          Smile: '😁', Shirt: '🎀', ToyBrick: '🧸', Droplets: '🫧',
+          UtensilsCrossed: '🍙', Bed: '🌤️', BookOpen: '📒', BookOpenCheck: '🦉',
+          Backpack: '🎒', Ear: '🧚', Lightbulb: '💡', Heart: '💖',
+          HandHeart: '🤗', Gift: '🎁', Timer: '🐢', Leaf: '🌱',
+          Sparkles: '✨', Soup: '🥣', WashingMachine: '🧺',
+        }
+        state.exchanges = state.exchanges.map((exchange) => {
+          const byLucide = lucideToEmoji[exchange.rewardIcon]
+          return byLucide ? { ...exchange, rewardIcon: byLucide } : exchange
+        })
+        return state
+      },
+    }
   )
 )

@@ -46,6 +46,10 @@ export default function MilestoneTracker() {
     return record?.status ?? 'not_started'
   }
 
+  const getRecord = (milestoneId: string) => {
+    return milestoneRecords.find((r) => r.milestoneId === milestoneId)
+  }
+
   const currentMilestones = useMemo(() => getMilestonesForAge(ageMonths), [ageMonths])
   const upcomingMilestones = useMemo(() => getUpcomingMilestones(ageMonths), [ageMonths])
 
@@ -76,6 +80,14 @@ export default function MilestoneTracker() {
     updateMilestoneStatus(child.childId, milestone.id, newStatus)
     if (newStatus === 'achieved') {
       showToast(`${milestone.name} 已达成！`)
+    }
+  }
+
+  const handlePhotoToggle = (milestoneId: string, photoTaken: boolean, photoNote?: string) => {
+    if (!child) return
+    const record = getRecord(milestoneId)
+    if (record) {
+      updateMilestoneStatus(child.childId, milestoneId, record.status, undefined, { photoTaken, photoNote })
     }
   }
 
@@ -186,8 +198,10 @@ export default function MilestoneTracker() {
                     key={milestone.id}
                     milestone={milestone}
                     status={getStatus(milestone.id)}
+                    record={getRecord(milestone.id)}
                     ageMonths={ageMonths}
                     onStatusChange={(status) => handleStatusChange(milestone, status)}
+                    onPhotoToggle={(photoTaken, photoNote) => handlePhotoToggle(milestone.id, photoTaken, photoNote)}
                   />
                 ))}
               </div>
@@ -211,14 +225,21 @@ export default function MilestoneTracker() {
 function MilestoneItem({
   milestone,
   status,
+  record,
   ageMonths,
   onStatusChange,
+  onPhotoToggle,
 }: {
   milestone: MilestoneDefinition
   status: MilestoneStatus
+  record: import('../../types').MilestoneRecord | undefined
   ageMonths: number
   onStatusChange: (status: MilestoneStatus) => void
+  onPhotoToggle: (photoTaken: boolean, photoNote?: string) => void
 }) {
+  const [showPhotoNote, setShowPhotoNote] = useState(false)
+  const [photoNoteText, setPhotoNoteText] = useState(record?.photoNote ?? '')
+
   const config = STATUS_CONFIG[status]
   const isInRange = ageMonths >= milestone.startMonth && ageMonths <= milestone.endMonth
   const isPast = ageMonths > milestone.endMonth
@@ -244,8 +265,9 @@ function MilestoneItem({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '1.2rem' }}>{milestone.icon}</span>
             <div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                 {milestone.name}
+                {record?.photoTaken && <span title="已拍照留念">📷</span>}
               </div>
               <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
                 {milestone.startMonth}-{milestone.endMonth}月龄 · {milestone.description}
@@ -268,6 +290,43 @@ function MilestoneItem({
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{config.icon} {config.label}</span>
         </button>
       </div>
+      {/* Photo toggle for achieved milestones */}
+      {status === 'achieved' && (
+        <div style={{ marginTop: 6, paddingLeft: 32 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={record?.photoTaken ?? false}
+              onChange={(e) => {
+                onPhotoToggle(e.target.checked, photoNoteText || undefined)
+                if (e.target.checked && !showPhotoNote) setShowPhotoNote(true)
+                if (!e.target.checked) setShowPhotoNote(false)
+              }}
+              style={{ width: 14, height: 14 }}
+            />
+            📷 已拍照留念
+          </label>
+          {(showPhotoNote || record?.photoTaken) && (
+            <div style={{ marginTop: 4, display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="text"
+                placeholder="照片备注（选填）"
+                value={photoNoteText}
+                onChange={(e) => setPhotoNoteText(e.target.value)}
+                onBlur={() => {
+                  if (record?.photoTaken) onPhotoToggle(true, photoNoteText || undefined)
+                }}
+                style={{ fontSize: '0.72rem', flex: 1, padding: '4px 8px' }}
+              />
+            </div>
+          )}
+          {record?.photoNote && !showPhotoNote && (
+            <div style={{ fontSize: '0.68rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+              📝 {record.photoNote}
+            </div>
+          )}
+        </div>
+      )}
       {isPast && status === 'not_started' && (
         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-warning)', marginTop: 4, paddingLeft: 32 }}>
           ⚠️ 已超过典型发展窗口期，请关注
