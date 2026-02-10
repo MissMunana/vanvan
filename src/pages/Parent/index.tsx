@@ -208,7 +208,9 @@ export default function Parent() {
 function Dashboard() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
+  const setCurrentChild = useAppStore((s) => s.setCurrentChild)
   const logs = usePointStore((s) => s.logs)
+  const tasks = useTaskStore((s) => s.tasks)
   const exchanges = useExchangeStore((s) => s.exchanges)
   const navigate = useNavigate()
 
@@ -217,6 +219,19 @@ function Dashboard() {
 
   const [showScreenTime, setShowScreenTime] = useState(false)
   const screenTime = child?.settings?.screenTime
+
+  // Multi-child overview stats
+  const childOverview = useMemo(() => {
+    if (children.length <= 1) return null
+    const today = new Date().toISOString().split('T')[0]
+    return children.map((c) => {
+      const todayTasks = tasks.filter(
+        (t) => t.childId === c.childId && t.isActive && t.completedToday && t.lastCompletedDate === today
+      ).length
+      const pending = exchanges.filter((e) => e.childId === c.childId && e.status === 'pending').length
+      return { child: c, todayTasks, pending }
+    })
+  }, [children, tasks, exchanges])
 
   const weeklyStats = useMemo(() => {
     const now = new Date()
@@ -238,6 +253,49 @@ function Dashboard() {
 
   return (
     <div>
+      {/* Multi-child overview */}
+      {childOverview && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>👨‍👩‍👧‍👦 我的孩子们</div>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
+            {childOverview.map(({ child: c, todayTasks, pending }) => (
+              <button
+                key={c.childId}
+                onClick={() => setCurrentChild(c.childId)}
+                style={{
+                  minWidth: 140,
+                  padding: '12px 14px',
+                  borderRadius: 'var(--radius-lg)',
+                  background: c.childId === currentChildId
+                    ? (c.themeColor ?? 'var(--color-primary)') + '18'
+                    : 'white',
+                  border: c.childId === currentChildId
+                    ? `2px solid ${c.themeColor ?? 'var(--color-primary)'}`
+                    : '1px solid var(--color-border)',
+                  textAlign: 'left',
+                  flex: '0 0 auto',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <span style={{ fontSize: '1.3rem' }}>{c.avatar}</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{c.name}</span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  积分: <span style={{ fontWeight: 600, color: c.themeColor ?? 'var(--color-primary)' }}>{c.totalPoints}</span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                  今日完成: {todayTasks}
+                  {pending > 0 && (
+                    <span style={{ color: 'var(--color-warning)', marginLeft: 6 }}>待审核: {pending}</span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Current child stats */}
       <div style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         borderRadius: 16,
@@ -737,7 +795,7 @@ function RewardManager() {
     }
   }
 
-  const ICONS = ['Gift', 'Castle', 'Dice5', 'TreePine', 'CakeSlice', 'Clapperboard', 'Moon', 'IceCreamCone', 'Tv', 'Pencil', 'Palette', 'Puzzle', 'Crown', 'Heart']
+  const ICONS = ['🎁', '🏰', '🎲', '🎡', '🧁', '🍿', '💫', '🍦', '🎠', '🖍️', '🎨', '🧩', '👑', '💖']
 
   return (
     <div>
@@ -883,7 +941,22 @@ function ExchangeReview() {
   const allExchanges = useExchangeStore((s) => s.exchanges)
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
-  const exchanges = useMemo(() => allExchanges.filter((e) => e.childId === (child?.childId || '')), [allExchanges, child?.childId])
+
+  // Multi-child filter
+  const [filterChildId, setFilterChildId] = useState<string | null>(null)
+  const multiChild = children.length > 1
+
+  const exchanges = useMemo(() => {
+    if (filterChildId) {
+      return allExchanges.filter((e) => e.childId === filterChildId)
+    }
+    if (multiChild) {
+      // Show all children's exchanges
+      return allExchanges
+    }
+    return allExchanges.filter((e) => e.childId === (child?.childId || ''))
+  }, [allExchanges, child?.childId, filterChildId, multiChild])
+
   const reviewExchange = useExchangeStore((s) => s.reviewExchange)
   const addLog = usePointStore((s) => s.addLog)
   const { showToast } = useToast()
@@ -891,13 +964,15 @@ function ExchangeReview() {
   const [rejectModal, setRejectModal] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
 
+  const getChildForExchange = (childId: string) => children.find((c) => c.childId === childId)
+
   if (!child) return null
 
   const handleApprove = (exchange: typeof exchanges[0]) => {
-    updatePoints(child.childId, -exchange.points)
+    updatePoints(exchange.childId, -exchange.points)
     reviewExchange(exchange.exchangeId, 'approved')
     addLog({
-      childId: child.childId,
+      childId: exchange.childId,
       taskId: null,
       type: 'spend',
       points: -exchange.points,
@@ -920,15 +995,63 @@ function ExchangeReview() {
 
   return (
     <div>
+      {/* Multi-child filter tabs */}
+      {multiChild && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto' }}>
+          <button
+            onClick={() => setFilterChildId(null)}
+            style={{
+              padding: '5px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem',
+              fontWeight: filterChildId === null ? 700 : 400,
+              background: filterChildId === null ? 'var(--color-primary)' : 'transparent',
+              color: filterChildId === null ? 'white' : 'var(--color-text-secondary)',
+              border: filterChildId === null ? 'none' : '1px solid var(--color-border)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            全部
+          </button>
+          {children.map((c) => (
+            <button
+              key={c.childId}
+              onClick={() => setFilterChildId(c.childId)}
+              style={{
+                padding: '5px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem',
+                fontWeight: filterChildId === c.childId ? 700 : 400,
+                background: filterChildId === c.childId ? (c.themeColor ?? 'var(--color-primary)') : 'transparent',
+                color: filterChildId === c.childId ? 'white' : 'var(--color-text-secondary)',
+                border: filterChildId === c.childId ? 'none' : '1px solid var(--color-border)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {c.avatar} {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {pending.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontWeight: 700, marginBottom: 10 }}>待审核 ({pending.length})</div>
-          {pending.map((exchange) => (
+          {pending.map((exchange) => {
+            const exchangeChild = getChildForExchange(exchange.childId)
+            return (
             <div key={exchange.exchangeId} className="card">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 {exchange.rewardIcon}
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600 }}>{exchange.rewardName}</div>
+                  <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {exchange.rewardName}
+                    {multiChild && exchangeChild && (
+                      <span style={{
+                        fontSize: '0.65rem', padding: '1px 6px', borderRadius: 8,
+                        background: (exchangeChild.themeColor ?? '#999') + '20',
+                        color: exchangeChild.themeColor ?? '#999',
+                      }}>
+                        {exchangeChild.avatar} {exchangeChild.name}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                     {new Date(exchange.requestedAt).toLocaleString('zh-CN')} · {exchange.points}积分
                   </div>
@@ -951,7 +1074,7 @@ function ExchangeReview() {
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 
@@ -1221,7 +1344,7 @@ function Settings() {
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
 
-  const [editingChild, setEditingChild] = useState<{ childId: string; name: string; gender: 'male' | 'female'; birthday: string; avatar: string } | null>(null)
+  const [editingChild, setEditingChild] = useState<{ childId: string; name: string; gender: 'male' | 'female'; birthday: string; avatar: string; themeColor?: string } | null>(null)
   const [showAddChild, setShowAddChild] = useState(false)
   const [newChild, setNewChild] = useState({ name: '', gender: 'male' as 'male' | 'female', birthday: '', avatar: 'Cat' })
   const [showPinChange, setShowPinChange] = useState(false)
@@ -1253,6 +1376,7 @@ function Settings() {
       gender: editingChild.gender,
       birthday: editingChild.birthday,
       avatar: editingChild.avatar,
+      themeColor: editingChild.themeColor,
     })
     setEditingChild(null)
     setAgeGroupChangeConfirm(false)
@@ -1353,6 +1477,7 @@ function Settings() {
           display: 'flex',
           alignItems: 'center',
           gap: 12,
+          borderLeft: `3px solid ${c.themeColor ?? 'var(--color-primary)'}`,
         }}>
           {c.avatar}
           <div style={{ flex: 1 }}>
@@ -1378,6 +1503,7 @@ function Settings() {
               gender: c.gender,
               birthday: c.birthday || '',
               avatar: c.avatar,
+              themeColor: c.themeColor,
             })}
             style={{ fontSize: '0.9rem', color: 'var(--color-primary)', padding: '4px 6px' }}
           >
@@ -1584,6 +1710,23 @@ function Settings() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   ><span style={{ fontSize: '1.3rem' }}>{a}</span></button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>主题色</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['#FFB800', '#4ECDC4', '#FF6B6B', '#A8A8E6', '#95E1D3'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setEditingChild({ ...editingChild, themeColor: color })}
+                    style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: color,
+                      border: editingChild.themeColor === color ? '3px solid var(--color-text)' : '2px solid transparent',
+                      outline: editingChild.themeColor === color ? '2px solid white' : 'none',
+                    }}
+                  />
                 ))}
               </div>
             </div>

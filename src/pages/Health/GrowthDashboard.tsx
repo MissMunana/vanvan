@@ -5,7 +5,7 @@ import { useHealthStore } from '../../stores/healthStore'
 import type { GrowthMetric } from '../../types'
 import GrowthCurveChart from '../../components/charts/GrowthCurveChart'
 import GrowthEntry from './GrowthEntry'
-import { calculateGrowthVelocity, getAgeInMonths } from '../../utils/growthUtils'
+import { calculateGrowthVelocity, getAgeInMonths, checkGrowthAlert } from '../../utils/growthUtils'
 
 const METRIC_TABS: { key: GrowthMetric; label: string }[] = [
   { key: 'height', label: '身高' },
@@ -63,6 +63,52 @@ export default function GrowthDashboard() {
   const showHeadCirc = child && ageMonths <= 36
   const visibleTabs = showHeadCirc ? METRIC_TABS : METRIC_TABS.filter((t) => t.key !== 'headCircumference')
 
+  // Smart growth alerts
+  const growthAlerts = useMemo(() => {
+    if (!latest || !child) return []
+    const alerts: { message: string; level: 'warning' | 'info' }[] = []
+
+    // Check latest percentiles against P3/P97
+    if (latest.height !== null) {
+      const alert = checkGrowthAlert(child.gender, 'height', latest.ageInMonths, latest.height)
+      if (alert === 'low') alerts.push({ message: '身高偏低（低于P3），建议关注', level: 'warning' })
+      if (alert === 'high') alerts.push({ message: '身高偏高（高于P97）', level: 'info' })
+    }
+    if (latest.weight !== null) {
+      const alert = checkGrowthAlert(child.gender, 'weight', latest.ageInMonths, latest.weight)
+      if (alert === 'low') alerts.push({ message: '体重偏低（低于P3），建议关注', level: 'warning' })
+      if (alert === 'high') alerts.push({ message: '体重偏高（高于P97）', level: 'info' })
+    }
+    if (latest.bmi !== null) {
+      const alert = checkGrowthAlert(child.gender, 'bmi', latest.ageInMonths, latest.bmi)
+      if (alert === 'low') alerts.push({ message: 'BMI偏低（低于P3），建议关注', level: 'warning' })
+      if (alert === 'high') alerts.push({ message: 'BMI偏高（高于P97），建议关注', level: 'warning' })
+    }
+
+    // Growth velocity alert: percentile change ≥25 within 3 months
+    if (records.length >= 2) {
+      const threeMonthsAgo = new Date()
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
+      const recent = records.filter((r) => new Date(r.date) >= threeMonthsAgo)
+      if (recent.length >= 2) {
+        const oldest = recent[0]
+        const newest = recent[recent.length - 1]
+        if (oldest.heightPercentile !== null && newest.heightPercentile !== null) {
+          if (Math.abs(newest.heightPercentile - oldest.heightPercentile) >= 25) {
+            alerts.push({ message: '身高百分位3个月内变化较大，建议评估', level: 'warning' })
+          }
+        }
+        if (oldest.weightPercentile !== null && newest.weightPercentile !== null) {
+          if (Math.abs(newest.weightPercentile - oldest.weightPercentile) >= 25) {
+            alerts.push({ message: '体重百分位3个月内变化较大，建议评估', level: 'warning' })
+          }
+        }
+      }
+    }
+
+    return alerts
+  }, [latest, records, child])
+
   // Reset metric if current tab is no longer visible (e.g. switching to older child)
   useEffect(() => {
     if (!visibleTabs.some((t) => t.key === metric)) {
@@ -76,6 +122,31 @@ export default function GrowthDashboard() {
 
   return (
     <div>
+      {/* Growth alerts */}
+      {growthAlerts.length > 0 && (
+        <div style={{
+          marginBottom: 12,
+          padding: '10px 14px',
+          borderRadius: 'var(--radius-md)',
+          background: '#FFF3E0',
+          border: '1px solid #FFE0B2',
+        }}>
+          {growthAlerts.map((a, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              fontSize: '0.8rem', color: a.level === 'warning' ? '#E65100' : '#F57C00',
+              padding: '3px 0',
+            }}>
+              <span>{a.level === 'warning' ? '⚠️' : '💡'}</span>
+              <span>{a.message}</span>
+            </div>
+          ))}
+          <div style={{ fontSize: '0.72rem', color: '#BF360C', marginTop: 4 }}>
+            建议带孩子到儿保科进行评估
+          </div>
+        </div>
+      )}
+
       {/* Latest data card */}
       {latest ? (
         <div className="card" style={{ marginBottom: 16 }}>

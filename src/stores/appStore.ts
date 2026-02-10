@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Child } from '../types'
+import { CHILD_THEME_COLORS } from '../types'
 import { getAgeGroup, getAgeFromBirthday } from '../hooks/useAgeGroup'
 
 const DEFAULT_SCREEN_TIME = {
@@ -21,7 +22,7 @@ interface AppStore {
   setCurrentChild: (childId: string) => void
   setParentPin: (pin: string) => void
   completeOnboarding: () => void
-  updateChild: (childId: string, updates: Partial<Pick<Child, 'name' | 'gender' | 'birthday' | 'avatar'>>) => void
+  updateChild: (childId: string, updates: Partial<Pick<Child, 'name' | 'gender' | 'birthday' | 'avatar' | 'themeColor'>>) => void
   deleteChild: (childId: string) => void
   updatePoints: (childId: string, delta: number) => void
   getCurrentChild: () => Child | null
@@ -55,6 +56,7 @@ export const useAppStore = create<AppStore>()(
           ageGroup: getAgeGroup(years),
           avatar: data.avatar,
           totalPoints: 0,
+          themeColor: CHILD_THEME_COLORS[get().children.length % CHILD_THEME_COLORS.length],
           settings: {
             soundEnabled: true,
             vibrationEnabled: true,

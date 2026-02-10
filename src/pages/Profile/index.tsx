@@ -11,6 +11,7 @@ import LineChart from '../../components/charts/LineChart'
 import PieChart from '../../components/charts/PieChart'
 import { CATEGORY_INFO, type TaskCategory } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
+import GrowthReport from '../../components/reports/GrowthReport'
 
 export default function Profile() {
   const children = useAppStore((s) => s.children)
@@ -91,6 +92,7 @@ export default function Profile() {
 
   const [showHistory, setShowHistory] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [showGrowthReport, setShowGrowthReport] = useState(false)
 
   if (!child) return null
 
@@ -194,6 +196,22 @@ export default function Profile() {
       {/* Menu items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <button
+          onClick={() => setShowGrowthReport(true)}
+          className="card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            width: '100%',
+            textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: '1.3rem' }}>📈</span>
+          <span style={{ flex: 1, fontWeight: 600 }}>成长报告</span>
+          <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+        </button>
+
+        <button
           onClick={() => navigate('/badges')}
           className="card"
           style={{
@@ -260,6 +278,15 @@ export default function Profile() {
           <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
         </button>
       </div>
+
+      {/* Growth report modal */}
+      <Modal
+        open={showGrowthReport}
+        onClose={() => setShowGrowthReport(false)}
+        title="成长报告"
+      >
+        <GrowthReport childId={child.childId} />
+      </Modal>
 
       {/* About modal */}
       <Modal

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { BottomNav } from './components/Layout/BottomNav'
 import { SideNav } from './components/Layout/SideNav'
+import { TopBar } from './components/Layout/TopBar'
 import { useIsTablet } from './hooks/useMediaQuery'
 import { useAppStore } from './stores/appStore'
 import { useTaskStore } from './stores/taskStore'
@@ -16,6 +17,7 @@ import Parent from './pages/Parent'
 import Badges from './pages/Badges'
 import Print from './pages/Print'
 import Health from './pages/Health'
+import HealthReport from './pages/HealthReport'
 import Knowledge from './pages/Knowledge'
 import InstallPrompt from './components/common/InstallPrompt'
 import { Agentation } from 'agentation'
@@ -46,9 +48,23 @@ export default function App() {
 
   useScreenTime(screenTimeConfig, onLimitReached, onNightLock)
 
+  const currentChildId = useAppStore((s) => s.currentChildId)
+  const children = useAppStore((s) => s.children)
+
+  // Apply per-child theme color
+  useEffect(() => {
+    const c = children.find((ch) => ch.childId === currentChildId)
+    if (c?.themeColor) {
+      document.documentElement.style.setProperty('--color-child-accent', c.themeColor)
+    } else {
+      document.documentElement.style.removeProperty('--color-child-accent')
+    }
+  }, [currentChildId, children])
+
   const isTablet = useIsTablet()
-  const hiddenNavRoutes = ['/print']
+  const hiddenNavRoutes = ['/print', '/health-report']
   const showNav = !hiddenNavRoutes.includes(location.pathname)
+  const showTopBar = showNav && !['/parent'].includes(location.pathname)
 
   if (!onboardingCompleted) {
     return <Onboarding />
@@ -57,7 +73,8 @@ export default function App() {
   return (
     <>
       {isTablet && showNav && <SideNav />}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      {showTopBar && <TopBar />}
+      <div style={{ flex: 1, minWidth: 0, paddingTop: showTopBar ? 52 : 0 }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tasks" element={<Tasks />} />
@@ -68,6 +85,7 @@ export default function App() {
           <Route path="/parent" element={<Parent />} />
           <Route path="/badges" element={<Badges />} />
           <Route path="/print" element={<Print />} />
+          <Route path="/health-report" element={<HealthReport />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
