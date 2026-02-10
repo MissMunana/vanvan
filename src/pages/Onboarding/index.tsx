@@ -239,7 +239,7 @@ export default function Onboarding() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-          style={{ textAlign: 'center', width: '100%', maxWidth: 340 }}
+          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(340px, calc(100vw - 48px))' }}
         >
           <div style={{ fontSize: '5rem', marginBottom: 16 }}>⭐</div>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 8 }}>小星星成长宝</h1>
@@ -277,7 +277,7 @@ export default function Onboarding() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-          style={{ textAlign: 'center', width: '100%', maxWidth: 340 }}
+          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(340px, calc(100vw - 48px))' }}
         >
           <div style={{ fontSize: '4rem', marginBottom: 12 }}>⭐</div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>欢迎回来!</h2>
@@ -733,7 +733,7 @@ export default function Onboarding() {
                 padding: '20px 16px',
                 paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
                 zIndex: 1001,
-                maxWidth: 480,
+                maxWidth: 'var(--content-max-width)',
                 margin: '0 auto',
               }}
             >

@@ -37,9 +37,9 @@ export function Modal({ open, onClose, children, title }: ModalProps) {
             style={{
               background: 'white',
               borderRadius: 20,
-              padding: 24,
+              padding: 'var(--modal-padding)',
               width: '100%',
-              maxWidth: 360,
+              maxWidth: 'var(--modal-max-width)',
               maxHeight: '80vh',
               overflow: 'auto',
             }}

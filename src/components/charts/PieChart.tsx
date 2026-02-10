@@ -6,16 +6,13 @@ interface Segment {
 
 interface PieChartProps {
   segments: Segment[]
-  size?: number
 }
 
-export default function PieChart({ segments, size = 140 }: PieChartProps) {
+export default function PieChart({ segments }: PieChartProps) {
   const total = segments.reduce((sum, s) => sum + s.value, 0)
   if (total === 0) {
     return (
-      <div style={{
-        width: size,
-        height: size,
+      <div className="pie-chart-container" style={{
         borderRadius: '50%',
         background: '#f0f0f0',
         display: 'flex',
@@ -42,9 +39,7 @@ export default function PieChart({ segments, size = 140 }: PieChartProps) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <div style={{
-        width: size,
-        height: size,
+      <div className="pie-chart-container" style={{
         borderRadius: '50%',
         background: `conic-gradient(${gradientStops})`,
         flexShrink: 0,
@@ -52,7 +47,7 @@ export default function PieChart({ segments, size = 140 }: PieChartProps) {
       }}>
         <div style={{
           position: 'absolute',
-          inset: size * 0.2,
+          inset: '20%',
           borderRadius: '50%',
           background: 'white',
           display: 'flex',

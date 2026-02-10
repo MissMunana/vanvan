@@ -129,7 +129,7 @@ export default function Shop() {
       {/* Rewards grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
+        gridTemplateColumns: 'var(--grid-shop-cols)',
         gap: 12,
       }}>
         {allRewards.map((reward) => {

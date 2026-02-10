@@ -41,7 +41,7 @@ export default function LineChart({ data, height = 160, color = '#FFB800' }: Lin
   })
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height }}>
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%' }} preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity={0.3} />

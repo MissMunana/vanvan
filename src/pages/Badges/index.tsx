@@ -57,7 +57,7 @@ export default function Badges() {
             </div>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'var(--grid-badges-cols)',
               gap: 12,
             }}>
               {badges.map((badge) => {

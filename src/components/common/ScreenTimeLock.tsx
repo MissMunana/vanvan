@@ -67,7 +67,7 @@ export default function ScreenTimeLock({ show, type, parentPin, onUnlock }: Scre
             borderRadius: 16,
             padding: 20,
             width: '100%',
-            maxWidth: 280,
+            maxWidth: 'min(340px, 80vw)',
           }}>
             <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 8, textAlign: 'center' }}>
               家长密码解锁

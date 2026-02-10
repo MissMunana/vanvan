@@ -128,7 +128,7 @@ export default function Profile() {
       {/* Stats cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
+        gridTemplateColumns: 'var(--grid-stats-cols)',
         gap: 10,
         marginBottom: 20,
       }}>
