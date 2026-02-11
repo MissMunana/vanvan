@@ -85,6 +85,8 @@ export default function Auth() {
   return (
     <div style={{
       minHeight: '100dvh',
+      width: '100%',
+      flex: 1,
       background: 'var(--color-bg)',
       display: 'flex',
       flexDirection: 'column',

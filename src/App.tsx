@@ -104,6 +104,8 @@ export default function App() {
     return (
       <div style={{
         minHeight: '100dvh',
+        width: '100%',
+        flex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
