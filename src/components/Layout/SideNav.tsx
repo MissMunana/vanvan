@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const NAV_ITEMS = [
-  { path: '/', label: '首页', icon: '🏠' },
-  { path: '/tasks', label: '任务', icon: '📋' },
-  { path: '/shop', label: '商城', icon: '🎁' },
-  { path: '/profile', label: '我的', icon: '👤' },
-  { path: '/parent', label: '家长', icon: '🔒' },
+  { path: '/', label: '首页', icon: '🌟' },
+  { path: '/health', label: '健康', icon: '🌙' },
+  { path: '/shop', label: '商城', icon: '🪐' },
+  { path: '/knowledge', label: '知识', icon: '🔮' },
+  { path: '/profile', label: '我的', icon: '🦄' },
 ]
 
 export function SideNav() {
@@ -35,7 +35,7 @@ export function SideNav() {
         alignItems: 'center',
         gap: 8,
       }}>
-        ⭐
+        ☆
         <span>小星星成长宝</span>
       </div>
 

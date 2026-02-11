@@ -59,11 +59,16 @@ export default function App() {
   }, [setSession])
 
   // After auth, sync data from cloud
+  const setDataLoaded = useAuthStore((s) => s.setDataLoaded)
   useEffect(() => {
     if (isAuthenticated && !isDataLoaded) {
-      migrateIfNeeded().catch(console.error)
+      migrateIfNeeded().catch((err) => {
+        console.error('Sync failed:', err)
+        // Still mark as loaded so the user isn't stuck on loading screen
+        setDataLoaded(true)
+      })
     }
-  }, [isAuthenticated, isDataLoaded, migrateIfNeeded])
+  }, [isAuthenticated, isDataLoaded, migrateIfNeeded, setDataLoaded])
 
   useEffect(() => {
     refreshDailyStatus()
@@ -124,6 +129,28 @@ export default function App() {
   // Not authenticated -> Auth page
   if (!isAuthenticated) {
     return <Auth />
+  }
+
+  // Wait for cloud data to load before deciding onboarding
+  if (!isDataLoaded) {
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        width: '100%',
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--color-bg)',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>⭐</div>
+          <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
+            正在同步数据...
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Authenticated but no children -> Onboarding

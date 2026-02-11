@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useRewardStore } from '../../stores/rewardStore'
+import { useSync } from '../../hooks/useSync'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { getAgeGroup, getAgeFromBirthday, formatAge } from '../../hooks/useAgeGroup'
 import type { TaskCategory, RewardCategory } from '../../types'
@@ -16,6 +17,7 @@ export default function Onboarding() {
   const completeOnboarding = useAppStore((s) => s.completeOnboarding)
   const addTasks = useTaskStore((s) => s.addTasks)
   const addRewards = useRewardStore((s) => s.addRewards)
+  const { pushToCloud } = useSync()
   const navigate = useNavigate()
 
   // Register state
@@ -134,6 +136,8 @@ export default function Onboarding() {
     addRewards(rewardsToAdd)
 
     completeOnboarding()
+    // Push onboarding data to cloud so it persists across logins
+    pushToCloud().catch(console.error)
     navigate('/')
   }
 
@@ -551,7 +555,7 @@ export default function Onboarding() {
                     left: 4, right: 4,
                     height: PICKER_ITEM_H,
                     background: 'var(--color-primary-light)',
-                    borderRadius: 10,
+                    borderRadius: 8,
                     pointerEvents: 'none',
                     zIndex: 0,
                   }} />
@@ -596,7 +600,7 @@ export default function Onboarding() {
                     left: 4, right: 4,
                     height: PICKER_ITEM_H,
                     background: 'var(--color-primary-light)',
-                    borderRadius: 10,
+                    borderRadius: 8,
                     pointerEvents: 'none',
                     zIndex: 0,
                   }} />
@@ -641,7 +645,7 @@ export default function Onboarding() {
                     left: 4, right: 4,
                     height: PICKER_ITEM_H,
                     background: 'var(--color-primary-light)',
-                    borderRadius: 10,
+                    borderRadius: 8,
                     pointerEvents: 'none',
                     zIndex: 0,
                   }} />
@@ -682,7 +686,7 @@ export default function Onboarding() {
               <button
                 onClick={confirmBirthday}
                 className="btn btn-primary btn-block"
-                style={{ marginTop: 16 }}
+                style={{ marginTop: 12 }}
               >
                 确定
               </button>
