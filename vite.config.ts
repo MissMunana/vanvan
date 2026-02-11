@@ -3,7 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'child_process'
 
-const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+let commitHash = 'unknown'
+try {
+  commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+} catch {
+  commitHash = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'unknown'
+}
 const buildTime = new Date().toLocaleString('zh-CN', {
   timeZone: 'Asia/Shanghai',
   year: 'numeric',

@@ -9,7 +9,7 @@ interface LineChartProps {
   color?: string
 }
 
-export default function LineChart({ data, height = 160, color = '#FFB800' }: LineChartProps) {
+export default function LineChart({ data, height = 160, color = '#FFA731' }: LineChartProps) {
   if (data.length === 0) return null
 
   const padding = { top: 10, right: 10, bottom: 28, left: 36 }
