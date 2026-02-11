@@ -7,7 +7,7 @@ import { useRewardStore } from '../../stores/rewardStore'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { getAgeGroup, getAgeFromBirthday, formatAge } from '../../hooks/useAgeGroup'
 import type { TaskCategory, RewardCategory } from '../../types'
-const PICKER_ITEM_H = 40
+const PICKER_ITEM_H = 34
 const PICKER_VISIBLE = 5
 
 export default function Onboarding() {
@@ -522,23 +522,23 @@ export default function Onboarding() {
                 right: 0,
                 background: 'white',
                 borderRadius: '20px 20px 0 0',
-                padding: '20px 16px',
-                paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+                padding: '16px 16px',
+                paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
                 zIndex: 1001,
-                maxWidth: 'var(--content-max-width)',
+                maxWidth: '420px',
                 margin: '0 auto',
               }}
             >
-              <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                <div><span style={{ fontSize: '2.2rem' }}>🎂</span></div>
-                <div style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: 4 }}>选择宝贝的生日</div>
+              <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                <div><span style={{ fontSize: '1.5rem' }}>🎂</span></div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', marginTop: 2 }}>选择宝贝的生日</div>
               </div>
 
               {/* Column headers */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>年</div>
-                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>月</div>
-                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>日</div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 2 }}>
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>年</div>
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>月</div>
+                <div style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>日</div>
               </div>
 
               {/* Picker columns */}
@@ -579,7 +579,7 @@ export default function Onboarding() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: pickYear === y ? 700 : 400,
-                        fontSize: '1rem',
+                        fontSize: '0.9rem',
                       }}>
                         {y}
                       </div>
@@ -624,7 +624,7 @@ export default function Onboarding() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: pickMonth === m ? 700 : 400,
-                        fontSize: '1rem',
+                        fontSize: '0.9rem',
                       }}>
                         {m}月
                       </div>
@@ -669,7 +669,7 @@ export default function Onboarding() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: pickDay === d ? 700 : 400,
-                        fontSize: '1rem',
+                        fontSize: '0.9rem',
                       }}>
                         {d}日
                       </div>

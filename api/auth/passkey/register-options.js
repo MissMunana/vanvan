@@ -3,10 +3,15 @@ import supabase from '../../_lib/supabase-admin.js';
 import { getAuthenticatedUser, getFamilyId, unauthorized, methodNotAllowed } from '../../_lib/auth-helpers.js';
 
 const rpName = process.env.WEBAUTHN_RP_NAME || '小星星成长宝';
-const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
+
+function getRpID(req) {
+  const host = req.headers.host || 'localhost';
+  return host.split(':')[0];
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
+  const rpID = getRpID(req);
 
   const { user, error: authError } = await getAuthenticatedUser(req);
   if (authError) return unauthorized(res, authError);

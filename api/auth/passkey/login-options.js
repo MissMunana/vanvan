@@ -2,10 +2,14 @@ import { generateAuthenticationOptions } from '@simplewebauthn/server';
 import supabase from '../../_lib/supabase-admin.js';
 import { methodNotAllowed } from '../../_lib/auth-helpers.js';
 
-const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
+function getRpID(req) {
+  const host = req.headers.host || 'localhost';
+  return host.split(':')[0];
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
+  const rpID = getRpID(req);
 
   const { email } = req.body;
   if (!email) {

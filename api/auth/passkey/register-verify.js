@@ -2,11 +2,21 @@ import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import supabase from '../../_lib/supabase-admin.js';
 import { getAuthenticatedUser, unauthorized, methodNotAllowed } from '../../_lib/auth-helpers.js';
 
-const rpID = process.env.WEBAUTHN_RP_ID || 'localhost';
-const origin = process.env.WEBAUTHN_ORIGIN || 'http://localhost:5173';
+function getRpID(req) {
+  const host = req.headers.host || 'localhost';
+  return host.split(':')[0];
+}
+
+function getOrigin(req) {
+  const proto = req.headers['x-forwarded-proto'] || 'http';
+  const host = req.headers.host || 'localhost:5173';
+  return `${proto}://${host}`;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
+  const rpID = getRpID(req);
+  const origin = getOrigin(req);
 
   const { user, error: authError } = await getAuthenticatedUser(req);
   if (authError) return unauthorized(res, authError);
