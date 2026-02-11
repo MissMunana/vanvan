@@ -1,6 +1,14 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api/auth/:path+", "destination": "/api/auth" },
+    { "source": "/api/sync/:path+", "destination": "/api/sync" },
+    { "source": "/api/children/:path+", "destination": "/api/children" },
+    { "source": "/api/tasks/:path+", "destination": "/api/tasks" },
+    { "source": "/api/rewards/:path+", "destination": "/api/rewards" },
+    { "source": "/api/exchanges/:path+", "destination": "/api/exchanges" },
+    { "source": "/api/health/:path+", "destination": "/api/health" },
+    { "source": "/api/point-logs/:path+", "destination": "/api/point-logs" },
+    { "source": "/api/badges/:path+", "destination": "/api/badges" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
