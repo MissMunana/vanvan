@@ -10,6 +10,7 @@ interface ExchangeStore {
   getChildExchanges: (childId: string) => Exchange[]
   getPendingExchanges: (childId?: string) => Exchange[]
   deleteByChildId: (childId: string) => void
+  hydrateFromCloud: (exchanges: Exchange[]) => void
 }
 
 export const useExchangeStore = create<ExchangeStore>()(
@@ -56,6 +57,10 @@ export const useExchangeStore = create<ExchangeStore>()(
 
       deleteByChildId: (childId) => {
         set((state) => ({ exchanges: state.exchanges.filter((e) => e.childId !== childId) }))
+      },
+
+      hydrateFromCloud: (exchanges) => {
+        set({ exchanges })
       },
     }),
     {

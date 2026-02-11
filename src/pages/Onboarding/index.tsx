@@ -10,62 +10,13 @@ import type { TaskCategory, RewardCategory } from '../../types'
 const PICKER_ITEM_H = 40
 const PICKER_VISIBLE = 5
 
-type Mode = 'welcome' | 'login' | 'register'
-
-// Synchronously check localStorage for existing data (bypasses Zustand async hydration)
-function checkLocalData(): { hasData: boolean; childId: string } {
-  try {
-    const stored = localStorage.getItem('star-app')
-    if (!stored) return { hasData: false, childId: '' }
-    const parsed = JSON.parse(stored)
-    const children = parsed?.state?.children
-    if (Array.isArray(children) && children.length > 0) {
-      const currentId = parsed?.state?.currentChildId || children[0]?.childId || ''
-      return { hasData: true, childId: currentId }
-    }
-  } catch { /* ignore */ }
-  return { hasData: false, childId: '' }
-}
-
 export default function Onboarding() {
-  const children = useAppStore((s) => s.children)
-  const parentPin = useAppStore((s) => s.parentPin)
-  const currentChildId = useAppStore((s) => s.currentChildId)
-  const setCurrentChild = useAppStore((s) => s.setCurrentChild)
   const addChild = useAppStore((s) => s.addChild)
   const setParentPin = useAppStore((s) => s.setParentPin)
   const completeOnboarding = useAppStore((s) => s.completeOnboarding)
   const addTasks = useTaskStore((s) => s.addTasks)
   const addRewards = useRewardStore((s) => s.addRewards)
   const navigate = useNavigate()
-
-  // Check both Zustand state and localStorage directly for existing data
-  const localData = checkLocalData()
-  const hasExistingData = children.length > 0 || localData.hasData
-
-  // Auto-detect mode: if has data → login, if not → welcome
-  const [mode, setMode] = useState<Mode>(() => hasExistingData ? 'login' : 'welcome')
-
-  // Sync mode when hasExistingData changes (e.g., after Zustand hydration)
-  useEffect(() => {
-    if (hasExistingData && mode === 'welcome') {
-      setMode('login')
-    }
-  }, [hasExistingData])
-
-  // Login state - also use localStorage fallback for initial childId
-  const [selectedChildId, setSelectedChildId] = useState(
-    currentChildId || children[0]?.childId || localData.childId || ''
-  )
-
-  // Sync selected child after hydration
-  useEffect(() => {
-    if (children.length > 0 && !selectedChildId) {
-      setSelectedChildId(currentChildId || children[0]?.childId || '')
-    }
-  }, [children, currentChildId])
-  const [loginPin, setLoginPin] = useState('')
-  const [loginPinError, setLoginPinError] = useState(false)
 
   // Register state
   const [regStep, setRegStep] = useState(0) // 0=form, 1=tasks, 2=rewards, 3=ready
@@ -133,20 +84,6 @@ export default function Onboarding() {
   useEffect(() => {
     if (pickDay > pickerDaysCount) setPickDay(pickerDaysCount)
   }, [pickerDaysCount])
-
-  // Login handler
-  const handleLogin = () => {
-    if (loginPin !== parentPin) {
-      setLoginPinError(true)
-      setLoginPin('')
-      return
-    }
-    if (selectedChildId) {
-      setCurrentChild(selectedChildId)
-    }
-    completeOnboarding()
-    navigate('/')
-  }
 
   // Register: computed values
   const age = birthday ? getAgeFromBirthday(birthday).years : 0
@@ -231,149 +168,6 @@ export default function Onboarding() {
     background: 'linear-gradient(180deg, #FFF9EC 0%, #FFE8A0 100%)',
   }
 
-  // ============ WELCOME SCREEN ============
-  if (mode === 'welcome') {
-    return (
-      <div style={{ ...bgStyle, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(400px, calc(100vw - 48px))' }}
-        >
-          <div style={{ marginBottom: 16 }}><span style={{ fontSize: '4rem' }}>⭐</span></div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 8 }}>小星星成长宝</h1>
-          <p style={{ color: 'var(--color-text-secondary)', marginBottom: 40, lineHeight: 1.6 }}>
-            让好习惯变得有趣!
-          </p>
-
-          <button
-            onClick={() => setMode('register')}
-            className="btn btn-primary btn-block"
-            style={{ fontSize: '1.05rem', padding: '14px', marginBottom: 12 }}
-          >
-            注册新账号
-          </button>
-
-          {hasExistingData && (
-            <button
-              onClick={() => setMode('login')}
-              className="btn btn-outline btn-block"
-              style={{ fontSize: '1.05rem', padding: '14px' }}
-            >
-              已有账号，登录
-            </button>
-          )}
-        </motion.div>
-      </div>
-    )
-  }
-
-  // ============ LOGIN SCREEN ============
-  if (mode === 'login' && hasExistingData) {
-    return (
-      <div style={{ ...bgStyle, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', damping: 15, stiffness: 200 }}
-          style={{ textAlign: 'center', width: '100%', maxWidth: 'min(400px, calc(100vw - 48px))' }}
-        >
-          <div style={{ marginBottom: 12 }}><span style={{ fontSize: '3.5rem' }}>⭐</span></div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>欢迎回来!</h2>
-          <p style={{ color: 'var(--color-text-secondary)', marginBottom: 20, fontSize: '0.9rem' }}>选择孩子并输入密码登录</p>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 12,
-            marginBottom: 24,
-            flexWrap: 'wrap',
-          }}>
-            {children.map((c) => {
-              const isSelected = c.childId === selectedChildId
-              return (
-                <button
-                  key={c.childId}
-                  onClick={() => setSelectedChildId(c.childId)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: isSelected ? 'var(--color-primary-light)' : 'white',
-                    padding: '8px 16px',
-                    borderRadius: 20,
-                    fontSize: '0.9rem',
-                    boxShadow: isSelected ? '0 2px 12px rgba(255,184,0,0.3)' : '0 2px 8px rgba(0,0,0,0.08)',
-                    border: isSelected ? '2px solid var(--color-primary)' : '2px solid transparent',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {c.avatar}
-                  <span style={{ fontWeight: 600 }}>{c.name}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8, display: 'block', color: 'var(--color-text-secondary)' }}>
-              请输入密码
-            </label>
-            <input
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              value={loginPin}
-              onChange={(e) => { setLoginPin(e.target.value.replace(/\D/g, '')); setLoginPinError(false) }}
-              onKeyDown={(e) => e.key === 'Enter' && loginPin.length >= 4 && handleLogin()}
-              placeholder="输入4位数字密码"
-              style={{
-                textAlign: 'center',
-                letterSpacing: '0.5em',
-                fontSize: '1.2rem',
-                padding: '14px 16px',
-                border: loginPinError ? '2px solid var(--color-danger)' : '1.5px solid var(--color-border)',
-                borderRadius: 'var(--radius-sm)',
-                width: '100%',
-                background: 'white',
-              }}
-            />
-            {loginPinError && (
-              <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 6 }}>
-                密码错误，请重试
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={handleLogin}
-            className="btn btn-primary btn-block"
-            disabled={loginPin.length < 4}
-            style={{ fontSize: '1.05rem', padding: '14px' }}
-          >
-            登录
-          </button>
-
-          <button
-            onClick={() => setMode('welcome')}
-            style={{
-              marginTop: 16,
-              background: 'none',
-              border: 'none',
-              color: 'var(--color-text-secondary)',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            返回
-          </button>
-        </motion.div>
-      </div>
-    )
-  }
-
-  // ============ REGISTER FLOW ============
   const regMaxWidth = 'min(480px, 100%)'
 
   return (
@@ -408,13 +202,13 @@ export default function Onboarding() {
             <motion.div key="reg0" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{ marginBottom: 8 }}><span style={{ fontSize: '2.5rem' }}>✨</span></div>
-                <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>注册新账号</h2>
-                <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>填写孩子信息并设置密码</p>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: 700 }}>添加孩子</h2>
+                <p style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>填写孩子信息并设置家长PIN</p>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>用户名（孩子姓名）</label>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>孩子姓名</label>
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -501,33 +295,33 @@ export default function Onboarding() {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>设置密码（4位数字）</label>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>设置家长PIN（4位数字）</label>
                   <input
                     type="password"
                     inputMode="numeric"
                     maxLength={4}
                     value={pin}
                     onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setPinMismatch(false) }}
-                    placeholder="请输入4位数字密码"
+                    placeholder="请输入4位数字PIN"
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>确认密码</label>
+                  <label style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 6, display: 'block' }}>确认PIN</label>
                   <input
                     type="password"
                     inputMode="numeric"
                     maxLength={4}
                     value={confirmPin}
                     onChange={(e) => { setConfirmPin(e.target.value.replace(/\D/g, '')); setPinMismatch(false) }}
-                    placeholder="再次输入密码"
+                    placeholder="再次输入PIN"
                     style={{
                       border: pinMismatch ? '2px solid var(--color-danger)' : undefined,
                     }}
                   />
                   {pinMismatch && (
                     <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginTop: 4 }}>
-                      两次密码不一致
+                      两次PIN不一致
                     </div>
                   )}
                 </div>
@@ -640,7 +434,7 @@ export default function Onboarding() {
                 >
                   <span style={{ fontSize: '4rem' }}>🚀</span>
                 </motion.div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>注册成功!</h2>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 12 }}>设置完成!</h2>
                 <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
                   {name}的成长之旅即将开始<br />
                   完成任务 → 获得积分 → 兑换奖励<br />
@@ -670,15 +464,7 @@ export default function Onboarding() {
 
       {/* Bottom Buttons */}
       <div style={{ padding: '16px 24px 32px', display: 'flex', gap: 12, width: '100%', maxWidth: regMaxWidth }}>
-        {regStep === 0 ? (
-          <button
-            onClick={() => setMode(hasExistingData ? 'login' : 'welcome')}
-            className="btn btn-outline"
-            style={{ flex: 1 }}
-          >
-            返回
-          </button>
-        ) : (
+        {regStep > 0 && (
           <button
             onClick={() => setRegStep(regStep - 1)}
             className="btn btn-outline"
@@ -694,7 +480,7 @@ export default function Onboarding() {
             style={{ flex: 2 }}
             disabled={regStep === 0 && !canProceedReg()}
           >
-            {regStep === 0 ? '注册' : '下一步'}
+            下一步
           </button>
         ) : (
           <button

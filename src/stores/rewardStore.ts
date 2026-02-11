@@ -13,6 +13,7 @@ interface RewardStore {
   getChildRewards: (childId: string) => Reward[]
   getChildRewardsByCategory: (childId: string) => Record<RewardCategory, Reward[]>
   deleteByChildId: (childId: string) => void
+  hydrateFromCloud: (rewards: Reward[]) => void
 }
 
 export const useRewardStore = create<RewardStore>()(
@@ -69,6 +70,10 @@ export const useRewardStore = create<RewardStore>()(
 
       deleteByChildId: (childId) => {
         set((state) => ({ rewards: state.rewards.filter((r) => r.childId !== childId) }))
+      },
+
+      hydrateFromCloud: (rewards) => {
+        set({ rewards })
       },
     }),
     {

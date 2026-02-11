@@ -41,6 +41,7 @@ interface TaskStore {
   getChildTasksByCategory: (childId: string) => Record<TaskCategory, Task[]>
   deleteByChildId: (childId: string) => void
   refreshDailyStatus: () => void
+  hydrateFromCloud: (tasks: Task[]) => void
 }
 
 export const useTaskStore = create<TaskStore>()(
@@ -173,6 +174,10 @@ export const useTaskStore = create<TaskStore>()(
             completedToday: t.lastCompletedDate === today,
           })),
         }))
+      },
+
+      hydrateFromCloud: (tasks) => {
+        set({ tasks })
       },
     }),
     {

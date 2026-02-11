@@ -7,6 +7,8 @@ import { useRewardStore } from '../../stores/rewardStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useBadgeStore } from '../../stores/badgeStore'
 import { useHealthStore } from '../../stores/healthStore'
+import { useAuthStore } from '../../stores/authStore'
+import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
@@ -1358,6 +1360,35 @@ function Settings() {
   const [destroyChecked, setDestroyChecked] = useState(false)
   const [ageGroupChangeConfirm, setAgeGroupChangeConfirm] = useState(false)
 
+  // Auth & Passkey
+  const authUser = useAuthStore((s) => s.user)
+  const authLogout = useAuthStore((s) => s.logout)
+  const { registerPasskey } = useAuth()
+  const [passkeys, setPasskeys] = useState<{ id: string; name: string; createdAt: string }[]>([])
+  const [passkeyName, setPasskeyName] = useState('')
+  const [showAddPasskey, setShowAddPasskey] = useState(false)
+  const [passkeyBusy, setPasskeyBusy] = useState(false)
+  const [passkeyError, setPasskeyError] = useState('')
+
+  // Fetch passkeys on mount
+  useEffect(() => {
+    if (!authUser) return
+    const fetchPasskeys = async () => {
+      try {
+        const session = useAuthStore.getState().session
+        if (!session?.access_token) return
+        const res = await fetch('/api/auth/passkey/list', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setPasskeys(data.passkeys || [])
+        }
+      } catch { /* ignore */ }
+    }
+    fetchPasskeys()
+  }, [authUser])
+
   const handleSaveChild = () => {
     if (!editingChild || !editingChild.name.trim()) return
 
@@ -1451,9 +1482,58 @@ function Settings() {
     }))
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authLogout()
     logout()
     navigate('/')
+  }
+
+  const handleAddPasskey = async () => {
+    setPasskeyBusy(true)
+    setPasskeyError('')
+    try {
+      await registerPasskey(passkeyName || undefined)
+      showToast('Passkey 已添加')
+      setShowAddPasskey(false)
+      setPasskeyName('')
+      // Refresh passkey list
+      const session = useAuthStore.getState().session
+      if (session?.access_token) {
+        const res = await fetch('/api/auth/passkey/list', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setPasskeys(data.passkeys || [])
+        }
+      }
+    } catch (err: any) {
+      setPasskeyError(err.message || 'Passkey 添加失败')
+      showToast('Passkey 添加失败')
+    } finally {
+      setPasskeyBusy(false)
+    }
+  }
+
+  const handleDeletePasskey = async (credentialId: string) => {
+    try {
+      const session = useAuthStore.getState().session
+      if (!session?.access_token) return
+      const res = await fetch('/api/auth/passkey/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ credentialId }),
+      })
+      if (res.ok) {
+        setPasskeys((prev) => prev.filter((p) => p.id !== credentialId))
+        showToast('Passkey 已删除')
+      }
+    } catch {
+      showToast('删除失败')
+    }
   }
 
   const handleDestroy = () => {
@@ -1563,6 +1643,61 @@ function Settings() {
               }} />
             </button>
           </div>
+        </>
+      )}
+
+      {/* Account info */}
+      {authUser && (
+        <>
+          <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>账号信息</div>
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            📧
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>邮箱</div>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{authUser.email}</div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Passkey management */}
+      {authUser && (
+        <>
+          <div style={{ fontWeight: 700, marginBottom: 12, marginTop: 20 }}>Passkey 管理</div>
+          {passkeys.length === 0 ? (
+            <div className="card" style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+              暂无 Passkey，添加后可使用指纹/面容快速登录
+            </div>
+          ) : (
+            passkeys.map((pk) => (
+              <div key={pk.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                🔑
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{pk.name || 'Passkey'}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                    添加于 {new Date(pk.createdAt).toLocaleDateString('zh-CN')}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeletePasskey(pk.id)}
+                  style={{ fontSize: '0.85rem', color: 'var(--color-danger)', padding: '4px 8px' }}
+                >
+                  删除
+                </button>
+              </div>
+            ))
+          )}
+          <button
+            className="btn btn-outline btn-block"
+            style={{ marginTop: 8 }}
+            onClick={() => setShowAddPasskey(true)}
+            disabled={passkeyBusy}
+          >
+            + 添加 Passkey
+          </button>
+          {passkeyError && (
+            <div style={{ color: 'var(--color-danger)', fontSize: '0.8rem', marginTop: 4 }}>{passkeyError}</div>
+          )}
         </>
       )}
 
@@ -1905,11 +2040,36 @@ function Settings() {
         </div>
       </Modal>
 
+      {/* Add passkey modal */}
+      <Modal open={showAddPasskey} onClose={() => { setShowAddPasskey(false); setPasskeyName('') }} title="添加 Passkey">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+            Passkey 让你使用指纹、面容或设备密码快速登录，无需输入邮箱和密码。
+          </div>
+          <div>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 4, display: 'block' }}>名称（可选）</label>
+            <input
+              value={passkeyName}
+              onChange={(e) => setPasskeyName(e.target.value)}
+              placeholder="例如：iPhone、MacBook"
+              maxLength={30}
+            />
+          </div>
+          <button
+            className="btn btn-primary btn-block"
+            onClick={handleAddPasskey}
+            disabled={passkeyBusy}
+          >
+            {passkeyBusy ? '注册中...' : '开始注册'}
+          </button>
+        </div>
+      </Modal>
+
       {/* Logout confirm modal */}
       <Modal open={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} title="退出登录">
         <div style={{ fontSize: '0.9rem', lineHeight: 1.8, marginBottom: 20 }}>
           <p>确定要退出登录吗？</p>
-          <p style={{ color: 'var(--color-text-secondary)' }}>退出后数据不会丢失，重新进入引导流程即可恢复使用。</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>退出后云端数据不会丢失，重新登录即可恢复。</p>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowLogoutConfirm(false)}>取消</button>

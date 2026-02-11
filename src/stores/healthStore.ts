@@ -36,6 +36,13 @@ interface HealthStore {
   getMilestoneStatus: (childId: string, milestoneId: string) => MilestoneRecord | undefined
 
   deleteByChildId: (childId: string) => void
+  hydrateFromCloud: (data: {
+    growthRecords?: GrowthRecord[]
+    temperatureRecords?: TemperatureRecord[]
+    medicationRecords?: MedicationRecord[]
+    vaccinationRecords?: VaccinationRecord[]
+    milestoneRecords?: MilestoneRecord[]
+  }) => void
 }
 
 const MEDICATION_INTERVALS: Record<string, number> = {
@@ -235,6 +242,16 @@ export const useHealthStore = create<HealthStore>()(
           vaccinationRecords: state.vaccinationRecords.filter((r) => r.childId !== childId),
           milestoneRecords: state.milestoneRecords.filter((r) => r.childId !== childId),
         }))
+      },
+
+      hydrateFromCloud: (data) => {
+        set({
+          growthRecords: data.growthRecords || [],
+          temperatureRecords: data.temperatureRecords || [],
+          medicationRecords: data.medicationRecords || [],
+          vaccinationRecords: data.vaccinationRecords || [],
+          milestoneRecords: data.milestoneRecords || [],
+        })
       },
     }),
     {

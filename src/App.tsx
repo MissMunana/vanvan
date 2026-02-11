@@ -7,8 +7,11 @@ import { TopBar } from './components/Layout/TopBar'
 import { useIsTablet } from './hooks/useMediaQuery'
 import { useAppStore } from './stores/appStore'
 import { useTaskStore } from './stores/taskStore'
+import { useAuthStore } from './stores/authStore'
 import { useScreenTime } from './hooks/useScreenTime'
+import { useSync } from './hooks/useSync'
 import ScreenTimeLock from './components/common/ScreenTimeLock'
+import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import Tasks from './pages/Tasks'
@@ -21,16 +24,46 @@ import Health from './pages/Health'
 import HealthReport from './pages/HealthReport'
 import Knowledge from './pages/Knowledge'
 import InstallPrompt from './components/common/InstallPrompt'
+import { supabase } from './lib/supabase-browser'
 import { Agentation } from 'agentation'
 
 export default function App() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isLoading = useAuthStore((s) => s.isLoading)
+  const isDataLoaded = useAuthStore((s) => s.isDataLoaded)
+  const initialize = useAuthStore((s) => s.initialize)
+  const setSession = useAuthStore((s) => s.setSession)
+
   const onboardingCompleted = useAppStore((s) => s.onboardingCompleted)
+  const children = useAppStore((s) => s.children)
   const refreshDailyStatus = useTaskStore((s) => s.refreshDailyStatus)
   const getCurrentChild = useAppStore((s) => s.getCurrentChild)
   const parentPin = useAppStore((s) => s.parentPin)
   const location = useLocation()
 
+  const { migrateIfNeeded } = useSync()
+
   const [screenLock, setScreenLock] = useState<{ show: boolean; type: 'limit' | 'night' }>({ show: false, type: 'limit' })
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize()
+  }, [initialize])
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [setSession])
+
+  // After auth, sync data from cloud
+  useEffect(() => {
+    if (isAuthenticated && !isDataLoaded) {
+      migrateIfNeeded().catch(console.error)
+    }
+  }, [isAuthenticated, isDataLoaded, migrateIfNeeded])
 
   useEffect(() => {
     refreshDailyStatus()
@@ -50,7 +83,6 @@ export default function App() {
   useScreenTime(screenTimeConfig, onLimitReached, onNightLock)
 
   const currentChildId = useAppStore((s) => s.currentChildId)
-  const children = useAppStore((s) => s.children)
 
   // Apply per-child theme color
   useEffect(() => {
@@ -67,7 +99,33 @@ export default function App() {
   const showNav = !hiddenNavRoutes.includes(location.pathname)
   const showTopBar = showNav && !['/parent'].includes(location.pathname)
 
-  if (!onboardingCompleted) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--color-bg)',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>⭐</div>
+          <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
+            加载中...
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Not authenticated -> Auth page
+  if (!isAuthenticated) {
+    return <Auth />
+  }
+
+  // Authenticated but no children -> Onboarding
+  if (!onboardingCompleted || children.length === 0) {
     return <Onboarding />
   }
 

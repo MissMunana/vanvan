@@ -27,6 +27,7 @@ interface AppStore {
   updatePoints: (childId: string, delta: number) => void
   getCurrentChild: () => Child | null
   incrementCompletionCount: () => number
+  hydrateFromCloud: (data: { children: Child[]; parentPin: string; onboardingCompleted: boolean; completionCount: number }) => void
   logout: () => void
   resetData: () => void
 }
@@ -121,6 +122,16 @@ export const useAppStore = create<AppStore>()(
         const newCount = get().completionCount + 1
         set({ completionCount: newCount })
         return newCount
+      },
+
+      hydrateFromCloud: (data) => {
+        set({
+          children: data.children,
+          parentPin: data.parentPin,
+          onboardingCompleted: data.onboardingCompleted,
+          completionCount: data.completionCount,
+          currentChildId: data.children[0]?.childId || null,
+        })
       },
 
       logout: () => set({ onboardingCompleted: false }),

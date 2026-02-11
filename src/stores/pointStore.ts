@@ -11,6 +11,7 @@ interface PointStore {
   getChildLogs: (childId: string, limit?: number) => PointLog[]
   getWeeklyStats: (childId: string) => { tasksCompleted: number; pointsEarned: number; pointsSpent: number }
   deleteByChildId: (childId: string) => void
+  hydrateFromCloud: (logs: PointLog[]) => void
 }
 
 export const usePointStore = create<PointStore>()(
@@ -60,6 +61,10 @@ export const usePointStore = create<PointStore>()(
 
       deleteByChildId: (childId) => {
         set((state) => ({ logs: state.logs.filter((l) => l.childId !== childId) }))
+      },
+
+      hydrateFromCloud: (logs) => {
+        set({ logs })
       },
     }),
     { name: 'star-points' }
