@@ -75,19 +75,27 @@ export default function MilestoneTracker() {
     return { total, achieved, inProgress }
   }, [currentMilestones, milestoneRecords])
 
-  const handleStatusChange = (milestone: MilestoneDefinition, newStatus: MilestoneStatus) => {
+  const handleStatusChange = async (milestone: MilestoneDefinition, newStatus: MilestoneStatus) => {
     if (!child) return
-    updateMilestoneStatus(child.childId, milestone.id, newStatus)
-    if (newStatus === 'achieved') {
-      showToast(`${milestone.name} 已达成！`)
+    try {
+      await updateMilestoneStatus(child.childId, milestone.id, newStatus)
+      if (newStatus === 'achieved') {
+        showToast(`${milestone.name} 已达成！`)
+      }
+    } catch {
+      showToast('操作失败，请重试')
     }
   }
 
-  const handlePhotoToggle = (milestoneId: string, photoTaken: boolean, photoNote?: string) => {
+  const handlePhotoToggle = async (milestoneId: string, photoTaken: boolean, photoNote?: string) => {
     if (!child) return
     const record = getRecord(milestoneId)
     if (record) {
-      updateMilestoneStatus(child.childId, milestoneId, record.status, undefined, { photoTaken, photoNote })
+      try {
+        await updateMilestoneStatus(child.childId, milestoneId, record.status, undefined, { photoTaken, photoNote })
+      } catch {
+        showToast('操作失败')
+      }
     }
   }
 
@@ -234,8 +242,8 @@ function MilestoneItem({
   status: MilestoneStatus
   record: import('../../types').MilestoneRecord | undefined
   ageMonths: number
-  onStatusChange: (status: MilestoneStatus) => void
-  onPhotoToggle: (photoTaken: boolean, photoNote?: string) => void
+  onStatusChange: (status: MilestoneStatus) => Promise<void>
+  onPhotoToggle: (photoTaken: boolean, photoNote?: string) => Promise<void>
 }) {
   const [showPhotoNote, setShowPhotoNote] = useState(false)
   const [photoNoteText, setPhotoNoteText] = useState(record?.photoNote ?? '')

@@ -77,32 +77,36 @@ export default function GrowthEntry({ open, onClose }: GrowthEntryProps) {
 
   const canSave = parseFloat(height) > 0 || parseFloat(weight) > 0
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!child || !canSave) return
     const h = parseFloat(height) || null
     const w = parseFloat(weight) || null
     const hc = parseFloat(headCirc) || null
 
-    addGrowthRecord({
-      childId: child.childId,
-      date,
-      ageInMonths,
-      height: h,
-      weight: w,
-      headCircumference: hc,
-      bmi: h && w ? calculateBMI(h, w) : null,
-      heightPercentile: percentiles.height,
-      weightPercentile: percentiles.weight,
-      bmiPercentile: percentiles.bmi,
-      note,
-    })
+    try {
+      await addGrowthRecord({
+        childId: child.childId,
+        date,
+        ageInMonths,
+        height: h,
+        weight: w,
+        headCircumference: hc,
+        bmi: h && w ? calculateBMI(h, w) : null,
+        heightPercentile: percentiles.height,
+        weightPercentile: percentiles.weight,
+        bmiPercentile: percentiles.bmi,
+        note,
+      })
 
-    showToast('记录已保存')
-    setHeight('')
-    setWeight('')
-    setHeadCirc('')
-    setNote('')
-    onClose()
+      showToast('记录已保存')
+      setHeight('')
+      setWeight('')
+      setHeadCirc('')
+      setNote('')
+      onClose()
+    } catch {
+      showToast('保存失败，请重试')
+    }
   }
 
   if (!child) return null

@@ -1,15 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { Child } from '../types'
-import { CHILD_THEME_COLORS } from '../types'
-import { getAgeGroup, getAgeFromBirthday } from '../hooks/useAgeGroup'
-
-const DEFAULT_SCREEN_TIME = {
-  dailyLimitMinutes: 30,
-  lockStartHour: 22,
-  lockEndHour: 6,
-  enabled: false,
-}
+import { familyApi, childrenApi, type CreateChildInput, type UpdateChildInput } from '../lib/api'
 
 interface AppStore {
   currentChildId: string | null
@@ -17,147 +8,156 @@ interface AppStore {
   parentPin: string
   onboardingCompleted: boolean
   completionCount: number
+  isLoading: boolean
+  error: string | null
 
-  addChild: (child: Omit<Child, 'childId' | 'age' | 'ageGroup' | 'totalPoints' | 'settings' | 'createdAt'>) => string
+  // Server-first async methods
+  fetchFamily: () => Promise<void>
+  fetchChildren: () => Promise<void>
+  addChild: (data: CreateChildInput) => Promise<string>
+  updateChild: (childId: string, updates: UpdateChildInput) => Promise<void>
+  deleteChild: (childId: string) => Promise<void>
+  updatePoints: (childId: string, delta: number) => Promise<number>
+  updateFamilySettings: (data: { parentPin?: string; onboardingCompleted?: boolean; completionCount?: number }) => Promise<void>
+
+  // Local-only helpers
   setCurrentChild: (childId: string) => void
-  setParentPin: (pin: string) => void
-  completeOnboarding: () => void
-  updateChild: (childId: string, updates: Partial<Pick<Child, 'name' | 'gender' | 'birthday' | 'avatar' | 'themeColor'>>) => void
-  deleteChild: (childId: string) => void
-  updatePoints: (childId: string, delta: number) => void
   getCurrentChild: () => Child | null
-  incrementCompletionCount: () => number
-  hydrateFromCloud: (data: { children: Child[]; parentPin: string; onboardingCompleted: boolean; completionCount: number }) => void
+  setChildrenAndFamily: (children: Child[], family: { parentPin: string; onboardingCompleted: boolean; completionCount: number }) => void
+  setChildPoints: (childId: string, totalPoints: number) => void
+
+  // Cleanup
   logout: () => void
   resetData: () => void
 }
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-}
+export const useAppStore = create<AppStore>()((set, get) => ({
+  currentChildId: null,
+  children: [],
+  parentPin: '',
+  onboardingCompleted: false,
+  completionCount: 0,
+  isLoading: false,
+  error: null,
 
-export const useAppStore = create<AppStore>()(
-  persist(
-    (set, get) => ({
-      currentChildId: null,
-      children: [],
-      parentPin: '',
-      onboardingCompleted: false,
-      completionCount: 0,
-
-      addChild: (data) => {
-        const childId = generateId()
-        const { years } = getAgeFromBirthday(data.birthday)
-        const child: Child = {
-          childId,
-          name: data.name,
-          gender: data.gender,
-          birthday: data.birthday,
-          age: years,
-          ageGroup: getAgeGroup(years),
-          avatar: data.avatar,
-          totalPoints: 0,
-          themeColor: CHILD_THEME_COLORS[get().children.length % CHILD_THEME_COLORS.length],
-          settings: {
-            soundEnabled: true,
-            vibrationEnabled: true,
-            screenTime: DEFAULT_SCREEN_TIME,
-          },
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({
-          children: [...state.children, child],
-          currentChildId: childId,
-        }))
-        return childId
-      },
-
-      setCurrentChild: (childId) => set({ currentChildId: childId }),
-      setParentPin: (pin) => set({ parentPin: pin }),
-      completeOnboarding: () => set({ onboardingCompleted: true }),
-
-      updateChild: (childId, updates) => {
-        set((state) => ({
-          children: state.children.map((c) => {
-            if (c.childId !== childId) return c
-            const updated = { ...c, ...updates }
-            if (updates.birthday) {
-              const { years } = getAgeFromBirthday(updates.birthday)
-              updated.age = years
-              updated.ageGroup = getAgeGroup(years)
-            }
-            return updated
-          }),
-        }))
-      },
-
-      deleteChild: (childId) => {
-        set((state) => {
-          const remaining = state.children.filter((c) => c.childId !== childId)
-          return {
-            children: remaining,
-            currentChildId: state.currentChildId === childId
-              ? (remaining[0]?.childId || null)
-              : state.currentChildId,
-          }
-        })
-      },
-
-      updatePoints: (childId, delta) => {
-        set((state) => ({
-          children: state.children.map((c) =>
-            c.childId === childId
-              ? { ...c, totalPoints: Math.max(0, c.totalPoints + delta) }
-              : c
-          ),
-        }))
-      },
-
-      getCurrentChild: () => {
-        const { children, currentChildId } = get()
-        return children.find((c) => c.childId === currentChildId) || null
-      },
-
-      incrementCompletionCount: () => {
-        const newCount = get().completionCount + 1
-        set({ completionCount: newCount })
-        return newCount
-      },
-
-      hydrateFromCloud: (data) => {
-        set({
-          children: data.children,
-          parentPin: data.parentPin,
-          onboardingCompleted: data.onboardingCompleted,
-          completionCount: data.completionCount,
-          currentChildId: data.children[0]?.childId || null,
-        })
-      },
-
-      logout: () => set({ onboardingCompleted: false }),
-
-      resetData: () => set({
-        currentChildId: null,
-        children: [],
-        parentPin: '',
-        onboardingCompleted: false,
-        completionCount: 0,
-      }),
-    }),
-    {
-      name: 'star-app',
-      version: 1,
-      migrate: (persistedState: any, _version: number) => {
-        const state = persistedState as { children: Child[]; currentChildId: string | null; parentPin: string; onboardingCompleted: boolean; completionCount: number }
-        state.children = state.children.map((child) => ({
-          ...child,
-          settings: {
-            ...child.settings,
-            screenTime: child.settings?.screenTime || DEFAULT_SCREEN_TIME,
-          },
-        }))
-        return state
-      },
+  fetchFamily: async () => {
+    try {
+      const family = await familyApi.get()
+      set({
+        parentPin: family.parentPin,
+        onboardingCompleted: family.onboardingCompleted,
+        completionCount: family.completionCount,
+      })
+    } catch (e) {
+      set({ error: (e as Error).message })
+      throw e
     }
-  )
-)
+  },
+
+  fetchChildren: async () => {
+    try {
+      const children = await childrenApi.list()
+      const currentChildId = get().currentChildId
+      set({
+        children,
+        currentChildId: children.find((c) => c.childId === currentChildId)
+          ? currentChildId
+          : (children[0]?.childId || null),
+      })
+    } catch (e) {
+      set({ error: (e as Error).message })
+      throw e
+    }
+  },
+
+  addChild: async (data) => {
+    const child = await childrenApi.create(data)
+    set((s) => ({
+      children: [...s.children, child],
+      currentChildId: child.childId,
+    }))
+    return child.childId
+  },
+
+  updateChild: async (childId, updates) => {
+    const child = await childrenApi.update(childId, updates)
+    set((s) => ({
+      children: s.children.map((c) => (c.childId === childId ? child : c)),
+    }))
+  },
+
+  deleteChild: async (childId) => {
+    await childrenApi.delete(childId)
+    set((s) => {
+      const remaining = s.children.filter((c) => c.childId !== childId)
+      return {
+        children: remaining,
+        currentChildId: s.currentChildId === childId
+          ? (remaining[0]?.childId || null)
+          : s.currentChildId,
+      }
+    })
+  },
+
+  updatePoints: async (childId, delta) => {
+    const { totalPoints } = await childrenApi.updatePoints(childId, delta)
+    set((s) => ({
+      children: s.children.map((c) =>
+        c.childId === childId ? { ...c, totalPoints } : c
+      ),
+    }))
+    return totalPoints
+  },
+
+  updateFamilySettings: async (data) => {
+    const family = await familyApi.update(data)
+    set({
+      parentPin: family.parentPin,
+      onboardingCompleted: family.onboardingCompleted,
+      completionCount: family.completionCount,
+    })
+  },
+
+  setCurrentChild: (childId) => set({ currentChildId: childId }),
+
+  getCurrentChild: () => {
+    const { children, currentChildId } = get()
+    return children.find((c) => c.childId === currentChildId) || null
+  },
+
+  setChildrenAndFamily: (children, family) => {
+    set({
+      children,
+      currentChildId: children[0]?.childId || null,
+      parentPin: family.parentPin,
+      onboardingCompleted: family.onboardingCompleted,
+      completionCount: family.completionCount,
+    })
+  },
+
+  setChildPoints: (childId, totalPoints) => {
+    set((s) => ({
+      children: s.children.map((c) =>
+        c.childId === childId ? { ...c, totalPoints } : c
+      ),
+    }))
+  },
+
+  logout: () => set({
+    onboardingCompleted: false,
+    currentChildId: null,
+    children: [],
+    parentPin: '',
+    completionCount: 0,
+  }),
+
+  resetData: () => set({
+    currentChildId: null,
+    children: [],
+    parentPin: '',
+    onboardingCompleted: false,
+    completionCount: 0,
+    isLoading: false,
+    error: null,
+  }),
+}))

@@ -87,23 +87,27 @@ export default function FeverTracker() {
     return warnings
   }, [child, temp, ageMonths, records, selectedSymptoms])
 
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (!child || !temp || temp < 35 || temp > 43) {
       showToast('请输入有效体温（35-43℃）')
       return
     }
-    addTemperatureRecord({
-      childId: child.childId,
-      temperature: temp,
-      measureMethod: method,
-      measureTime: new Date().toISOString(),
-      symptoms: selectedSymptoms,
-      note,
-    })
-    showToast(`已记录 ${temp}℃`)
-    setTemperature('')
-    setSelectedSymptoms([])
-    setNote('')
+    try {
+      await addTemperatureRecord({
+        childId: child.childId,
+        temperature: temp,
+        measureMethod: method,
+        measureTime: new Date().toISOString(),
+        symptoms: selectedSymptoms,
+        note,
+      })
+      showToast(`已记录 ${temp}℃`)
+      setTemperature('')
+      setSelectedSymptoms([])
+      setNote('')
+    } catch {
+      showToast('记录失败，请重试')
+    }
   }
 
   if (!child) {
@@ -258,7 +262,7 @@ export default function FeverTracker() {
                   </div>
                   <button
                     className="btn-delete"
-                    onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteTemperatureRecord(r.recordId) }}
+                    onClick={async () => { if (window.confirm('确定要删除这条记录吗？')) { try { await deleteTemperatureRecord(r.recordId) } catch { showToast('删除失败') } } }}
                   >
                     删除
                   </button>

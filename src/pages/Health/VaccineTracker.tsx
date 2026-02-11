@@ -77,25 +77,29 @@ export default function VaccineTracker() {
     setShowRecord(true)
   }
 
-  const handleSaveRecord = () => {
+  const handleSaveRecord = async () => {
     if (!child || !selectedVaccine) return
 
-    addVaccinationRecord({
-      childId: child.childId,
-      vaccineName: selectedVaccine.name,
-      vaccineType: selectedVaccine.category,
-      doseNumber: selectedVaccine.doseNumber,
-      totalDoses: selectedVaccine.totalDoses,
-      date: recordDate,
-      batchNumber,
-      site,
-      vaccinator: '',
-      reactions,
-      note,
-    })
+    try {
+      await addVaccinationRecord({
+        childId: child.childId,
+        vaccineName: selectedVaccine.name,
+        vaccineType: selectedVaccine.category,
+        doseNumber: selectedVaccine.doseNumber,
+        totalDoses: selectedVaccine.totalDoses,
+        date: recordDate,
+        batchNumber,
+        site,
+        vaccinator: '',
+        reactions,
+        note,
+      })
 
-    showToast('接种记录已保存')
-    setShowRecord(false)
+      showToast('接种记录已保存')
+      setShowRecord(false)
+    } catch {
+      showToast('保存失败，请重试')
+    }
   }
 
   if (!child) {
@@ -453,7 +457,7 @@ function VaccineHistoryView({
   onDelete,
 }: {
   records: VaccinationRecord[]
-  onDelete: (recordId: string) => void
+  onDelete: (recordId: string) => Promise<void>
 }) {
   if (records.length === 0) {
     return (
@@ -503,7 +507,7 @@ function VaccineHistoryView({
             </div>
             <button
               className="btn-delete"
-              onClick={() => { if (window.confirm('确定要删除这条接种记录吗？')) onDelete(r.recordId) }}
+              onClick={async () => { if (window.confirm('确定要删除这条接种记录吗？')) { try { await onDelete(r.recordId) } catch { /* parent handles */ } } }}
             >
               删除
             </button>

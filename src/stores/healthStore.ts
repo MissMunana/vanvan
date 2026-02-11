@@ -1,9 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord, MilestoneStatus } from '../types'
-import { generateId } from '../utils/generateId'
-
-const MAX_RECORDS = 500
+import { healthApi } from '../lib/api'
 
 interface HealthStore {
   growthRecords: GrowthRecord[]
@@ -11,38 +8,41 @@ interface HealthStore {
   medicationRecords: MedicationRecord[]
   vaccinationRecords: VaccinationRecord[]
   milestoneRecords: MilestoneRecord[]
+  isLoading: boolean
+  error: string | null
 
-  addGrowthRecord: (data: Omit<GrowthRecord, 'recordId' | 'createdAt'>) => void
-  updateGrowthRecord: (recordId: string, updates: Partial<Omit<GrowthRecord, 'recordId' | 'childId' | 'createdAt'>>) => void
-  deleteGrowthRecord: (recordId: string) => void
-  getChildGrowthRecords: (childId: string) => GrowthRecord[]
+  // Fetch methods
+  fetchGrowthRecords: (childId: string) => Promise<void>
+  fetchTemperatureRecords: (childId: string) => Promise<void>
+  fetchMedicationRecords: (childId: string) => Promise<void>
+  fetchVaccinationRecords: (childId: string) => Promise<void>
+  fetchMilestoneRecords: (childId: string) => Promise<void>
+  fetchAllHealth: (childId: string) => Promise<void>
 
-  addTemperatureRecord: (data: Omit<TemperatureRecord, 'recordId' | 'createdAt'>) => void
-  deleteTemperatureRecord: (recordId: string) => void
-  getChildTemperatureRecords: (childId: string, hours?: number) => TemperatureRecord[]
+  // Growth
+  addGrowthRecord: (data: Omit<GrowthRecord, 'recordId' | 'createdAt'>) => Promise<void>
+  updateGrowthRecord: (recordId: string, updates: Partial<Omit<GrowthRecord, 'recordId' | 'childId' | 'createdAt'>>) => Promise<void>
+  deleteGrowthRecord: (recordId: string) => Promise<void>
 
-  addMedicationRecord: (data: Omit<MedicationRecord, 'recordId' | 'createdAt'>) => void
-  deleteMedicationRecord: (recordId: string) => void
-  getChildMedicationRecords: (childId: string) => MedicationRecord[]
+  // Temperature
+  addTemperatureRecord: (data: Omit<TemperatureRecord, 'recordId' | 'createdAt'>) => Promise<void>
+  deleteTemperatureRecord: (recordId: string) => Promise<void>
+
+  // Medication
+  addMedicationRecord: (data: Omit<MedicationRecord, 'recordId' | 'createdAt'>) => Promise<void>
+  deleteMedicationRecord: (recordId: string) => Promise<void>
   getLastMedicationTime: (childId: string, genericName: string) => string | null
   checkMedicationInterval: (childId: string, genericName: string) => { safe: boolean; minutesRemaining: number }
 
-  addVaccinationRecord: (data: Omit<VaccinationRecord, 'recordId' | 'createdAt'>) => void
-  deleteVaccinationRecord: (recordId: string) => void
-  getChildVaccinationRecords: (childId: string) => VaccinationRecord[]
+  // Vaccination
+  addVaccinationRecord: (data: Omit<VaccinationRecord, 'recordId' | 'createdAt'>) => Promise<void>
+  deleteVaccinationRecord: (recordId: string) => Promise<void>
 
-  updateMilestoneStatus: (childId: string, milestoneId: string, status: MilestoneStatus, note?: string, extra?: { photoTaken?: boolean; photoNote?: string }) => void
-  getChildMilestoneRecords: (childId: string) => MilestoneRecord[]
-  getMilestoneStatus: (childId: string, milestoneId: string) => MilestoneRecord | undefined
+  // Milestone
+  updateMilestoneStatus: (childId: string, milestoneId: string, status: MilestoneStatus, note?: string, extra?: { photoTaken?: boolean; photoNote?: string }) => Promise<void>
 
+  // Cleanup
   deleteByChildId: (childId: string) => void
-  hydrateFromCloud: (data: {
-    growthRecords?: GrowthRecord[]
-    temperatureRecords?: TemperatureRecord[]
-    medicationRecords?: MedicationRecord[]
-    vaccinationRecords?: VaccinationRecord[]
-    milestoneRecords?: MilestoneRecord[]
-  }) => void
 }
 
 const MEDICATION_INTERVALS: Record<string, number> = {
@@ -51,212 +51,185 @@ const MEDICATION_INTERVALS: Record<string, number> = {
 }
 
 export const useHealthStore = create<HealthStore>()(
-  persist(
-    (set, get) => ({
-      growthRecords: [],
-      temperatureRecords: [],
-      medicationRecords: [],
-      vaccinationRecords: [],
-      milestoneRecords: [],
+  (set, get) => ({
+    growthRecords: [],
+    temperatureRecords: [],
+    medicationRecords: [],
+    vaccinationRecords: [],
+    milestoneRecords: [],
+    isLoading: false,
+    error: null,
 
-      addGrowthRecord: (data) => {
-        const record: GrowthRecord = {
-          ...data,
-          recordId: generateId(),
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({
-          growthRecords: [...state.growthRecords, record]
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .slice(-MAX_RECORDS),
-        }))
-      },
+    fetchGrowthRecords: async (childId) => {
+      const data = await healthApi.growth.list(childId)
+      set({ growthRecords: data })
+    },
 
-      updateGrowthRecord: (recordId, updates) => {
-        set((state) => ({
-          growthRecords: state.growthRecords.map((r) =>
-            r.recordId === recordId ? { ...r, ...updates } : r
-          ),
-        }))
-      },
+    fetchTemperatureRecords: async (childId) => {
+      const data = await healthApi.temperature.list(childId)
+      set({ temperatureRecords: data })
+    },
 
-      deleteGrowthRecord: (recordId) => {
-        set((state) => ({
-          growthRecords: state.growthRecords.filter((r) => r.recordId !== recordId),
-        }))
-      },
+    fetchMedicationRecords: async (childId) => {
+      const data = await healthApi.medication.list(childId)
+      set({ medicationRecords: data })
+    },
 
-      getChildGrowthRecords: (childId) => {
-        return get()
-          .growthRecords.filter((r) => r.childId === childId)
-          .sort((a, b) => a.date.localeCompare(b.date))
-      },
+    fetchVaccinationRecords: async (childId) => {
+      const data = await healthApi.vaccination.list(childId)
+      set({ vaccinationRecords: data })
+    },
 
-      addTemperatureRecord: (data) => {
-        const record: TemperatureRecord = {
-          ...data,
-          recordId: generateId(),
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({
-          temperatureRecords: [record, ...state.temperatureRecords].slice(0, MAX_RECORDS),
-        }))
-      },
+    fetchMilestoneRecords: async (childId) => {
+      const data = await healthApi.milestone.list(childId)
+      set({ milestoneRecords: data })
+    },
 
-      deleteTemperatureRecord: (recordId) => {
-        set((state) => ({
-          temperatureRecords: state.temperatureRecords.filter((r) => r.recordId !== recordId),
-        }))
-      },
-
-      getChildTemperatureRecords: (childId, hours) => {
-        const records = get()
-          .temperatureRecords.filter((r) => r.childId === childId)
-          .sort((a, b) => a.measureTime.localeCompare(b.measureTime))
-        if (!hours) return records
-        const cutoff = new Date(Date.now() - hours * 3600000).toISOString()
-        return records.filter((r) => r.measureTime >= cutoff)
-      },
-
-      addMedicationRecord: (data) => {
-        const record: MedicationRecord = {
-          ...data,
-          recordId: generateId(),
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({
-          medicationRecords: [record, ...state.medicationRecords].slice(0, MAX_RECORDS),
-        }))
-      },
-
-      deleteMedicationRecord: (recordId) => {
-        set((state) => ({
-          medicationRecords: state.medicationRecords.filter((r) => r.recordId !== recordId),
-        }))
-      },
-
-      getChildMedicationRecords: (childId) => {
-        return get()
-          .medicationRecords.filter((r) => r.childId === childId)
-          .sort((a, b) => b.administrationTime.localeCompare(a.administrationTime))
-      },
-
-      getLastMedicationTime: (childId, genericName) => {
-        const records = get()
-          .medicationRecords.filter(
-            (r) => r.childId === childId && r.genericName === genericName
-          )
-          .sort((a, b) => b.administrationTime.localeCompare(a.administrationTime))
-        return records.length > 0 ? records[0].administrationTime : null
-      },
-
-      checkMedicationInterval: (childId, genericName) => {
-        const minInterval = MEDICATION_INTERVALS[genericName]
-        if (!minInterval) return { safe: true, minutesRemaining: 0 }
-
-        const lastTime = get().getLastMedicationTime(childId, genericName)
-        if (!lastTime) return { safe: true, minutesRemaining: 0 }
-
-        const elapsed = (Date.now() - new Date(lastTime).getTime()) / 60000
-        const remaining = minInterval - elapsed
-        return {
-          safe: remaining <= 0,
-          minutesRemaining: Math.max(0, Math.ceil(remaining)),
-        }
-      },
-
-      addVaccinationRecord: (data) => {
-        const record: VaccinationRecord = {
-          ...data,
-          recordId: generateId(),
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({
-          vaccinationRecords: [...state.vaccinationRecords, record].slice(-MAX_RECORDS),
-        }))
-      },
-
-      deleteVaccinationRecord: (recordId) => {
-        set((state) => ({
-          vaccinationRecords: state.vaccinationRecords.filter((r) => r.recordId !== recordId),
-        }))
-      },
-
-      getChildVaccinationRecords: (childId) => {
-        return get()
-          .vaccinationRecords.filter((r) => r.childId === childId)
-          .sort((a, b) => a.date.localeCompare(b.date))
-      },
-
-      updateMilestoneStatus: (childId, milestoneId, status, note, extra) => {
-        set((state) => {
-          const existing = state.milestoneRecords.find(
-            (r) => r.childId === childId && r.milestoneId === milestoneId
-          )
-          if (existing) {
-            return {
-              milestoneRecords: state.milestoneRecords.map((r) =>
-                r.childId === childId && r.milestoneId === milestoneId
-                  ? {
-                      ...r,
-                      status,
-                      achievedDate: status === 'achieved' ? new Date().toISOString().split('T')[0] : r.achievedDate,
-                      note: note ?? r.note,
-                      ...(extra?.photoTaken !== undefined ? { photoTaken: extra.photoTaken } : {}),
-                      ...(extra?.photoNote !== undefined ? { photoNote: extra.photoNote } : {}),
-                    }
-                  : r
-              ),
-            }
-          }
-          const record: MilestoneRecord = {
-            recordId: generateId(),
-            childId,
-            milestoneId,
-            status,
-            achievedDate: status === 'achieved' ? new Date().toISOString().split('T')[0] : null,
-            note: note ?? '',
-            photoTaken: extra?.photoTaken,
-            photoNote: extra?.photoNote,
-            createdAt: new Date().toISOString(),
-          }
-          return { milestoneRecords: [...state.milestoneRecords, record].slice(-MAX_RECORDS) }
+    fetchAllHealth: async (childId) => {
+      set({ isLoading: true, error: null })
+      try {
+        const [growth, temperature, medication, vaccination, milestone] = await Promise.all([
+          healthApi.growth.list(childId),
+          healthApi.temperature.list(childId),
+          healthApi.medication.list(childId),
+          healthApi.vaccination.list(childId),
+          healthApi.milestone.list(childId),
+        ])
+        set({
+          growthRecords: growth,
+          temperatureRecords: temperature,
+          medicationRecords: medication,
+          vaccinationRecords: vaccination,
+          milestoneRecords: milestone,
+          isLoading: false,
         })
-      },
+      } catch (err: any) {
+        set({ isLoading: false, error: err.message || 'Failed to load health data' })
+      }
+    },
 
-      getChildMilestoneRecords: (childId) => {
-        return get().milestoneRecords.filter((r) => r.childId === childId)
-      },
+    addGrowthRecord: async (data) => {
+      const record = await healthApi.growth.create(data)
+      set((state) => ({
+        growthRecords: [...state.growthRecords, record]
+          .sort((a, b) => a.date.localeCompare(b.date)),
+      }))
+    },
 
-      getMilestoneStatus: (childId, milestoneId) => {
-        return get().milestoneRecords.find(
+    updateGrowthRecord: async (recordId, updates) => {
+      const updated = await healthApi.growth.update(recordId, updates)
+      set((state) => ({
+        growthRecords: state.growthRecords.map((r) =>
+          r.recordId === recordId ? updated : r
+        ),
+      }))
+    },
+
+    deleteGrowthRecord: async (recordId) => {
+      await healthApi.growth.delete(recordId)
+      set((state) => ({
+        growthRecords: state.growthRecords.filter((r) => r.recordId !== recordId),
+      }))
+    },
+
+    addTemperatureRecord: async (data) => {
+      const record = await healthApi.temperature.create(data)
+      set((state) => ({
+        temperatureRecords: [record, ...state.temperatureRecords],
+      }))
+    },
+
+    deleteTemperatureRecord: async (recordId) => {
+      await healthApi.temperature.delete(recordId)
+      set((state) => ({
+        temperatureRecords: state.temperatureRecords.filter((r) => r.recordId !== recordId),
+      }))
+    },
+
+    addMedicationRecord: async (data) => {
+      const record = await healthApi.medication.create(data)
+      set((state) => ({
+        medicationRecords: [record, ...state.medicationRecords],
+      }))
+    },
+
+    deleteMedicationRecord: async (recordId) => {
+      await healthApi.medication.delete(recordId)
+      set((state) => ({
+        medicationRecords: state.medicationRecords.filter((r) => r.recordId !== recordId),
+      }))
+    },
+
+    getLastMedicationTime: (childId, genericName) => {
+      const records = get()
+        .medicationRecords.filter(
+          (r) => r.childId === childId && r.genericName === genericName
+        )
+        .sort((a, b) => b.administrationTime.localeCompare(a.administrationTime))
+      return records.length > 0 ? records[0].administrationTime : null
+    },
+
+    checkMedicationInterval: (childId, genericName) => {
+      const minInterval = MEDICATION_INTERVALS[genericName]
+      if (!minInterval) return { safe: true, minutesRemaining: 0 }
+
+      const lastTime = get().getLastMedicationTime(childId, genericName)
+      if (!lastTime) return { safe: true, minutesRemaining: 0 }
+
+      const elapsed = (Date.now() - new Date(lastTime).getTime()) / 60000
+      const remaining = minInterval - elapsed
+      return {
+        safe: remaining <= 0,
+        minutesRemaining: Math.max(0, Math.ceil(remaining)),
+      }
+    },
+
+    addVaccinationRecord: async (data) => {
+      const record = await healthApi.vaccination.create(data)
+      set((state) => ({
+        vaccinationRecords: [...state.vaccinationRecords, record],
+      }))
+    },
+
+    deleteVaccinationRecord: async (recordId) => {
+      await healthApi.vaccination.delete(recordId)
+      set((state) => ({
+        vaccinationRecords: state.vaccinationRecords.filter((r) => r.recordId !== recordId),
+      }))
+    },
+
+    updateMilestoneStatus: async (childId, milestoneId, status, note, extra) => {
+      const record = await healthApi.milestone.upsert({
+        childId,
+        milestoneId,
+        status,
+        note,
+        photoTaken: extra?.photoTaken,
+        photoNote: extra?.photoNote,
+      })
+      set((state) => {
+        const existing = state.milestoneRecords.find(
           (r) => r.childId === childId && r.milestoneId === milestoneId
         )
-      },
+        if (existing) {
+          return {
+            milestoneRecords: state.milestoneRecords.map((r) =>
+              r.childId === childId && r.milestoneId === milestoneId ? record : r
+            ),
+          }
+        }
+        return { milestoneRecords: [...state.milestoneRecords, record] }
+      })
+    },
 
-      deleteByChildId: (childId) => {
-        set((state) => ({
-          growthRecords: state.growthRecords.filter((r) => r.childId !== childId),
-          temperatureRecords: state.temperatureRecords.filter((r) => r.childId !== childId),
-          medicationRecords: state.medicationRecords.filter((r) => r.childId !== childId),
-          vaccinationRecords: state.vaccinationRecords.filter((r) => r.childId !== childId),
-          milestoneRecords: state.milestoneRecords.filter((r) => r.childId !== childId),
-        }))
-      },
-
-      hydrateFromCloud: (data) => {
-        set({
-          growthRecords: data.growthRecords || [],
-          temperatureRecords: data.temperatureRecords || [],
-          medicationRecords: data.medicationRecords || [],
-          vaccinationRecords: data.vaccinationRecords || [],
-          milestoneRecords: data.milestoneRecords || [],
-        })
-      },
-    }),
-    {
-      name: 'star-health',
-      version: 1,
-    }
-  )
+    deleteByChildId: (childId) => {
+      set((state) => ({
+        growthRecords: state.growthRecords.filter((r) => r.childId !== childId),
+        temperatureRecords: state.temperatureRecords.filter((r) => r.childId !== childId),
+        medicationRecords: state.medicationRecords.filter((r) => r.childId !== childId),
+        vaccinationRecords: state.vaccinationRecords.filter((r) => r.childId !== childId),
+        milestoneRecords: state.milestoneRecords.filter((r) => r.childId !== childId),
+      }))
+    },
+  })
 )

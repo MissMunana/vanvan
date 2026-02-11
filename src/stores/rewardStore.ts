@@ -1,99 +1,84 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type { Reward, RewardCategory } from '../types'
-import { REWARD_TEMPLATES } from '../data/templates'
-import { generateId } from '../utils/generateId'
+import { rewardsApi } from '../lib/api'
 
 interface RewardStore {
   rewards: Reward[]
-  addReward: (reward: Omit<Reward, 'rewardId' | 'createdAt'>) => void
-  addRewards: (rewards: Omit<Reward, 'rewardId' | 'createdAt'>[]) => void
-  updateReward: (rewardId: string, updates: Partial<Reward>) => void
-  deleteReward: (rewardId: string) => void
+  isLoading: boolean
+  error: string | null
+
+  // Server-first async methods
+  fetchRewards: (childId: string) => Promise<void>
+  addReward: (reward: { childId: string; name: string; category: RewardCategory; points: number; icon: string; description: string; limit: Reward['limit']; stock: number; isActive: boolean }) => Promise<void>
+  addRewards: (rewards: { childId: string; name: string; category: RewardCategory; points: number; icon: string; description: string; limit: Reward['limit']; stock: number; isActive: boolean }[]) => Promise<void>
+  updateReward: (rewardId: string, updates: Partial<Reward>) => Promise<void>
+  deleteReward: (rewardId: string) => Promise<void>
+  deleteByChildId: (childId: string) => void
+
+  // Local-only helpers
   getChildRewards: (childId: string) => Reward[]
   getChildRewardsByCategory: (childId: string) => Record<RewardCategory, Reward[]>
-  deleteByChildId: (childId: string) => void
-  hydrateFromCloud: (rewards: Reward[]) => void
 }
 
-export const useRewardStore = create<RewardStore>()(
-  persist(
-    (set, get) => ({
-      rewards: [],
+export const useRewardStore = create<RewardStore>()((set, get) => ({
+  rewards: [],
+  isLoading: false,
+  error: null,
 
-      addReward: (rewardData) => {
-        const reward: Reward = {
-          ...rewardData,
-          rewardId: generateId(),
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => ({ rewards: [...state.rewards, reward] }))
-      },
-
-      addRewards: (rewardDataList) => {
-        const newRewards = rewardDataList.map((rd) => ({
-          ...rd,
-          rewardId: generateId(),
-          createdAt: new Date().toISOString(),
-        }))
-        set((state) => ({ rewards: [...state.rewards, ...newRewards] }))
-      },
-
-      updateReward: (rewardId, updates) => {
-        set((state) => ({
-          rewards: state.rewards.map((r) =>
-            r.rewardId === rewardId ? { ...r, ...updates } : r
-          ),
-        }))
-      },
-
-      deleteReward: (rewardId) => {
-        set((state) => ({
-          rewards: state.rewards.filter((r) => r.rewardId !== rewardId),
-        }))
-      },
-
-      getChildRewards: (childId) => {
-        return get().rewards.filter((r) => r.childId === childId && r.isActive)
-      },
-
-      getChildRewardsByCategory: (childId) => {
-        const rewards = get().getChildRewards(childId)
-        const grouped: Record<RewardCategory, Reward[]> = {
-          time: [], privilege: [], material: [],
-        }
-        rewards.forEach((r) => {
-          grouped[r.category].push(r)
-        })
-        return grouped
-      },
-
-      deleteByChildId: (childId) => {
-        set((state) => ({ rewards: state.rewards.filter((r) => r.childId !== childId) }))
-      },
-
-      hydrateFromCloud: (rewards) => {
-        set({ rewards })
-      },
-    }),
-    {
-      name: 'star-rewards',
-      version: 2,
-      migrate: (persistedState: any, _version: number) => {
-        const state = persistedState as { rewards: Reward[] }
-        const nameToIcon = new Map(REWARD_TEMPLATES.map((t) => [t.name, t.icon]))
-        const lucideToEmoji: Record<string, string> = {
-          Castle: '🏰', Dice5: '🎲', TreePine: '🎡', CakeSlice: '🧁',
-          Clapperboard: '🍿', Moon: '💫', IceCreamBowl: '🍦', IceCreamCone: '🍦', Tv: '🎠',
-          Pencil: '🖍️', Palette: '🎨', Puzzle: '🧩', Crown: '👑', Gift: '🎁', Heart: '💖',
-        }
-        state.rewards = state.rewards.map((reward) => {
-          const byName = nameToIcon.get(reward.name)
-          const byLucide = lucideToEmoji[reward.icon]
-          return { ...reward, icon: byName || byLucide || reward.icon }
-        })
-        return state
-      },
+  fetchRewards: async (childId) => {
+    set({ isLoading: true, error: null })
+    try {
+      const rewards = await rewardsApi.list(childId)
+      set((s) => {
+        const otherRewards = s.rewards.filter((r) => r.childId !== childId)
+        return { rewards: [...otherRewards, ...rewards], isLoading: false }
+      })
+    } catch (e) {
+      set({ error: (e as Error).message, isLoading: false })
+      throw e
     }
-  )
-)
+  },
+
+  addReward: async (rewardData) => {
+    const reward = await rewardsApi.create(rewardData)
+    set((s) => ({ rewards: [...s.rewards, reward] }))
+  },
+
+  addRewards: async (rewardDataList) => {
+    const rewards = await rewardsApi.createBatch(rewardDataList)
+    set((s) => ({ rewards: [...s.rewards, ...rewards] }))
+  },
+
+  updateReward: async (rewardId, updates) => {
+    const reward = await rewardsApi.update(rewardId, updates)
+    set((s) => ({
+      rewards: s.rewards.map((r) => (r.rewardId === rewardId ? reward : r)),
+    }))
+  },
+
+  deleteReward: async (rewardId) => {
+    await rewardsApi.delete(rewardId)
+    set((s) => ({
+      rewards: s.rewards.filter((r) => r.rewardId !== rewardId),
+    }))
+  },
+
+  deleteByChildId: (childId) => {
+    set((s) => ({ rewards: s.rewards.filter((r) => r.childId !== childId) }))
+  },
+
+  getChildRewards: (childId) => {
+    return get().rewards.filter((r) => r.childId === childId && r.isActive)
+  },
+
+  getChildRewardsByCategory: (childId) => {
+    const rewards = get().getChildRewards(childId)
+    const grouped: Record<RewardCategory, Reward[]> = {
+      time: [], privilege: [], material: [],
+    }
+    rewards.forEach((r) => {
+      grouped[r.category].push(r)
+    })
+    return grouped
+  },
+}))

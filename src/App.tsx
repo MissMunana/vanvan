@@ -9,7 +9,7 @@ import { useAppStore } from './stores/appStore'
 import { useTaskStore } from './stores/taskStore'
 import { useAuthStore } from './stores/authStore'
 import { useScreenTime } from './hooks/useScreenTime'
-import { useSync } from './hooks/useSync'
+import { useDataLoader } from './hooks/useDataLoader'
 import ScreenTimeLock from './components/common/ScreenTimeLock'
 import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
@@ -31,6 +31,7 @@ export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isLoading = useAuthStore((s) => s.isLoading)
   const isDataLoaded = useAuthStore((s) => s.isDataLoaded)
+  const setDataLoaded = useAuthStore((s) => s.setDataLoaded)
   const initialize = useAuthStore((s) => s.initialize)
   const setSession = useAuthStore((s) => s.setSession)
 
@@ -41,7 +42,7 @@ export default function App() {
   const parentPin = useAppStore((s) => s.parentPin)
   const location = useLocation()
 
-  const { migrateIfNeeded } = useSync()
+  const { loadCoreData, loadChildData } = useDataLoader()
 
   const [screenLock, setScreenLock] = useState<{ show: boolean; type: 'limit' | 'night' }>({ show: false, type: 'limit' })
 
@@ -58,17 +59,25 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [setSession])
 
-  // After auth, sync data from cloud
-  const setDataLoaded = useAuthStore((s) => s.setDataLoaded)
+  // After auth, load data from server via granular APIs
   useEffect(() => {
     if (isAuthenticated && !isDataLoaded) {
-      migrateIfNeeded().catch((err) => {
-        console.error('Sync failed:', err)
-        // Still mark as loaded so the user isn't stuck on loading screen
-        setDataLoaded(true)
-      })
+      const load = async () => {
+        try {
+          await loadCoreData()
+          const childId = useAppStore.getState().currentChildId
+          if (childId) {
+            await loadChildData(childId)
+          }
+        } catch (err) {
+          console.error('Data load failed:', err)
+        } finally {
+          setDataLoaded(true)
+        }
+      }
+      load()
     }
-  }, [isAuthenticated, isDataLoaded, migrateIfNeeded, setDataLoaded])
+  }, [isAuthenticated, isDataLoaded, loadCoreData, loadChildData, setDataLoaded])
 
   useEffect(() => {
     refreshDailyStatus()
@@ -131,7 +140,7 @@ export default function App() {
     return <Auth />
   }
 
-  // Wait for cloud data to load before deciding onboarding
+  // Wait for server data to load before deciding onboarding
   if (!isDataLoaded) {
     return (
       <div style={{

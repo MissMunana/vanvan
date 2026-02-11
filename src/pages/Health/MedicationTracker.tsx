@@ -76,7 +76,7 @@ export default function MedicationTracker() {
     setShowCalc(true)
   }
 
-  const handleSaveMedication = (formulation: DrugFormulation, result: DosageResult) => {
+  const handleSaveMedication = async (formulation: DrugFormulation, result: DosageResult) => {
     if (!child) return
 
     if (!intervalCheck.safe) {
@@ -88,21 +88,25 @@ export default function MedicationTracker() {
       : formulation.id.includes('gran') ? 'granules'
       : 'suspension'
 
-    addMedicationRecord({
-      childId: child.childId,
-      drugName: formulation.name,
-      genericName: drugType,
-      dosageForm,
-      singleDose: result.recommendedDoseVolume,
-      doseUnit: result.unit,
-      administrationTime: new Date().toISOString(),
-      route: 'oral',
-      reason: '退烧',
-      note: `${result.recommendedDoseMg}mg (${result.recommendedDoseVolume}${result.unit})`,
-    })
+    try {
+      await addMedicationRecord({
+        childId: child.childId,
+        drugName: formulation.name,
+        genericName: drugType,
+        dosageForm,
+        singleDose: result.recommendedDoseVolume,
+        doseUnit: result.unit,
+        administrationTime: new Date().toISOString(),
+        route: 'oral',
+        reason: '退烧',
+        note: `${result.recommendedDoseMg}mg (${result.recommendedDoseVolume}${result.unit})`,
+      })
 
-    showToast('用药记录已保存')
-    setShowCalc(false)
+      showToast('用药记录已保存')
+      setShowCalc(false)
+    } catch {
+      showToast('保存失败，请重试')
+    }
   }
 
   if (!child) {
@@ -151,7 +155,7 @@ export default function MedicationTracker() {
                   </div>
                   <button
                     className="btn-delete"
-                    onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteMedicationRecord(r.recordId) }}
+                    onClick={async () => { if (window.confirm('确定要删除这条记录吗？')) { try { await deleteMedicationRecord(r.recordId) } catch { showToast('删除失败') } } }}
                   >
                     删除
                   </button>

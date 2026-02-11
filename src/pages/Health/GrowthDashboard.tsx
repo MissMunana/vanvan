@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
+import { useToast } from '../../components/common/Toast'
 import type { GrowthMetric } from '../../types'
 import GrowthCurveChart from '../../components/charts/GrowthCurveChart'
 import GrowthEntry from './GrowthEntry'
@@ -18,6 +19,7 @@ export default function GrowthDashboard() {
   const child = useAppStore((s) => s.getCurrentChild())
   const growthRecords = useHealthStore((s) => s.growthRecords)
   const deleteGrowthRecord = useHealthStore((s) => s.deleteGrowthRecord)
+  const { showToast } = useToast()
   const [metric, setMetric] = useState<GrowthMetric>('height')
   const [showEntry, setShowEntry] = useState(false)
 
@@ -229,7 +231,7 @@ export default function GrowthDashboard() {
                 </div>
                 <button
                   className="btn-delete"
-                  onClick={() => { if (window.confirm('确定要删除这条记录吗？')) deleteGrowthRecord(r.recordId) }}
+                  onClick={async () => { if (window.confirm('确定要删除这条记录吗？')) { try { await deleteGrowthRecord(r.recordId) } catch { showToast('删除失败') } } }}
                 >
                   删除
                 </button>

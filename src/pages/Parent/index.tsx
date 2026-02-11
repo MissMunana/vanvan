@@ -390,10 +390,8 @@ function Dashboard() {
               <span style={{ fontWeight: 600 }}>启用屏幕时间限制</span>
               <button
                 onClick={() => {
-                  const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, enabled: !screenTime.enabled } } }
-                  useAppStore.setState((state) => ({
-                    children: state.children.map((c) => c.childId === child.childId ? updated : c),
-                  }))
+                  const newSettings = { ...child.settings, screenTime: { ...screenTime, enabled: !screenTime.enabled } }
+                  useAppStore.getState().updateChild(child.childId, { settings: newSettings })
                 }}
                 style={{
                   width: 48,
@@ -427,10 +425,8 @@ function Dashboard() {
                 value={screenTime.dailyLimitMinutes}
                 onChange={(e) => {
                   const val = parseInt(e.target.value) || 30
-                  const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, dailyLimitMinutes: val } } }
-                  useAppStore.setState((state) => ({
-                    children: state.children.map((c) => c.childId === child.childId ? updated : c),
-                  }))
+                  const newSettings = { ...child.settings, screenTime: { ...screenTime, dailyLimitMinutes: val } }
+                  useAppStore.getState().updateChild(child.childId, { settings: newSettings })
                 }}
                 min={5}
                 max={120}
@@ -448,10 +444,8 @@ function Dashboard() {
                   value={screenTime.lockStartHour}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 22
-                    const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, lockStartHour: val } } }
-                    useAppStore.setState((state) => ({
-                      children: state.children.map((c) => c.childId === child.childId ? updated : c),
-                    }))
+                    const newSettings = { ...child.settings, screenTime: { ...screenTime, lockStartHour: val } }
+                    useAppStore.getState().updateChild(child.childId, { settings: newSettings })
                   }}
                   min={0}
                   max={23}
@@ -467,10 +461,8 @@ function Dashboard() {
                   value={screenTime.lockEndHour}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 6
-                    const updated = { ...child, settings: { ...child.settings, screenTime: { ...screenTime, lockEndHour: val } } }
-                    useAppStore.setState((state) => ({
-                      children: state.children.map((c) => c.childId === child.childId ? updated : c),
-                    }))
+                    const newSettings = { ...child.settings, screenTime: { ...screenTime, lockEndHour: val } }
+                    useAppStore.getState().updateChild(child.childId, { settings: newSettings })
                   }}
                   min={0}
                   max={23}
@@ -515,37 +507,45 @@ function TaskManager() {
 
   if (!child) return null
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newTask.name.trim()) return
-    addTask({
-      childId: child.childId,
-      name: newTask.name,
-      category: newTask.category,
-      points: newTask.points,
-      icon: newTask.icon,
-      description: newTask.description,
-      isActive: true,
-      frequency: 'daily',
-    })
-    setShowAdd(false)
-    setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '' })
-    showToast('任务已添加')
+    try {
+      await addTask({
+        childId: child.childId,
+        name: newTask.name,
+        category: newTask.category,
+        points: newTask.points,
+        icon: newTask.icon,
+        description: newTask.description,
+        isActive: true,
+        frequency: 'daily',
+      })
+      setShowAdd(false)
+      setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '' })
+      showToast('任务已添加')
+    } catch {
+      showToast('添加失败，请重试')
+    }
   }
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     if (!editingTask || !editingTask.name.trim()) return
-    updateTask(editingTask.taskId, {
-      name: editingTask.name,
-      category: editingTask.category,
-      points: editingTask.points,
-      icon: editingTask.icon,
-      description: editingTask.description,
-    })
-    setEditingTask(null)
-    showToast('任务已更新')
+    try {
+      await updateTask(editingTask.taskId, {
+        name: editingTask.name,
+        category: editingTask.category,
+        points: editingTask.points,
+        icon: editingTask.icon,
+        description: editingTask.description,
+      })
+      setEditingTask(null)
+      showToast('任务已更新')
+    } catch {
+      showToast('更新失败，请重试')
+    }
   }
 
-  const handleImport = () => {
+  const handleImport = async () => {
     const ageGroup = child.ageGroup
     const existingNames = new Set(allTasks.map((t) => t.name))
     const toImport = TASK_TEMPLATES
@@ -564,8 +564,12 @@ function TaskManager() {
     if (toImport.length === 0) {
       showToast('没有新的可导入任务')
     } else {
-      addTasks(toImport)
-      showToast(`已导入 ${toImport.length} 个任务`)
+      try {
+        await addTasks(toImport)
+        showToast(`已导入 ${toImport.length} 个任务`)
+      } catch {
+        showToast('导入失败，请重试')
+      }
     }
     setShowImport(false)
   }
@@ -600,7 +604,9 @@ function TaskManager() {
             ✎
           </button>
           <button
-            onClick={() => updateTask(task.taskId, { isActive: !task.isActive })}
+            onClick={async () => {
+              try { await updateTask(task.taskId, { isActive: !task.isActive }) } catch { showToast('操作失败') }
+            }}
             style={{
               fontSize: '0.75rem',
               padding: '4px 10px',
@@ -612,9 +618,8 @@ function TaskManager() {
             {task.isActive ? '启用' : '停用'}
           </button>
           <button
-            onClick={() => {
-              deleteTask(task.taskId)
-              showToast('已删除')
+            onClick={async () => {
+              try { await deleteTask(task.taskId); showToast('已删除') } catch { showToast('删除失败') }
             }}
             style={{ fontSize: '1rem', color: 'var(--color-danger)' }}
           >
@@ -742,38 +747,46 @@ function RewardManager() {
 
   if (!child) return null
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newReward.name.trim()) return
-    addReward({
-      childId: child.childId,
-      name: newReward.name,
-      category: newReward.category,
-      points: newReward.points,
-      icon: newReward.icon,
-      description: newReward.description,
-      limit: { type: 'unlimited', count: 0 },
-      stock: -1,
-      isActive: true,
-    })
-    setShowAdd(false)
-    setNewReward({ name: '', category: 'time', points: 20, icon: '🎁', description: '' })
-    showToast('奖励已添加')
+    try {
+      await addReward({
+        childId: child.childId,
+        name: newReward.name,
+        category: newReward.category,
+        points: newReward.points,
+        icon: newReward.icon,
+        description: newReward.description,
+        limit: { type: 'unlimited', count: 0 },
+        stock: -1,
+        isActive: true,
+      })
+      setShowAdd(false)
+      setNewReward({ name: '', category: 'time', points: 20, icon: '🎁', description: '' })
+      showToast('奖励已添加')
+    } catch {
+      showToast('添加失败，请重试')
+    }
   }
 
-  const handleEditRewardSave = () => {
+  const handleEditRewardSave = async () => {
     if (!editingReward || !editingReward.name.trim()) return
-    updateReward(editingReward.rewardId, {
-      name: editingReward.name,
-      category: editingReward.category,
-      points: editingReward.points,
-      icon: editingReward.icon,
-      description: editingReward.description,
-    })
-    setEditingReward(null)
-    showToast('奖励已更新')
+    try {
+      await updateReward(editingReward.rewardId, {
+        name: editingReward.name,
+        category: editingReward.category,
+        points: editingReward.points,
+        icon: editingReward.icon,
+        description: editingReward.description,
+      })
+      setEditingReward(null)
+      showToast('奖励已更新')
+    } catch {
+      showToast('更新失败，请重试')
+    }
   }
 
-  const handleImportRewards = () => {
+  const handleImportRewards = async () => {
     const existingNames = new Set(allRewards.map((r) => r.name))
     const toImport = REWARD_TEMPLATES
       .filter((r) => !existingNames.has(r.name))
@@ -792,8 +805,12 @@ function RewardManager() {
     if (toImport.length === 0) {
       showToast('没有新的可导入奖励')
     } else {
-      addRewards(toImport)
-      showToast(`已导入 ${toImport.length} 个奖励`)
+      try {
+        await addRewards(toImport)
+        showToast(`已导入 ${toImport.length} 个奖励`)
+      } catch {
+        showToast('导入失败，请重试')
+      }
     }
   }
 
@@ -826,7 +843,9 @@ function RewardManager() {
             ✎
           </button>
           <button
-            onClick={() => updateReward(reward.rewardId, { isActive: !reward.isActive })}
+            onClick={async () => {
+              try { await updateReward(reward.rewardId, { isActive: !reward.isActive }) } catch { showToast('操作失败') }
+            }}
             style={{
               fontSize: '0.75rem',
               padding: '4px 10px',
@@ -838,7 +857,9 @@ function RewardManager() {
             {reward.isActive ? '上架' : '下架'}
           </button>
           <button
-            onClick={() => { deleteReward(reward.rewardId); showToast('已删除') }}
+            onClick={async () => {
+              try { await deleteReward(reward.rewardId); showToast('已删除') } catch { showToast('删除失败') }
+            }}
             style={{ fontSize: '1rem', color: 'var(--color-danger)' }}
           >
             ✕
@@ -939,7 +960,6 @@ function RewardManager() {
 function ExchangeReview() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
-  const updatePoints = useAppStore((s) => s.updatePoints)
   const allExchanges = useExchangeStore((s) => s.exchanges)
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
@@ -960,7 +980,6 @@ function ExchangeReview() {
   }, [allExchanges, child?.childId, filterChildId, multiChild])
 
   const reviewExchange = useExchangeStore((s) => s.reviewExchange)
-  const addLog = usePointStore((s) => s.addLog)
   const { showToast } = useToast()
 
   const [rejectModal, setRejectModal] = useState<string | null>(null)
@@ -970,26 +989,27 @@ function ExchangeReview() {
 
   if (!child) return null
 
-  const handleApprove = (exchange: typeof exchanges[0]) => {
-    updatePoints(exchange.childId, -exchange.points)
-    reviewExchange(exchange.exchangeId, 'approved')
-    addLog({
-      childId: exchange.childId,
-      taskId: null,
-      type: 'spend',
-      points: -exchange.points,
-      reason: `兑换: ${exchange.rewardName}`,
-      emotion: null,
-      operator: 'parent',
-    })
-    showToast('已通过，积分已扣除')
+  const handleApprove = async (exchange: typeof exchanges[0]) => {
+    try {
+      await reviewExchange(exchange.exchangeId, 'approved')
+      // Server handles point deduction and log creation; refresh child data
+      await useAppStore.getState().fetchChildren()
+      await usePointStore.getState().fetchLogs(exchange.childId)
+      showToast('已通过，积分已扣除')
+    } catch {
+      showToast('操作失败，请重试')
+    }
   }
 
-  const handleReject = (exchangeId: string) => {
-    reviewExchange(exchangeId, 'rejected', rejectReason || '爸爸妈妈觉得可以再等等哦')
-    setRejectModal(null)
-    setRejectReason('')
-    showToast('已拒绝')
+  const handleReject = async (exchangeId: string) => {
+    try {
+      await reviewExchange(exchangeId, 'rejected', rejectReason || '爸爸妈妈觉得可以再等等哦')
+      setRejectModal(null)
+      setRejectReason('')
+      showToast('已拒绝')
+    } catch {
+      showToast('操作失败，请重试')
+    }
   }
 
   const pending = exchanges.filter((e) => e.status === 'pending')
@@ -1141,7 +1161,6 @@ function ExchangeReview() {
 function PointAdjust() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
-  const updatePoints = useAppStore((s) => s.updatePoints)
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
   const addLog = usePointStore((s) => s.addLog)
@@ -1173,7 +1192,7 @@ function PointAdjust() {
 
   if (!child) return null
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!reason.trim()) {
       showToast('请填写原因')
       return
@@ -1189,21 +1208,26 @@ function PointAdjust() {
       return
     }
 
-    updatePoints(child.childId, delta)
-    addLog({
-      childId: child.childId,
-      taskId: null,
-      type: 'adjust',
-      points: delta,
-      reason: `家长调整: ${reason}`,
-      emotion: null,
-      operator: 'parent',
-    })
-    showToast(`已${mode === 'add' ? '增加' : '减少'}${points}积分`)
-    setReason('')
-    setPoints(10)
-    if (mode === 'subtract') {
-      setMode('add')
+    try {
+      // addLog on server also updates child total_points
+      const { totalPoints } = await addLog({
+        childId: child.childId,
+        taskId: null,
+        type: 'adjust',
+        points: delta,
+        reason: `家长调整: ${reason}`,
+        emotion: null,
+        operator: 'parent',
+      })
+      useAppStore.getState().setChildPoints(child.childId, totalPoints)
+      showToast(`已${mode === 'add' ? '增加' : '减少'}${points}积分`)
+      setReason('')
+      setPoints(10)
+      if (mode === 'subtract') {
+        setMode('add')
+      }
+    } catch {
+      showToast('操作失败，请重试')
     }
   }
 
@@ -1334,7 +1358,7 @@ function Settings() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const parentPin = useAppStore((s) => s.parentPin)
-  const setParentPin = useAppStore((s) => s.setParentPin)
+  const updateFamilySettings = useAppStore((s) => s.updateFamilySettings)
   const updateChild = useAppStore((s) => s.updateChild)
   const deleteChildFromApp = useAppStore((s) => s.deleteChild)
   const addChild = useAppStore((s) => s.addChild)
@@ -1389,7 +1413,7 @@ function Settings() {
     fetchPasskeys()
   }, [authUser])
 
-  const handleSaveChild = () => {
+  const handleSaveChild = async () => {
     if (!editingChild || !editingChild.name.trim()) return
 
     const currentChild = children.find((c) => c.childId === editingChild.childId)
@@ -1402,59 +1426,71 @@ function Settings() {
       }
     }
 
-    updateChild(editingChild.childId, {
-      name: editingChild.name,
-      gender: editingChild.gender,
-      birthday: editingChild.birthday,
-      avatar: editingChild.avatar,
-      themeColor: editingChild.themeColor,
-    })
-    setEditingChild(null)
-    setAgeGroupChangeConfirm(false)
-    showToast('已更新')
+    try {
+      await updateChild(editingChild.childId, {
+        name: editingChild.name,
+        gender: editingChild.gender,
+        birthday: editingChild.birthday,
+        avatar: editingChild.avatar,
+        themeColor: editingChild.themeColor,
+      })
+      setEditingChild(null)
+      setAgeGroupChangeConfirm(false)
+      showToast('已更新')
+    } catch {
+      showToast('更新失败，请重试')
+    }
   }
 
-  const handleAddChild = () => {
+  const handleAddChild = async () => {
     if (!newChild.name.trim() || !newChild.birthday) return
-    const childId = addChild({
-      name: newChild.name,
-      gender: newChild.gender,
-      birthday: newChild.birthday,
-      avatar: newChild.avatar,
-    })
-    setCurrentChild(childId)
-    setShowAddChild(false)
-    setNewChild({ name: '', gender: 'male', birthday: '', avatar: 'Cat' })
-    showToast('孩子已添加')
+    try {
+      const childId = await addChild({
+        name: newChild.name,
+        gender: newChild.gender,
+        birthday: newChild.birthday,
+        avatar: newChild.avatar,
+      })
+      setCurrentChild(childId)
+      setShowAddChild(false)
+      setNewChild({ name: '', gender: 'male', birthday: '', avatar: 'Cat' })
+      showToast('孩子已添加')
+    } catch {
+      showToast('添加失败，请重试')
+    }
   }
 
-  const handleDeleteChild = () => {
+  const handleDeleteChild = async () => {
     if (!showDeleteChild) return
     if (deletePin !== parentPin) {
       setDeletePinError(true)
       setDeletePin('')
       return
     }
-    // Clean up related data in all stores
-    useTaskStore.getState().deleteByChildId(showDeleteChild)
-    usePointStore.getState().deleteByChildId(showDeleteChild)
-    useRewardStore.getState().deleteByChildId(showDeleteChild)
-    useExchangeStore.getState().deleteByChildId(showDeleteChild)
-    useBadgeStore.getState().deleteByChildId(showDeleteChild)
-    useHealthStore.getState().deleteByChildId(showDeleteChild)
-    deleteChildFromApp(showDeleteChild)
-    setShowDeleteChild(null)
-    setDeletePin('')
-    setDeletePinError(false)
-    showToast('已删除')
-    // If no children left, go back to onboarding
-    if (children.length <= 1) {
-      resetData()
-      navigate('/')
+    try {
+      // Clean up related data in all stores
+      useTaskStore.getState().deleteByChildId(showDeleteChild)
+      usePointStore.getState().deleteByChildId(showDeleteChild)
+      useRewardStore.getState().deleteByChildId(showDeleteChild)
+      useExchangeStore.getState().deleteByChildId(showDeleteChild)
+      useBadgeStore.getState().deleteByChildId(showDeleteChild)
+      useHealthStore.getState().deleteByChildId(showDeleteChild)
+      await deleteChildFromApp(showDeleteChild)
+      setShowDeleteChild(null)
+      setDeletePin('')
+      setDeletePinError(false)
+      showToast('已删除')
+      // If no children left, go back to onboarding
+      if (children.length <= 1) {
+        resetData()
+        navigate('/')
+      }
+    } catch {
+      showToast('删除失败，请重试')
     }
   }
 
-  const handlePinChange = () => {
+  const handlePinChange = async () => {
     if (pinForm.oldPin !== parentPin) {
       setPinChangeError('旧密码不正确')
       return
@@ -1467,19 +1503,25 @@ function Settings() {
       setPinChangeError('两次输入的新密码不一致')
       return
     }
-    setParentPin(pinForm.newPin)
-    setShowPinChange(false)
-    setPinForm({ oldPin: '', newPin: '', confirmPin: '' })
-    setPinChangeError('')
-    showToast('密码已修改')
+    try {
+      await updateFamilySettings({ parentPin: pinForm.newPin })
+      setShowPinChange(false)
+      setPinForm({ oldPin: '', newPin: '', confirmPin: '' })
+      setPinChangeError('')
+      showToast('密码已修改')
+    } catch {
+      showToast('修改失败，请重试')
+    }
   }
 
-  const handleSoundToggle = () => {
+  const handleSoundToggle = async () => {
     if (!child) return
-    const updated = { ...child, settings: { ...child.settings, soundEnabled: !child.settings.soundEnabled } }
-    useAppStore.setState((state) => ({
-      children: state.children.map((c) => c.childId === child.childId ? updated : c),
-    }))
+    const newSettings = { ...child.settings, soundEnabled: !child.settings.soundEnabled }
+    try {
+      await updateChild(child.childId, { settings: newSettings })
+    } catch {
+      showToast('操作失败')
+    }
   }
 
   const handleLogout = async () => {

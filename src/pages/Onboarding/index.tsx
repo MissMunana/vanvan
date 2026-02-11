@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { useRewardStore } from '../../stores/rewardStore'
-import { useSync } from '../../hooks/useSync'
+import { onboardingApi } from '../../lib/api'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { getAgeGroup, getAgeFromBirthday, formatAge } from '../../hooks/useAgeGroup'
 import type { TaskCategory, RewardCategory } from '../../types'
@@ -12,13 +12,8 @@ const PICKER_ITEM_H = 34
 const PICKER_VISIBLE = 5
 
 export default function Onboarding() {
-  const addChild = useAppStore((s) => s.addChild)
-  const setParentPin = useAppStore((s) => s.setParentPin)
-  const completeOnboarding = useAppStore((s) => s.completeOnboarding)
-  const addTasks = useTaskStore((s) => s.addTasks)
-  const addRewards = useRewardStore((s) => s.addRewards)
-  const { pushToCloud } = useSync()
   const navigate = useNavigate()
+  const [submitting, setSubmitting] = useState(false)
 
   // Register state
   const [regStep, setRegStep] = useState(0) // 0=form, 1=tasks, 2=rewards, 3=ready
@@ -102,43 +97,54 @@ export default function Onboarding() {
     setSelectedRewards(defaultRewards)
   })
 
-  const handleRegComplete = () => {
-    const childId = addChild({ name, gender, birthday, avatar })
-    setParentPin(pin || '1234')
-
-    const tasksToAdd = filteredTasks
-      .filter((_, i) => selectedTasks.has(i))
-      .map((t) => ({
-        childId,
-        name: t.name,
-        category: t.category as TaskCategory,
-        points: t.points,
-        icon: t.icon,
-        description: t.description,
-        isActive: true,
-        frequency: 'daily' as const,
-      }))
-    addTasks(tasksToAdd)
-
-    const rewardsToAdd = REWARD_TEMPLATES
-      .filter((_, i) => selectedRewards.has(i))
-      .map((r) => ({
-        childId,
-        name: r.name,
-        category: r.category as RewardCategory,
-        points: r.points,
-        icon: r.icon,
-        description: r.description,
-        limit: { type: 'unlimited' as const, count: 0 },
-        stock: -1,
-        isActive: true,
-      }))
-    addRewards(rewardsToAdd)
-
-    completeOnboarding()
-    // Push onboarding data to cloud so it persists across logins
-    pushToCloud().catch(console.error)
-    navigate('/')
+  const handleRegComplete = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const result = await onboardingApi.setup({
+        child: { name, gender, birthday, avatar },
+        parentPin: pin || '1234',
+        tasks: filteredTasks
+          .filter((_, i) => selectedTasks.has(i))
+          .map((t) => ({
+            childId: '',
+            name: t.name,
+            category: t.category as TaskCategory,
+            points: t.points,
+            icon: t.icon,
+            description: t.description,
+            isActive: true,
+            frequency: 'daily' as const,
+          })),
+        rewards: REWARD_TEMPLATES
+          .filter((_, i) => selectedRewards.has(i))
+          .map((r) => ({
+            childId: '',
+            name: r.name,
+            category: r.category as RewardCategory,
+            points: r.points,
+            icon: r.icon,
+            description: r.description,
+            limit: { type: 'unlimited' as const, count: 0 },
+            stock: -1,
+            isActive: true,
+          })),
+      })
+      // Populate stores from server response
+      useAppStore.setState({
+        children: [result.child],
+        currentChildId: result.child.childId,
+        parentPin: result.family.parentPin,
+        onboardingCompleted: true,
+        completionCount: result.family.completionCount,
+      })
+      useTaskStore.setState({ tasks: result.tasks })
+      useRewardStore.setState({ rewards: result.rewards })
+      navigate('/')
+    } catch (err) {
+      console.error('Onboarding failed:', err)
+      setSubmitting(false)
+    }
   }
 
   const canProceedReg = () => {

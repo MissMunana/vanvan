@@ -38,22 +38,25 @@ export default function Shop() {
 
   if (!child) return null
 
-  const handleExchange = (reward: Reward) => {
+  const handleExchange = async (reward: Reward) => {
     if (child.totalPoints < reward.points) {
       showToast(`还差${reward.points - child.totalPoints}分就够啦! 加油!`)
       setSelectedReward(null)
       return
     }
 
-    createExchange({
-      childId: child.childId,
-      rewardId: reward.rewardId,
-      rewardName: reward.name,
-      rewardIcon: reward.icon,
-      points: reward.points,
-    })
-
-    showToast('兑换申请已提交，等待家长确认')
+    try {
+      await createExchange({
+        childId: child.childId,
+        rewardId: reward.rewardId,
+        rewardName: reward.name,
+        rewardIcon: reward.icon,
+        points: reward.points,
+      })
+      showToast('兑换申请已提交，等待家长确认')
+    } catch {
+      showToast('提交失败，请重试')
+    }
     setSelectedReward(null)
   }
 

@@ -16,13 +16,10 @@ import { Modal } from '../../components/common/Modal'
 export default function Home() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
-  const incrementCompletionCount = useAppStore((s) => s.incrementCompletionCount)
-  const updatePoints = useAppStore((s) => s.updatePoints)
   const allTasks = useTaskStore((s) => s.tasks)
   const completeTask = useTaskStore((s) => s.completeTask)
   const undoComplete = useTaskStore((s) => s.undoComplete)
   const logs = usePointStore((s) => s.logs)
-  const addLog = usePointStore((s) => s.addLog)
   const exchanges = useExchangeStore((s) => s.exchanges)
   const checkAndUnlock = useBadgeStore((s) => s.checkAndUnlock)
   const navigate = useNavigate()
@@ -99,75 +96,74 @@ export default function Home() {
 
   const completedCount = completedTasks.length
 
-  const handleComplete = useCallback((taskId: string, taskName: string, _basePoints: number) => {
+  const handleComplete = useCallback(async (taskId: string, taskName: string, _basePoints: number) => {
     if (!child) return
-    const result = completeTask(taskId)
-    const totalPoints = result.earnedPoints + result.bonusPoints
-    updatePoints(child.childId, totalPoints)
-    incrementCompletionCount()
-    addLog({
-      childId: child.childId,
-      taskId,
-      type: 'earn',
-      points: totalPoints,
-      reason: `完成任务: ${taskName}`,
-      emotion: null,
-      operator: 'child',
-    })
-    setLastPoints(totalPoints)
-    setAnimTrigger((t) => t + 1)
+    try {
+      const result = await completeTask(taskId)
+      const totalPoints = result.earnedPoints + result.bonusPoints
 
-    // Play sound
-    play('complete')
-    if (result.bonusPoints > 0) {
-      setTimeout(() => play('applause'), 300)
-    }
+      // Update local stores with server response
+      useAppStore.getState().setChildPoints(child.childId, result.totalPoints)
+      if (result.pointLog) {
+        usePointStore.getState().prependLog(result.pointLog)
+      }
 
-    // Check badges
-    const updatedTasks = useTaskStore.getState().tasks.filter((t) => t.childId === child.childId)
-    const updatedLogs = usePointStore.getState().logs
-    const unlockedBadgeIds = useBadgeStore.getState().getChildBadges(child.childId).map((b) => b.badgeId)
-    const newBadges = checkAndUnlock({
-      child,
-      tasks: updatedTasks,
-      logs: updatedLogs,
-      unlockedBadgeIds,
-    })
-    if (newBadges.length > 0) {
-      setTimeout(() => {
-        play('badge')
-        const badge = BADGE_LIST.find((b) => b.badgeId === newBadges[0])
-        if (badge) {
-          showToast(`${badge.icon} 获得勋章：${badge.name}！`)
-        }
-      }, 800)
-    }
+      setLastPoints(totalPoints)
+      setAnimTrigger((t) => t + 1)
 
-    // Check graduation
-    if (result.graduated) {
-      setTimeout(() => {
-        setGraduation({ show: true, taskName })
-        play('levelup')
-      }, 1200)
-    }
+      // Play sound
+      play('complete')
+      if (result.bonusPoints > 0) {
+        setTimeout(() => play('applause'), 300)
+      }
 
-    let message = `你坚持做到了! +${totalPoints}分`
-    if (result.bonusPoints > 0) {
-      message = `连续${result.consecutiveDays}天! 额外奖励+${result.bonusPoints}分`
+      // Check badges
+      const updatedTasks = useTaskStore.getState().tasks.filter((t) => t.childId === child.childId)
+      const updatedLogs = usePointStore.getState().logs
+      const unlockedBadgeIds = useBadgeStore.getState().getChildBadges(child.childId).map((b) => b.badgeId)
+      const newBadges = await checkAndUnlock({
+        child: { ...child, totalPoints: result.totalPoints },
+        tasks: updatedTasks,
+        logs: updatedLogs,
+        unlockedBadgeIds,
+      })
+      if (newBadges.length > 0) {
+        setTimeout(() => {
+          play('badge')
+          const badge = BADGE_LIST.find((b) => b.badgeId === newBadges[0])
+          if (badge) {
+            showToast(`${badge.icon} 获得勋章：${badge.name}！`)
+          }
+        }, 800)
+      }
+
+      // Check graduation
+      if (result.graduated) {
+        setTimeout(() => {
+          setGraduation({ show: true, taskName })
+          play('levelup')
+        }, 1200)
+      }
+
+      let message = `你坚持做到了! +${totalPoints}分`
+      if (result.bonusPoints > 0) {
+        message = `连续${result.consecutiveDays}天! 额外奖励+${result.bonusPoints}分`
+      }
+      if (result.stageChanged && !result.graduated) {
+        const stageInfo = HABIT_STAGE_INFO[result.newStage]
+        message += ` ${stageInfo.icon} 进入${stageInfo.label}!`
+      }
+      showToast(message, {
+        label: '撤销',
+        onClick: async () => {
+          await undoComplete(taskId)
+          showToast('已撤销')
+        },
+      })
+    } catch {
+      showToast('操作失败，请重试')
     }
-    if (result.stageChanged && !result.graduated) {
-      const stageInfo = HABIT_STAGE_INFO[result.newStage]
-      message += ` ${stageInfo.icon} 进入${stageInfo.label}!`
-    }
-    showToast(message, {
-      label: '撤销',
-      onClick: () => {
-        undoComplete(taskId)
-        updatePoints(child.childId, -totalPoints)
-        showToast('已撤销')
-      },
-    })
-  }, [child, completeTask, updatePoints, incrementCompletionCount, addLog, showToast, undoComplete, play, checkAndUnlock])
+  }, [child, completeTask, showToast, undoComplete, play, checkAndUnlock])
 
   const isInDropZone = useCallback((info: PanInfo) => {
     if (!planetRef.current) return false
