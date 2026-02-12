@@ -384,3 +384,61 @@ export const SAFETY_AGE_GROUP_INFO: Record<SafetyAgeGroup, { label: string; desc
   '3-6': { label: '3-6岁', description: '学前期安全' },
   '6-12': { label: '6-12岁', description: '学龄期安全' },
 }
+
+// ============ V2.5 循证育儿知识库类型 ============
+
+export type KnowledgeCategory = 'age_guide' | 'behavior' | 'illness_care' | 'myth_busting'
+
+export type KnowledgeAgeGroup = '0-1' | '1-3' | '3-6' | '6-12'
+
+export type EvidenceLevel = 'systematic_review' | 'guideline' | 'rct' | 'expert_consensus'
+
+export interface KnowledgeArticle {
+  articleId: string
+  category: KnowledgeCategory
+  ageGroup: KnowledgeAgeGroup | null
+  title: string
+  summary: string
+  content: string
+  icon: string
+  tags: string[]
+  sourceName: string
+  sourceLevel: EvidenceLevel
+  sourceUrl: string | null
+  relatedArticleIds: string[]
+  sortOrder: number
+  isPublished: boolean
+  viewCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type KnowledgeArticleSummary = Omit<KnowledgeArticle, 'content'>
+
+export interface KnowledgeBookmark {
+  id: string
+  familyId: string
+  articleId: string
+  createdAt: string
+}
+
+export const KNOWLEDGE_CATEGORY_INFO: Record<KnowledgeCategory, { label: string; icon: string }> = {
+  age_guide: { label: '分龄指南', icon: '👶' },
+  behavior: { label: '行为管理', icon: '🧠' },
+  illness_care: { label: '疾病护理', icon: '🏥' },
+  myth_busting: { label: '科学辟谣', icon: '🔬' },
+}
+
+export const KNOWLEDGE_AGE_GROUP_INFO: Record<KnowledgeAgeGroup, { label: string; description: string }> = {
+  '0-1': { label: '0-1岁', description: '婴儿期' },
+  '1-3': { label: '1-3岁', description: '幼儿期' },
+  '3-6': { label: '3-6岁', description: '学龄前期' },
+  '6-12': { label: '6-12岁', description: '学龄期' },
+}
+
+export const EVIDENCE_LEVEL_INFO: Record<EvidenceLevel, { label: string; stars: number; description: string }> = {
+  systematic_review: { label: '系统综述', stars: 5, description: 'Cochrane Review等' },
+  guideline: { label: '权威指南', stars: 5, description: 'AAP/WHO/中华医学会' },
+  rct: { label: '随机对照试验', stars: 4, description: '发表于权威期刊' },
+  expert_consensus: { label: '专家共识', stars: 3, description: '中国专家共识' },
+}

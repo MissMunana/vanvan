@@ -4,6 +4,8 @@ import type {
   PointLog, UnlockedBadge,
   GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord,
   MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress,
+  KnowledgeArticle, KnowledgeArticleSummary, KnowledgeBookmark,
+  KnowledgeCategory, KnowledgeAgeGroup,
 } from '../types'
 
 const API_BASE = '/api'
@@ -260,6 +262,37 @@ export const emergencyApi = {
       request<SafetyChecklistProgress>('/health/emergency-checklist', {
         method: 'POST', body: JSON.stringify({ childId, checklistItemId, completed }),
       }),
+  },
+}
+
+// ---- Knowledge ----
+export interface KnowledgeListParams {
+  category?: KnowledgeCategory
+  ageGroup?: KnowledgeAgeGroup
+  search?: string
+}
+
+export const knowledgeApi = {
+  articles: {
+    list: (params?: KnowledgeListParams) => {
+      const sp = new URLSearchParams()
+      if (params?.category) sp.set('category', params.category)
+      if (params?.ageGroup) sp.set('ageGroup', params.ageGroup)
+      if (params?.search) sp.set('search', params.search)
+      const qs = sp.toString()
+      return request<KnowledgeArticleSummary[]>(`/knowledge/articles${qs ? `?${qs}` : ''}`)
+    },
+    get: (articleId: string) =>
+      request<KnowledgeArticle>(`/knowledge/articles/${articleId}`),
+  },
+  bookmarks: {
+    list: () => request<KnowledgeBookmark[]>('/knowledge/bookmarks'),
+    create: (articleId: string) =>
+      request<KnowledgeBookmark>('/knowledge/bookmarks', {
+        method: 'POST', body: JSON.stringify({ articleId }),
+      }),
+    remove: (articleId: string) =>
+      request<void>(`/knowledge/bookmarks/${articleId}`, { method: 'DELETE' }),
   },
 }
 

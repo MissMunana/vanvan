@@ -175,6 +175,23 @@ export function mapSafetyChecklistProgress(r) {
   }
 }
 
+export function mapKnowledgeArticle(a) {
+  return {
+    articleId: a.article_id, category: a.category, ageGroup: a.age_group,
+    title: a.title, summary: a.summary, content: a.content, icon: a.icon,
+    tags: a.tags || [], sourceName: a.source_name, sourceLevel: a.source_level,
+    sourceUrl: a.source_url, relatedArticleIds: a.related_article_ids || [],
+    sortOrder: a.sort_order, isPublished: a.is_published,
+    viewCount: a.view_count, createdAt: a.created_at, updatedAt: a.updated_at,
+  }
+}
+
+export function mapKnowledgeBookmark(b) {
+  return {
+    id: b.id, familyId: b.family_id, articleId: b.article_id, createdAt: b.created_at,
+  }
+}
+
 // Client format (camelCase) → DB row (snake_case) mappers
 
 export function childToRow(c, familyId) {
