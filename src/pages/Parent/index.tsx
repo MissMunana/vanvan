@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
@@ -19,6 +21,8 @@ import type { TaskCategory, RewardCategory, Task, Reward } from '../../types'
 type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust' | 'settings'
 
 export default function Parent() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['tasks', 'rewards', 'exchanges', 'logs', 'badges', 'health'])
+
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const parentPin = useAppStore((s) => s.parentPin)
@@ -148,6 +152,7 @@ export default function Parent() {
   ]
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div style={{ minHeight: '100dvh', background: 'var(--color-bg)' }}>
       {/* Header */}
       <div style={{
@@ -204,6 +209,7 @@ export default function Parent() {
         {activeTab === 'settings' && <Settings />}
       </div>
     </div>
+    </PageLoading>
   )
 }
 

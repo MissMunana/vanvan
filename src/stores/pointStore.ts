@@ -6,6 +6,7 @@ interface PointStore {
   logs: PointLog[]
   isLoading: boolean
   error: string | null
+  _loadedChildIds: Set<string>
 
   // Server-first async methods
   fetchLogs: (childId: string, limit?: number) => Promise<void>
@@ -23,6 +24,7 @@ export const usePointStore = create<PointStore>()((set, get) => ({
   logs: [],
   isLoading: false,
   error: null,
+  _loadedChildIds: new Set<string>(),
 
   fetchLogs: async (childId, limit = 200) => {
     set({ isLoading: true, error: null })
@@ -30,7 +32,9 @@ export const usePointStore = create<PointStore>()((set, get) => ({
       const logs = await pointLogsApi.list(childId, limit)
       set((s) => {
         const otherLogs = s.logs.filter((l) => l.childId !== childId)
-        return { logs: [...logs, ...otherLogs], isLoading: false }
+        const newLoaded = new Set(s._loadedChildIds)
+        newLoaded.add(childId)
+        return { logs: [...logs, ...otherLogs], isLoading: false, _loadedChildIds: newLoaded }
       })
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false })

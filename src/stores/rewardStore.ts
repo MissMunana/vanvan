@@ -6,6 +6,7 @@ interface RewardStore {
   rewards: Reward[]
   isLoading: boolean
   error: string | null
+  _loadedChildIds: Set<string>
 
   // Server-first async methods
   fetchRewards: (childId: string) => Promise<void>
@@ -24,6 +25,7 @@ export const useRewardStore = create<RewardStore>()((set, get) => ({
   rewards: [],
   isLoading: false,
   error: null,
+  _loadedChildIds: new Set<string>(),
 
   fetchRewards: async (childId) => {
     set({ isLoading: true, error: null })
@@ -31,7 +33,9 @@ export const useRewardStore = create<RewardStore>()((set, get) => ({
       const rewards = await rewardsApi.list(childId)
       set((s) => {
         const otherRewards = s.rewards.filter((r) => r.childId !== childId)
-        return { rewards: [...otherRewards, ...rewards], isLoading: false }
+        const newLoaded = new Set(s._loadedChildIds)
+        newLoaded.add(childId)
+        return { rewards: [...otherRewards, ...rewards], isLoading: false, _loadedChildIds: newLoaded }
       })
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false })

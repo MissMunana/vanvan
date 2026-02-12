@@ -13,6 +13,7 @@ interface HealthStore {
   safetyChecklistProgress: SafetyChecklistProgress[]
   isLoading: boolean
   error: string | null
+  _loadedChildIds: Set<string>
 
   // Fetch methods
   fetchGrowthRecords: (childId: string) => Promise<void>
@@ -77,6 +78,7 @@ export const useHealthStore = create<HealthStore>()(
     safetyChecklistProgress: [],
     isLoading: false,
     error: null,
+    _loadedChildIds: new Set<string>(),
 
     fetchGrowthRecords: async (childId) => {
       const data = await healthApi.growth.list(childId)
@@ -129,14 +131,19 @@ export const useHealthStore = create<HealthStore>()(
           healthApi.milestone.list(childId),
           healthApi.sleep.list(childId),
         ])
-        set({
-          growthRecords: growth,
-          temperatureRecords: temperature,
-          medicationRecords: medication,
-          vaccinationRecords: vaccination,
-          milestoneRecords: milestone,
-          sleepRecords: sleep,
-          isLoading: false,
+        set((s) => {
+          const newLoaded = new Set(s._loadedChildIds)
+          newLoaded.add(childId)
+          return {
+            growthRecords: growth,
+            temperatureRecords: temperature,
+            medicationRecords: medication,
+            vaccinationRecords: vaccination,
+            milestoneRecords: milestone,
+            sleepRecords: sleep,
+            isLoading: false,
+            _loadedChildIds: newLoaded,
+          }
         })
         // Fetch emergency data non-blocking
         Promise.all([

@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 import { useAppStore } from '../../stores/appStore'
 import { useBadgeStore } from '../../stores/badgeStore'
 import { BADGE_LIST } from '../../data/badges'
 import { Modal } from '../../components/common/Modal'
 export default function Badges() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['badges'])
+
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const unlockedBadges = useBadgeStore((s) => s.unlockedBadges)
@@ -37,6 +41,7 @@ export default function Badges() {
   ]
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       <h2 className="page-title">
         我的勋章 ({unlockedIds.size}/{BADGE_LIST.length})
@@ -176,5 +181,6 @@ export default function Badges() {
         )}
       </Modal>
     </div>
+    </PageLoading>
   )
 }

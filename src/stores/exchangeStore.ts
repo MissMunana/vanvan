@@ -6,6 +6,7 @@ interface ExchangeStore {
   exchanges: Exchange[]
   isLoading: boolean
   error: string | null
+  _loadedChildIds: Set<string>
 
   // Server-first async methods
   fetchExchanges: (childId: string) => Promise<void>
@@ -24,6 +25,7 @@ export const useExchangeStore = create<ExchangeStore>()((set, get) => ({
   exchanges: [],
   isLoading: false,
   error: null,
+  _loadedChildIds: new Set<string>(),
 
   fetchExchanges: async (childId) => {
     set({ isLoading: true, error: null })
@@ -31,7 +33,9 @@ export const useExchangeStore = create<ExchangeStore>()((set, get) => ({
       const exchanges = await exchangesApi.list(childId)
       set((s) => {
         const otherExchanges = s.exchanges.filter((e) => e.childId !== childId)
-        return { exchanges: [...otherExchanges, ...exchanges], isLoading: false }
+        const newLoaded = new Set(s._loadedChildIds)
+        newLoaded.add(childId)
+        return { exchanges: [...otherExchanges, ...exchanges], isLoading: false, _loadedChildIds: newLoaded }
       })
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false })

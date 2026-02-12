@@ -7,6 +7,7 @@ interface TaskStore {
   tasks: Task[]
   isLoading: boolean
   error: string | null
+  _loadedChildIds: Set<string>
 
   // Server-first async methods
   fetchTasks: (childId: string) => Promise<void>
@@ -29,15 +30,17 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
   tasks: [],
   isLoading: false,
   error: null,
+  _loadedChildIds: new Set<string>(),
 
   fetchTasks: async (childId) => {
     set({ isLoading: true, error: null })
     try {
       const tasks = await tasksApi.list(childId)
-      // Merge: keep tasks for other children, replace tasks for this child
       set((s) => {
         const otherTasks = s.tasks.filter((t) => t.childId !== childId)
-        return { tasks: [...otherTasks, ...tasks], isLoading: false }
+        const newLoaded = new Set(s._loadedChildIds)
+        newLoaded.add(childId)
+        return { tasks: [...otherTasks, ...tasks], isLoading: false, _loadedChildIds: newLoaded }
       })
       get().refreshDailyStatus()
     } catch (e) {

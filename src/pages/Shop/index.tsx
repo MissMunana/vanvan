@@ -7,7 +7,10 @@ import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { REWARD_CATEGORY_INFO, type RewardCategory } from '../../types'
 import type { Reward } from '../../types'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 export default function Shop() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['rewards', 'exchanges'])
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const storeRewards = useRewardStore((s) => s.rewards)
@@ -67,6 +70,7 @@ export default function Shop() {
   const categories = Object.entries(REWARD_CATEGORY_INFO) as [RewardCategory, { label: string; icon: string }][]
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       <h2 className="page-title">积分商城</h2>
 
@@ -259,5 +263,6 @@ export default function Shop() {
         )}
       </Modal>
     </div>
+    </PageLoading>
   )
 }

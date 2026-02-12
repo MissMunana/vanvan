@@ -13,7 +13,13 @@ import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { HABIT_STAGE_INFO } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
 import { Modal } from '../../components/common/Modal'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
+
+const HOME_DATA = ['tasks', 'logs', 'exchanges', 'badges'] as const
+
 export default function Home() {
+  const { isLoading: pageLoading, error: pageError } = usePageData([...HOME_DATA])
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const allTasks = useTaskStore((s) => s.tasks)
@@ -192,6 +198,7 @@ export default function Home() {
   if (!child) return null
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       <PointAnimation trigger={animTrigger} points={lastPoints} />
       <GraduationCeremony
@@ -644,6 +651,7 @@ export default function Home() {
         </div>
       </Modal>
     </div>
+    </PageLoading>
   )
 }
 

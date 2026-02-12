@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 import type { HealthTab } from '../../types'
 import SubTabBar from '../../components/Layout/SubTabBar'
 import MedicalDisclaimer from '../../components/common/MedicalDisclaimer'
@@ -36,6 +38,8 @@ function getTabContent(tab: HealthTab) {
 }
 
 export default function Health() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['health'])
+
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<HealthTab>('growth')
   const prevTabRef = useRef<number>(0)
@@ -47,6 +51,7 @@ export default function Health() {
   }
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <MedicalDisclaimer compact />
@@ -81,5 +86,6 @@ export default function Health() {
         </motion.div>
       </AnimatePresence>
     </div>
+    </PageLoading>
   )
 }

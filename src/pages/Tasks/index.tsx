@@ -11,6 +11,8 @@ import { useSound } from '../../hooks/useSound'
 import GraduationCeremony from '../../components/common/GraduationCeremony'
 import { CATEGORY_INFO, HABIT_STAGE_INFO, type TaskCategory } from '../../types'
 import { BADGE_LIST } from '../../data/badges'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 const EMOTIONS = [
   { emoji: '😊', label: '开心' },
   { emoji: '💪', label: '自豪' },
@@ -19,6 +21,7 @@ const EMOTIONS = [
 ]
 
 export default function Tasks() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['tasks', 'logs', 'badges'])
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const allTasks = useTaskStore((s) => s.tasks)
@@ -146,6 +149,7 @@ export default function Tasks() {
     : tasksByCategory[activeCategory] || []
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       <PointAnimation trigger={animTrigger} points={lastPoints} />
       <GraduationCeremony
@@ -323,5 +327,6 @@ export default function Tasks() {
         </div>
       </Modal>
     </div>
+    </PageLoading>
   )
 }

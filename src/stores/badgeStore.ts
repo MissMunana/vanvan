@@ -7,6 +7,7 @@ interface BadgeStore {
   unlockedBadges: UnlockedBadge[]
   isLoading: boolean
   error: string | null
+  _loadedChildIds: Set<string>
 
   // Server-first async methods
   fetchBadges: (childId: string) => Promise<void>
@@ -24,6 +25,7 @@ export const useBadgeStore = create<BadgeStore>()((set, get) => ({
   unlockedBadges: [],
   isLoading: false,
   error: null,
+  _loadedChildIds: new Set<string>(),
 
   fetchBadges: async (childId) => {
     set({ isLoading: true, error: null })
@@ -31,7 +33,9 @@ export const useBadgeStore = create<BadgeStore>()((set, get) => ({
       const badges = await badgesApi.list(childId)
       set((s) => {
         const otherBadges = s.unlockedBadges.filter((b) => b.childId !== childId)
-        return { unlockedBadges: [...otherBadges, ...badges], isLoading: false }
+        const newLoaded = new Set(s._loadedChildIds)
+        newLoaded.add(childId)
+        return { unlockedBadges: [...otherBadges, ...badges], isLoading: false, _loadedChildIds: newLoaded }
       })
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false })

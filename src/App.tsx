@@ -9,7 +9,6 @@ import { useAppStore } from './stores/appStore'
 import { useTaskStore } from './stores/taskStore'
 import { useAuthStore } from './stores/authStore'
 import { useScreenTime } from './hooks/useScreenTime'
-import { useDataLoader } from './hooks/useDataLoader'
 import ScreenTimeLock from './components/common/ScreenTimeLock'
 import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
@@ -43,7 +42,8 @@ export default function App() {
   const parentPin = useAppStore((s) => s.parentPin)
   const location = useLocation()
 
-  const { loadCoreData, loadChildData } = useDataLoader()
+  const fetchFamily = useAppStore((s) => s.fetchFamily)
+  const fetchChildren = useAppStore((s) => s.fetchChildren)
 
   const [screenLock, setScreenLock] = useState<{ show: boolean; type: 'limit' | 'night' }>({ show: false, type: 'limit' })
 
@@ -60,25 +60,21 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [setSession])
 
-  // After auth, load data from server via granular APIs
+  // After auth, load only core data (family + children). Page-level data loaded by usePageData.
   useEffect(() => {
     if (isAuthenticated && !isDataLoaded) {
       const load = async () => {
         try {
-          await loadCoreData()
-          const childId = useAppStore.getState().currentChildId
-          if (childId) {
-            await loadChildData(childId)
-          }
+          await Promise.all([fetchFamily(), fetchChildren()])
         } catch (err) {
-          console.error('Data load failed:', err)
+          console.error('Core data load failed:', err)
         } finally {
           setDataLoaded(true)
         }
       }
       load()
     }
-  }, [isAuthenticated, isDataLoaded, loadCoreData, loadChildData, setDataLoaded])
+  }, [isAuthenticated, isDataLoaded, fetchFamily, fetchChildren, setDataLoaded])
 
   useEffect(() => {
     refreshDailyStatus()

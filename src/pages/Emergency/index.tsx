@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import SubTabBar from '../../components/Layout/SubTabBar'
@@ -29,6 +31,8 @@ function getTabContent(tab: EmergencyTab) {
 }
 
 export default function Emergency() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['health'])
+
   const navigate = useNavigate()
   const child = useAppStore((s) => s.getCurrentChild())
   const emergencyProfile = useHealthStore((s) => s.emergencyProfile)
@@ -62,6 +66,7 @@ export default function Emergency() {
   }
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
@@ -117,5 +122,6 @@ export default function Emergency() {
         childId={child.childId}
       />
     </div>
+    </PageLoading>
   )
 }

@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { usePageData } from '../../hooks/usePageData'
+import PageLoading from '../../components/common/PageLoading'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
@@ -14,6 +16,8 @@ import { BADGE_LIST } from '../../data/badges'
 import GrowthReport from '../../components/reports/GrowthReport'
 
 export default function Profile() {
+  const { isLoading: pageLoading, error: pageError } = usePageData(['tasks', 'logs', 'exchanges', 'badges'])
+
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const logs = usePointStore((s) => s.logs)
@@ -99,6 +103,7 @@ export default function Profile() {
   const approvedExchanges = exchanges.filter((e) => e.status === 'approved').length
 
   return (
+    <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
       {/* Profile header */}
       <div style={{
@@ -377,5 +382,6 @@ export default function Profile() {
         </div>
       </Modal>
     </div>
+    </PageLoading>
   )
 }
