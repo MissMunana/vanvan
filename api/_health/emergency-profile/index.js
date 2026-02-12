@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     child_id: childId,
     family_id: familyId,
     blood_type: bloodType || 'unknown',
-    rh_factor: rhFactor || 'positive',
+    rh_factor: rhFactor || 'unknown',
     drug_allergies: drugAllergies || [],
     food_allergies: foodAllergies || [],
     other_allergies: otherAllergies || [],

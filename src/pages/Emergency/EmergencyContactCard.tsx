@@ -12,7 +12,7 @@ interface EmergencyContactCardProps {
 const QUICK_DIAL = [
   { label: '120 急救', phone: '120', color: '#FF5252', icon: '🚑' },
   { label: '110 报警', phone: '110', color: '#2196F3', icon: '🚔' },
-  { label: '中毒热线', phone: '400-7700-120', color: '#FF9800', icon: '☠️' },
+  { label: '中毒热线', phone: '010-83132345', color: '#FF9800', icon: '☠️' },
 ]
 
 const BLOOD_TYPE_COLORS: Record<string, string> = {

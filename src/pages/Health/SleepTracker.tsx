@@ -29,10 +29,18 @@ function formatMinutes(min: number): string {
 
 function averageTimeString(times: string[]): string {
   if (times.length === 0) return '--:--'
-  let totalMin = 0
-  for (const t of times) { const [h, m] = t.split(':').map(Number); totalMin += h * 60 + m }
-  const avg = Math.round(totalMin / times.length)
-  return `${(Math.floor(avg / 60) % 24).toString().padStart(2, '0')}:${(avg % 60).toString().padStart(2, '0')}`
+  // Use circular mean to handle midnight crossover correctly
+  let sinSum = 0, cosSum = 0
+  for (const t of times) {
+    const [h, m] = t.split(':').map(Number)
+    const angle = ((h * 60 + m) / (24 * 60)) * 2 * Math.PI
+    sinSum += Math.sin(angle)
+    cosSum += Math.cos(angle)
+  }
+  let avgAngle = Math.atan2(sinSum / times.length, cosSum / times.length)
+  if (avgAngle < 0) avgAngle += 2 * Math.PI
+  const avgMin = Math.round((avgAngle / (2 * Math.PI)) * 24 * 60)
+  return `${(Math.floor(avgMin / 60) % 24).toString().padStart(2, '0')}:${(avgMin % 60).toString().padStart(2, '0')}`
 }
 
 export default function SleepTracker() {

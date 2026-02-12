@@ -100,7 +100,12 @@ export default function EmergencyProfileEditor({ isOpen, onClose, profile, child
   }, [])
 
   const updateContact = useCallback((index: number, field: keyof EmergencyContact, value: string | boolean) => {
-    setContacts((prev) => prev.map((c, i) => i === index ? { ...c, [field]: value } : c))
+    setContacts((prev) => prev.map((c, i) => {
+      if (i === index) return { ...c, [field]: value }
+      // When setting isPrimary to true, unset all others
+      if (field === 'isPrimary' && value === true) return { ...c, isPrimary: false }
+      return c
+    }))
   }, [])
 
   const addContact = useCallback(() => {
