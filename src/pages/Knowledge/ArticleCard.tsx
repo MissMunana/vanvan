@@ -33,7 +33,7 @@ export default function ArticleCard({ article, isBookmarked, onToggleBookmark }:
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{article.icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 4 }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 4 }}>
             {article.title}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -42,15 +42,15 @@ export default function ArticleCard({ article, isBookmarked, onToggleBookmark }:
               color: '#7C4DFF',
               padding: '1px 8px',
               borderRadius: 10,
-              fontSize: '0.7rem',
+              fontSize: '0.8rem',
               fontWeight: 600,
             }}>
               {categoryInfo.icon} {categoryInfo.label}
             </span>
-            <span style={{ color: '#FFB800', fontSize: '0.7rem' }}>
+            <span style={{ color: '#FFB800', fontSize: '0.8rem' }}>
               {'⭐'.repeat(evidence.stars)}
             </span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
               {article.sourceName}
             </span>
           </div>
@@ -70,7 +70,7 @@ export default function ArticleCard({ article, isBookmarked, onToggleBookmark }:
 
       {/* Summary */}
       <p style={{
-        fontSize: '0.82rem',
+        fontSize: '0.92rem',
         color: 'var(--color-text-secondary)',
         lineHeight: 1.5,
         marginTop: 8,

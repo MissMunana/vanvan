@@ -319,7 +319,7 @@ export default function Profile() {
           <div style={{ marginBottom: 12, fontSize: '3rem' }}>⭐</div>
           <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 4 }}>小星星成长宝</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginBottom: 4 }}>
-            V2.0 健康管理版
+            V2.5 UI优化版
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: 16 }}>
             更新于 {typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : '未知'}

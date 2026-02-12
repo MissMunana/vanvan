@@ -18,7 +18,7 @@ export default function ArticleDetail({ articleId }: ArticleDetailProps) {
 
   if (!article) {
     return (
-      <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+      <div style={{ textAlign: 'center', padding: 16, color: 'var(--color-text-secondary)', fontSize: '0.95rem' }}>
         加载中...
       </div>
     )
@@ -29,7 +29,7 @@ export default function ArticleDetail({ articleId }: ArticleDetailProps) {
   return (
     <div>
       {/* Article content */}
-      <div style={{ fontSize: '0.88rem', lineHeight: 1.8, color: 'var(--color-text)', whiteSpace: 'pre-line' }}>
+      <div style={{ fontSize: '0.98rem', lineHeight: 1.8, color: 'var(--color-text)', whiteSpace: 'pre-line' }}>
         {article.content}
       </div>
 
@@ -40,7 +40,7 @@ export default function ArticleDetail({ articleId }: ArticleDetailProps) {
         border: '1px solid #2196F330',
         borderRadius: 8,
         padding: 10,
-        fontSize: '0.8rem',
+        fontSize: '0.9rem',
       }}>
         <div style={{ fontWeight: 600, color: '#2196F3', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
           <span>📋</span> 参考来源
@@ -48,14 +48,14 @@ export default function ArticleDetail({ articleId }: ArticleDetailProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span style={{ color: '#FFB800' }}>{'⭐'.repeat(evidence.stars)}</span>
           <span style={{ fontWeight: 500 }}>{article.sourceName}</span>
-          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem' }}>({evidence.label})</span>
+          <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>({evidence.label})</span>
         </div>
         {article.sourceUrl && (
           <a
             href={article.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#2196F3', fontSize: '0.75rem', textDecoration: 'underline', marginTop: 4, display: 'inline-block' }}
+            style={{ color: '#2196F3', fontSize: '0.85rem', textDecoration: 'underline', marginTop: 4, display: 'inline-block' }}
           >
             查看原文
           </a>
@@ -70,7 +70,7 @@ export default function ArticleDetail({ articleId }: ArticleDetailProps) {
               background: 'var(--color-bg)',
               padding: '2px 8px',
               borderRadius: 12,
-              fontSize: '0.75rem',
+              fontSize: '0.85rem',
               color: 'var(--color-text-secondary)',
             }}>
               #{tag}

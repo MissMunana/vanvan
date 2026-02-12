@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { KnowledgeCategory, KnowledgeAgeGroup } from '../../types'
 import { KNOWLEDGE_CATEGORY_INFO, KNOWLEDGE_AGE_GROUP_INFO } from '../../types'
@@ -26,8 +25,6 @@ const TAB_INDEX: Record<KnowledgeTab, number> = {
 const AGE_GROUPS: KnowledgeAgeGroup[] = ['0-1', '1-3', '3-6', '6-12']
 
 export default function Knowledge() {
-  const navigate = useNavigate()
-
   const fetchArticles = useKnowledgeStore((s) => s.fetchArticles)
   const fetchBookmarks = useKnowledgeStore((s) => s.fetchBookmarks)
   const isLoading = useKnowledgeStore((s) => s.isLoading)
@@ -62,22 +59,7 @@ export default function Knowledge() {
   return (
     <div className="page">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '1.2rem',
-            cursor: 'pointer',
-            padding: '4px 8px',
-            color: 'var(--color-text)',
-          }}
-        >
-          ←
-        </button>
-        <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>循证育儿知识库</h2>
-      </div>
+      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 12px 0' }}>循证育儿知识库</h2>
 
       {/* Search */}
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -114,7 +96,7 @@ export default function Knowledge() {
                       border: isActive ? '1.5px solid #7C4DFF' : '1.5px solid var(--color-border)',
                       background: isActive ? '#7C4DFF15' : 'var(--color-surface)',
                       color: isActive ? '#7C4DFF' : 'var(--color-text-secondary)',
-                      fontSize: '0.8rem',
+                      fontSize: '1rem',
                       fontWeight: isActive ? 600 : 400,
                       cursor: 'pointer',
                       transition: 'all 0.15s',
@@ -134,12 +116,12 @@ export default function Knowledge() {
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: 40, color: 'var(--color-text-secondary)' }}>
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>⏳</div>
-            <div style={{ fontSize: '0.9rem' }}>加载知识文章中...</div>
+            <div style={{ fontSize: '1rem' }}>加载知识文章中...</div>
           </div>
         ) : error ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#FF5252' }}>
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>⚠️</div>
-            <div style={{ fontSize: '0.9rem' }}>{error}</div>
+            <div style={{ fontSize: '1rem' }}>{error}</div>
             <button
               onClick={() => fetchArticles()}
               style={{
@@ -149,7 +131,7 @@ export default function Knowledge() {
                 border: '1px solid #FF525240',
                 background: 'none',
                 color: '#FF5252',
-                fontSize: '0.85rem',
+                fontSize: '0.95rem',
                 cursor: 'pointer',
               }}
             >

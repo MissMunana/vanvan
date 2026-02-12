@@ -29,7 +29,7 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
           padding: '10px 36px 10px 14px',
           borderRadius: 10,
           border: '1px solid var(--color-border)',
-          fontSize: '0.9rem',
+          fontSize: '1rem',
           background: 'var(--color-surface)',
         }}
       />
