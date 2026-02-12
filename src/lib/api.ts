@@ -3,7 +3,7 @@ import type {
   Child, Task, TaskCategory, HabitStage, Reward, RewardCategory, Exchange,
   PointLog, UnlockedBadge,
   GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord,
-  MilestoneStatus,
+  MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress,
 } from '../types'
 
 const API_BASE = '/api'
@@ -235,6 +235,31 @@ export const healthApi = {
     list: (childId: string) => request<MilestoneRecord[]>(`/children/${childId}/health/milestone`),
     upsert: (data: { childId: string; milestoneId: string; status: MilestoneStatus; note?: string; photoTaken?: boolean; photoNote?: string }) =>
       request<MilestoneRecord>('/health/milestone', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  sleep: {
+    list: (childId: string) => request<SleepRecord[]>(`/children/${childId}/health/sleep`),
+    create: (data: Omit<SleepRecord, 'recordId' | 'createdAt'>) =>
+      request<SleepRecord>('/health/sleep', { method: 'POST', body: JSON.stringify(data) }),
+    update: (recordId: string, data: Partial<SleepRecord>) =>
+      request<SleepRecord>(`/health/sleep/${recordId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (recordId: string) =>
+      request<void>(`/health/sleep/${recordId}`, { method: 'DELETE' }),
+  },
+}
+
+// ---- Emergency ----
+export const emergencyApi = {
+  profile: {
+    get: (childId: string) => request<EmergencyProfile | null>(`/children/${childId}/emergency/profile`),
+    upsert: (data: Omit<EmergencyProfile, 'profileId' | 'createdAt' | 'updatedAt'>) =>
+      request<EmergencyProfile>('/health/emergency-profile', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  checklist: {
+    list: (childId: string) => request<SafetyChecklistProgress[]>(`/children/${childId}/emergency/checklist`),
+    toggle: (childId: string, checklistItemId: string, completed: boolean) =>
+      request<SafetyChecklistProgress>('/health/emergency-checklist', {
+        method: 'POST', body: JSON.stringify({ childId, checklistItemId, completed }),
+      }),
   },
 }
 

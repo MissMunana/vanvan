@@ -23,6 +23,7 @@ import Print from './pages/Print'
 import Health from './pages/Health'
 import HealthReport from './pages/HealthReport'
 import Knowledge from './pages/Knowledge'
+import Emergency from './pages/Emergency'
 import InstallPrompt from './components/common/InstallPrompt'
 import { supabase } from './lib/supabase-browser'
 import { Agentation } from 'agentation'
@@ -109,7 +110,7 @@ export default function App() {
   }, [currentChildId, children])
 
   const isTablet = useIsTablet()
-  const hiddenNavRoutes = ['/print', '/health-report']
+  const hiddenNavRoutes = ['/print', '/health-report', '/emergency']
   const showNav = !hiddenNavRoutes.includes(location.pathname)
   const showTopBar = showNav && !['/parent'].includes(location.pathname)
 
@@ -192,6 +193,7 @@ export default function App() {
               <Route path="/badges" element={<Badges />} />
               <Route path="/print" element={<Print />} />
               <Route path="/health-report" element={<HealthReport />} />
+              <Route path="/emergency" element={<Emergency />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </motion.div>

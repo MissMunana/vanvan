@@ -135,6 +135,46 @@ export function mapMilestoneRecord(r) {
   }
 }
 
+export function mapSleepRecord(r) {
+  return {
+    recordId: r.record_id, childId: r.child_id, date: r.date,
+    bedTime: r.bed_time, sleepTime: r.sleep_time,
+    wakeTime: r.wake_time, getUpTime: r.get_up_time,
+    durationMinutes: r.duration_minutes, naps: r.naps || [],
+    totalNapMinutes: r.total_nap_minutes || 0,
+    sleepQuality: r.sleep_quality, note: r.note || '',
+    createdAt: r.created_at,
+  }
+}
+
+export function mapEmergencyProfile(r) {
+  return {
+    profileId: r.profile_id, childId: r.child_id,
+    bloodType: r.blood_type || 'unknown', rhFactor: r.rh_factor || 'positive',
+    drugAllergies: r.drug_allergies || [],
+    foodAllergies: r.food_allergies || [],
+    otherAllergies: r.other_allergies || [],
+    medicalConditions: r.medical_conditions || [],
+    emergencyContacts: r.emergency_contacts || [],
+    preferredHospital: r.preferred_hospital || '',
+    hospitalAddress: r.hospital_address || '',
+    hospitalPhone: r.hospital_phone || '',
+    insuranceInfo: r.insurance_info || '',
+    note: r.note || '',
+    updatedAt: r.updated_at, createdAt: r.created_at,
+  }
+}
+
+export function mapSafetyChecklistProgress(r) {
+  return {
+    id: r.id, childId: r.child_id,
+    checklistItemId: r.checklist_item_id,
+    completed: r.completed,
+    completedAt: r.completed_at,
+    createdAt: r.created_at,
+  }
+}
+
 // Client format (camelCase) → DB row (snake_case) mappers
 
 export function childToRow(c, familyId) {

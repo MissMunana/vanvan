@@ -160,7 +160,7 @@ export type AdministrationRoute = 'oral' | 'topical' | 'rectal'
 
 export type FeverLevel = 'normal' | 'low' | 'moderate' | 'high'
 
-export type HealthTab = 'growth' | 'fever' | 'medication' | 'vaccine' | 'milestone'
+export type HealthTab = 'growth' | 'fever' | 'medication' | 'vaccine' | 'milestone' | 'sleep'
 
 export type GrowthMetric = 'height' | 'weight' | 'bmi' | 'headCircumference'
 
@@ -267,4 +267,120 @@ export const MEASURE_METHOD_INFO: Record<MeasureMethod, { label: string }> = {
   armpit: { label: '腋温' },
   rectal: { label: '肛温' },
   oral: { label: '口温' },
+}
+
+// ============ V2.5 睡眠管理类型 ============
+
+export type SleepQuality = 'great' | 'good' | 'fair' | 'poor'
+
+export interface NapRecord {
+  startTime: string
+  endTime: string
+  durationMinutes: number
+}
+
+export interface SleepRecord {
+  recordId: string
+  childId: string
+  date: string
+  bedTime: string | null
+  sleepTime: string | null
+  wakeTime: string | null
+  getUpTime: string | null
+  durationMinutes: number | null
+  naps: NapRecord[]
+  totalNapMinutes: number
+  sleepQuality: SleepQuality
+  note: string
+  createdAt: string
+}
+
+export const SLEEP_QUALITY_INFO: Record<SleepQuality, { label: string; icon: string; color: string }> = {
+  great: { label: '很好', icon: '😴', color: '#4CAF50' },
+  good: { label: '良好', icon: '🙂', color: '#8BC34A' },
+  fair: { label: '一般', icon: '😐', color: '#FFB800' },
+  poor: { label: '较差', icon: '😟', color: '#FF5252' },
+}
+
+// ============ V2.5 应急安全类型 ============
+
+export type BloodType = 'A' | 'B' | 'AB' | 'O' | 'unknown'
+export type RhFactor = 'positive' | 'negative' | 'unknown'
+
+export interface EmergencyContact {
+  name: string
+  relationship: string
+  phone: string
+  isPrimary: boolean
+}
+
+export interface EmergencyProfile {
+  profileId: string
+  childId: string
+  bloodType: BloodType
+  rhFactor: RhFactor
+  drugAllergies: string[]
+  foodAllergies: string[]
+  otherAllergies: string[]
+  medicalConditions: string[]
+  emergencyContacts: EmergencyContact[]
+  preferredHospital: string
+  hospitalAddress: string
+  hospitalPhone: string
+  insuranceInfo: string
+  note: string
+  updatedAt: string
+  createdAt: string
+}
+
+export type SafetyAgeGroup = '0-1' | '1-3' | '3-6' | '6-12'
+
+export interface SafetyChecklistItem {
+  id: string
+  ageGroup: SafetyAgeGroup
+  category: string
+  text: string
+  priority: 'high' | 'medium'
+}
+
+export interface SafetyChecklistProgress {
+  id: string
+  childId: string
+  checklistItemId: string
+  completed: boolean
+  completedAt: string | null
+  createdAt: string
+}
+
+export interface FirstAidStep {
+  stepNumber: number
+  title: string
+  description: string
+  icon?: string
+}
+
+export interface FirstAidGuide {
+  id: string
+  title: string
+  icon: string
+  severity: 'common' | 'urgent' | 'emergency'
+  ageNotes?: Record<string, string>
+  steps: FirstAidStep[]
+  warnings: string[]
+  whenToCallEmergency: string[]
+}
+
+export const BLOOD_TYPE_INFO: Record<BloodType, { label: string }> = {
+  A: { label: 'A型' },
+  B: { label: 'B型' },
+  AB: { label: 'AB型' },
+  O: { label: 'O型' },
+  unknown: { label: '未知' },
+}
+
+export const SAFETY_AGE_GROUP_INFO: Record<SafetyAgeGroup, { label: string; description: string }> = {
+  '0-1': { label: '0-1岁', description: '新生儿和婴儿安全' },
+  '1-3': { label: '1-3岁', description: '学步期安全' },
+  '3-6': { label: '3-6岁', description: '学前期安全' },
+  '6-12': { label: '6-12岁', description: '学龄期安全' },
 }

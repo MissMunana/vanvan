@@ -6,6 +6,9 @@ import healthTemperature from './_children/[childId]/health/temperature.js';
 import healthMedication from './_children/[childId]/health/medication.js';
 import healthVaccination from './_children/[childId]/health/vaccination.js';
 import healthMilestone from './_children/[childId]/health/milestone.js';
+import healthSleep from './_children/[childId]/health/sleep.js';
+import emergencyProfile from './_children/[childId]/emergency/profile.js';
+import emergencyChecklist from './_children/[childId]/emergency/checklist.js';
 // Cross-domain list handlers
 import tasksIndex from './_tasks/index.js';
 import rewardsIndex from './_rewards/index.js';
@@ -76,6 +79,15 @@ export default async function handler(req, res) {
     if (healthType === 'medication') return healthMedication(req, res);
     if (healthType === 'vaccination') return healthVaccination(req, res);
     if (healthType === 'milestone') return healthMilestone(req, res);
+    if (healthType === 'sleep') return healthSleep(req, res);
+  }
+
+  // /api/children/:childId/emergency/:type
+  if (resource === 'emergency' && segments.length === 3) {
+    req.query = { ...req.query, childId };
+    const emergencyType = segments[2];
+    if (emergencyType === 'profile') return emergencyProfile(req, res);
+    if (emergencyType === 'checklist') return emergencyChecklist(req, res);
   }
 
   return res.status(404).json({ error: 'Not found' });

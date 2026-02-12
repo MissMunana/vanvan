@@ -9,6 +9,7 @@ import FeverTracker from './FeverTracker'
 import MedicationTracker from './MedicationTracker'
 import VaccineTracker from './VaccineTracker'
 import MilestoneTracker from './MilestoneTracker'
+import SleepTracker from './SleepTracker'
 
 const HEALTH_TABS: { key: HealthTab; label: string; icon: string }[] = [
   { key: 'growth', label: '生长曲线', icon: '📏' },
@@ -16,10 +17,11 @@ const HEALTH_TABS: { key: HealthTab; label: string; icon: string }[] = [
   { key: 'medication', label: '用药管理', icon: '💊' },
   { key: 'vaccine', label: '疫苗', icon: '💉' },
   { key: 'milestone', label: '里程碑', icon: '🌟' },
+  { key: 'sleep', label: '睡眠', icon: '😴' },
 ]
 
 const TAB_INDEX: Record<HealthTab, number> = {
-  growth: 0, fever: 1, medication: 2, vaccine: 3, milestone: 4,
+  growth: 0, fever: 1, medication: 2, vaccine: 3, milestone: 4, sleep: 5,
 }
 
 function getTabContent(tab: HealthTab) {
@@ -29,6 +31,7 @@ function getTabContent(tab: HealthTab) {
     case 'medication': return <MedicationTracker />
     case 'vaccine': return <VaccineTracker />
     case 'milestone': return <MilestoneTracker />
+    case 'sleep': return <SleepTracker />
   }
 }
 
@@ -47,13 +50,22 @@ export default function Health() {
     <div className="page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <MedicalDisclaimer compact />
-        <button
-          onClick={() => navigate('/health-report')}
-          className="btn btn-outline"
-          style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
-        >
-          🖨️ 就医报告
-        </button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={() => navigate('/emergency')}
+            className="btn btn-outline"
+            style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#FF525240', color: '#FF5252' }}
+          >
+            🆘 应急
+          </button>
+          <button
+            onClick={() => navigate('/health-report')}
+            className="btn btn-outline"
+            style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+          >
+            🖨️ 就医报告
+          </button>
+        </div>
       </div>
       <SubTabBar tabs={HEALTH_TABS} active={activeTab} onChange={handleTabChange} />
 

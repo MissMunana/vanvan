@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord, MilestoneStatus } from '../types'
-import { healthApi } from '../lib/api'
+import type { GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord, MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress } from '../types'
+import { healthApi, emergencyApi } from '../lib/api'
 
 interface HealthStore {
   growthRecords: GrowthRecord[]
@@ -8,6 +8,9 @@ interface HealthStore {
   medicationRecords: MedicationRecord[]
   vaccinationRecords: VaccinationRecord[]
   milestoneRecords: MilestoneRecord[]
+  sleepRecords: SleepRecord[]
+  emergencyProfile: EmergencyProfile | null
+  safetyChecklistProgress: SafetyChecklistProgress[]
   isLoading: boolean
   error: string | null
 
@@ -17,6 +20,9 @@ interface HealthStore {
   fetchMedicationRecords: (childId: string) => Promise<void>
   fetchVaccinationRecords: (childId: string) => Promise<void>
   fetchMilestoneRecords: (childId: string) => Promise<void>
+  fetchSleepRecords: (childId: string) => Promise<void>
+  fetchEmergencyProfile: (childId: string) => Promise<void>
+  fetchSafetyChecklistProgress: (childId: string) => Promise<void>
   fetchAllHealth: (childId: string) => Promise<void>
 
   // Growth
@@ -41,6 +47,15 @@ interface HealthStore {
   // Milestone
   updateMilestoneStatus: (childId: string, milestoneId: string, status: MilestoneStatus, note?: string, extra?: { photoTaken?: boolean; photoNote?: string }) => Promise<void>
 
+  // Sleep
+  addSleepRecord: (data: Omit<SleepRecord, 'recordId' | 'createdAt'>) => Promise<void>
+  updateSleepRecord: (recordId: string, updates: Partial<SleepRecord>) => Promise<void>
+  deleteSleepRecord: (recordId: string) => Promise<void>
+
+  // Emergency
+  upsertEmergencyProfile: (data: Omit<EmergencyProfile, 'profileId' | 'createdAt' | 'updatedAt'>) => Promise<void>
+  toggleSafetyChecklistItem: (childId: string, checklistItemId: string, completed: boolean) => Promise<void>
+
   // Cleanup
   deleteByChildId: (childId: string) => void
 }
@@ -57,6 +72,9 @@ export const useHealthStore = create<HealthStore>()(
     medicationRecords: [],
     vaccinationRecords: [],
     milestoneRecords: [],
+    sleepRecords: [],
+    emergencyProfile: null,
+    safetyChecklistProgress: [],
     isLoading: false,
     error: null,
 
@@ -85,15 +103,31 @@ export const useHealthStore = create<HealthStore>()(
       set({ milestoneRecords: data })
     },
 
+    fetchSleepRecords: async (childId) => {
+      const data = await healthApi.sleep.list(childId)
+      set({ sleepRecords: data })
+    },
+
+    fetchEmergencyProfile: async (childId) => {
+      const data = await emergencyApi.profile.get(childId)
+      set({ emergencyProfile: data })
+    },
+
+    fetchSafetyChecklistProgress: async (childId) => {
+      const data = await emergencyApi.checklist.list(childId)
+      set({ safetyChecklistProgress: data })
+    },
+
     fetchAllHealth: async (childId) => {
       set({ isLoading: true, error: null })
       try {
-        const [growth, temperature, medication, vaccination, milestone] = await Promise.all([
+        const [growth, temperature, medication, vaccination, milestone, sleep] = await Promise.all([
           healthApi.growth.list(childId),
           healthApi.temperature.list(childId),
           healthApi.medication.list(childId),
           healthApi.vaccination.list(childId),
           healthApi.milestone.list(childId),
+          healthApi.sleep.list(childId),
         ])
         set({
           growthRecords: growth,
@@ -101,8 +135,14 @@ export const useHealthStore = create<HealthStore>()(
           medicationRecords: medication,
           vaccinationRecords: vaccination,
           milestoneRecords: milestone,
+          sleepRecords: sleep,
           isLoading: false,
         })
+        // Fetch emergency data non-blocking
+        Promise.all([
+          emergencyApi.profile.get(childId).then((data) => set({ emergencyProfile: data })),
+          emergencyApi.checklist.list(childId).then((data) => set({ safetyChecklistProgress: data })),
+        ]).catch(() => { /* non-critical */ })
       } catch (err: any) {
         set({ isLoading: false, error: err.message || 'Failed to load health data' })
       }
@@ -222,6 +262,51 @@ export const useHealthStore = create<HealthStore>()(
       })
     },
 
+    addSleepRecord: async (data) => {
+      const record = await healthApi.sleep.create(data)
+      set((state) => ({
+        sleepRecords: [record, ...state.sleepRecords],
+      }))
+    },
+
+    updateSleepRecord: async (recordId, updates) => {
+      const updated = await healthApi.sleep.update(recordId, updates)
+      set((state) => ({
+        sleepRecords: state.sleepRecords.map((r) =>
+          r.recordId === recordId ? updated : r
+        ),
+      }))
+    },
+
+    deleteSleepRecord: async (recordId) => {
+      await healthApi.sleep.delete(recordId)
+      set((state) => ({
+        sleepRecords: state.sleepRecords.filter((r) => r.recordId !== recordId),
+      }))
+    },
+
+    upsertEmergencyProfile: async (data) => {
+      const profile = await emergencyApi.profile.upsert(data)
+      set({ emergencyProfile: profile })
+    },
+
+    toggleSafetyChecklistItem: async (childId, checklistItemId, completed) => {
+      const progress = await emergencyApi.checklist.toggle(childId, checklistItemId, completed)
+      set((state) => {
+        const existing = state.safetyChecklistProgress.find(
+          (p) => p.childId === childId && p.checklistItemId === checklistItemId
+        )
+        if (existing) {
+          return {
+            safetyChecklistProgress: state.safetyChecklistProgress.map((p) =>
+              p.childId === childId && p.checklistItemId === checklistItemId ? progress : p
+            ),
+          }
+        }
+        return { safetyChecklistProgress: [...state.safetyChecklistProgress, progress] }
+      })
+    },
+
     deleteByChildId: (childId) => {
       set((state) => ({
         growthRecords: state.growthRecords.filter((r) => r.childId !== childId),
@@ -229,6 +314,9 @@ export const useHealthStore = create<HealthStore>()(
         medicationRecords: state.medicationRecords.filter((r) => r.childId !== childId),
         vaccinationRecords: state.vaccinationRecords.filter((r) => r.childId !== childId),
         milestoneRecords: state.milestoneRecords.filter((r) => r.childId !== childId),
+        sleepRecords: state.sleepRecords.filter((r) => r.childId !== childId),
+        emergencyProfile: state.emergencyProfile?.childId === childId ? null : state.emergencyProfile,
+        safetyChecklistProgress: state.safetyChecklistProgress.filter((p) => p.childId !== childId),
       }))
     },
   })

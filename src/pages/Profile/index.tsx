@@ -263,6 +263,22 @@ export default function Profile() {
         </button>
 
         <button
+          onClick={() => navigate('/emergency')}
+          className="card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            width: '100%',
+            textAlign: 'left',
+          }}
+        >
+          <span style={{ fontSize: '1.3rem' }}>🆘</span>
+          <span style={{ flex: 1, fontWeight: 600 }}>紧急安全</span>
+          <span style={{ color: 'var(--color-text-secondary)' }}>→</span>
+        </button>
+
+        <button
           onClick={() => setShowAbout(true)}
           className="card"
           style={{
