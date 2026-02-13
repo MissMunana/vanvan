@@ -1,6 +1,6 @@
 import supabase from '../../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized } from '../../_lib/auth-helpers.js';
-import { mapVaccinationRecord, generateId } from '../../_lib/mappers.js';
+import { getAuthenticatedUser, getFamilyId, unauthorized, validateChildOwnership } from '../../_lib/auth-helpers.js';
+import { mapVaccinationRecord, generateId, getToday } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,6 +17,10 @@ export default async function handler(req, res) {
   const { childId, vaccineName, vaccineType, doseNumber, totalDoses, date, batchNumber, site, vaccinator, reactions, note } = req.body;
   if (!childId || !vaccineName) return res.status(400).json({ error: 'childId and vaccineName are required' });
 
+  if (!await validateChildOwnership(familyId, childId)) {
+    return res.status(403).json({ error: 'Child does not belong to your family' });
+  }
+
   const row = {
     record_id: generateId(),
     child_id: childId,
@@ -25,7 +29,7 @@ export default async function handler(req, res) {
     vaccine_type: vaccineType || 'planned',
     dose_number: doseNumber || 1,
     total_doses: totalDoses || 1,
-    date: date || new Date().toISOString().split('T')[0],
+    date: date || getToday(),
     batch_number: batchNumber || '',
     site: site || '',
     vaccinator: vaccinator || '',

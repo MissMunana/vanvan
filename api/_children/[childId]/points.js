@@ -20,27 +20,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'delta must be a number' });
   }
 
-  // First get current points
-  const { data: child, error: getError } = await supabase
-    .from('children')
-    .select('total_points')
-    .eq('child_id', childId)
-    .eq('family_id', familyId)
-    .single();
-
-  if (getError) return res.status(404).json({ error: 'Child not found' });
-
-  const newPoints = Math.max(0, child.total_points + delta);
-
-  const { data, error } = await supabase
-    .from('children')
-    .update({ total_points: newPoints })
-    .eq('child_id', childId)
-    .eq('family_id', familyId)
-    .select('total_points')
-    .single();
+  // Atomically increment points
+  const { data: newTotal, error } = await supabase.rpc('increment_points', {
+    target_child_id: childId,
+    target_family_id: familyId,
+    delta,
+  });
 
   if (error) return res.status(500).json({ error: error.message });
+  if (newTotal === null) return res.status(404).json({ error: 'Child not found' });
 
-  return res.status(200).json({ totalPoints: data.total_points });
+  return res.status(200).json({ totalPoints: newTotal });
 }

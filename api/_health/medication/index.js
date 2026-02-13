@@ -1,5 +1,5 @@
 import supabase from '../../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized } from '../../_lib/auth-helpers.js';
+import { getAuthenticatedUser, getFamilyId, unauthorized, validateChildOwnership } from '../../_lib/auth-helpers.js';
 import { mapMedicationRecord, generateId } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -16,6 +16,10 @@ export default async function handler(req, res) {
 
   const { childId, drugName, genericName, dosageForm, singleDose, doseUnit, administrationTime, route, reason, note } = req.body;
   if (!childId || !drugName) return res.status(400).json({ error: 'childId and drugName are required' });
+
+  if (!await validateChildOwnership(familyId, childId)) {
+    return res.status(403).json({ error: 'Child does not belong to your family' });
+  }
 
   const row = {
     record_id: generateId(),

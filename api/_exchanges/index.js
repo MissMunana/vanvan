@@ -28,6 +28,21 @@ export default async function handler(req, res) {
     const { childId, rewardId, rewardName, rewardIcon, points } = req.body;
     if (!childId || !rewardId) return res.status(400).json({ error: 'childId and rewardId are required' });
 
+    // Validate child has enough points
+    const cost = points || 0;
+    if (cost > 0) {
+      const { data: child } = await supabase
+        .from('children')
+        .select('total_points')
+        .eq('child_id', childId)
+        .eq('family_id', familyId)
+        .single();
+      if (!child) return res.status(404).json({ error: 'Child not found' });
+      if (child.total_points < cost) {
+        return res.status(400).json({ error: '积分不足', needed: cost, available: child.total_points });
+      }
+    }
+
     const row = {
       exchange_id: generateId(),
       child_id: childId,

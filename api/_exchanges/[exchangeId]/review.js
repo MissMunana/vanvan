@@ -52,23 +52,13 @@ export default async function handler(req, res) {
 
     if (updateError) throw updateError;
 
-    // 3. If approved, deduct points and create spend log
+    // 3. If approved, deduct points atomically and create spend log
     if (status === 'approved') {
-      const { data: child } = await supabase
-        .from('children')
-        .select('total_points')
-        .eq('child_id', exchange.child_id)
-        .eq('family_id', familyId)
-        .single();
-
-      if (child) {
-        const newPoints = Math.max(0, child.total_points - exchange.points);
-        await supabase
-          .from('children')
-          .update({ total_points: newPoints })
-          .eq('child_id', exchange.child_id)
-          .eq('family_id', familyId);
-      }
+      await supabase.rpc('increment_points', {
+        target_child_id: exchange.child_id,
+        target_family_id: familyId,
+        delta: -exchange.points,
+      });
 
       // Create spend log
       await supabase.from('point_logs').insert({

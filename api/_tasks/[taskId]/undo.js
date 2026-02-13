@@ -58,21 +58,12 @@ export default async function handler(req, res) {
       .single();
 
     if (recentLog) {
-      // Subtract points from child
-      const { data: child } = await supabase
-        .from('children')
-        .select('total_points')
-        .eq('child_id', task.child_id)
-        .eq('family_id', familyId)
-        .single();
-
-      if (child) {
-        await supabase
-          .from('children')
-          .update({ total_points: Math.max(0, child.total_points - recentLog.points) })
-          .eq('child_id', task.child_id)
-          .eq('family_id', familyId);
-      }
+      // Subtract points atomically
+      await supabase.rpc('increment_points', {
+        target_child_id: task.child_id,
+        target_family_id: familyId,
+        delta: -recentLog.points,
+      });
 
       // Delete the log
       await supabase

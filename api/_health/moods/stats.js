@@ -19,7 +19,7 @@ export default async function handler(req, res) {
 
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-  const cutoff = ninetyDaysAgo.toISOString().split('T')[0];
+  const cutoff = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(ninetyDaysAgo);
 
   const { data, error } = await supabase
     .from('mood_records')

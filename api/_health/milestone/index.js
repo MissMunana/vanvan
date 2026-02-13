@@ -1,6 +1,6 @@
 import supabase from '../../_lib/supabase-admin.js';
 import { getAuthenticatedUser, getFamilyId, unauthorized } from '../../_lib/auth-helpers.js';
-import { mapMilestoneRecord, generateId } from '../../_lib/mappers.js';
+import { mapMilestoneRecord, generateId, getToday } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   if (existing) {
     const updates = { status: status || 'not_started' };
-    if (status === 'achieved') updates.achieved_date = new Date().toISOString().split('T')[0];
+    if (status === 'achieved') updates.achieved_date = getToday();
     if (note !== undefined) updates.note = note;
     if (photoTaken !== undefined) updates.photo_taken = photoTaken;
     if (photoNote !== undefined) updates.photo_note = photoNote;
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
     family_id: familyId,
     milestone_id: milestoneId,
     status: status || 'not_started',
-    achieved_date: status === 'achieved' ? new Date().toISOString().split('T')[0] : null,
+    achieved_date: status === 'achieved' ? getToday() : null,
     note: note || '',
     photo_taken: photoTaken || false,
     photo_note: photoNote || null,
