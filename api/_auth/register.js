@@ -29,6 +29,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: createError.message });
   }
 
+  // Database trigger auto-creates families record
+  // No additional action needed here
+
   // Generate a magic link token so the client can establish a session
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: 'magiclink',

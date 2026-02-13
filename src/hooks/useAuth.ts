@@ -141,7 +141,7 @@ export function useAuth() {
     if (otpData.session) {
       setSession(otpData.session)
       const { data: familyData } = await supabase
-        .from('families')
+        .from('family_members')
         .select('family_id')
         .eq('user_id', otpData.session.user.id)
         .single()
