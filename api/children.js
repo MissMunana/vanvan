@@ -7,6 +7,8 @@ import healthMedication from './_children/[childId]/health/medication.js';
 import healthVaccination from './_children/[childId]/health/vaccination.js';
 import healthMilestone from './_children/[childId]/health/milestone.js';
 import healthSleep from './_children/[childId]/health/sleep.js';
+import healthMoods from './_children/[childId]/health/moods.js';
+import healthConflicts from './_children/[childId]/health/conflicts.js';
 import emergencyProfile from './_children/[childId]/emergency/profile.js';
 import emergencyChecklist from './_children/[childId]/emergency/checklist.js';
 // Cross-domain list handlers
@@ -80,6 +82,8 @@ export default async function handler(req, res) {
     if (healthType === 'vaccination') return healthVaccination(req, res);
     if (healthType === 'milestone') return healthMilestone(req, res);
     if (healthType === 'sleep') return healthSleep(req, res);
+    if (healthType === 'moods') return healthMoods(req, res);
+    if (healthType === 'conflicts') return healthConflicts(req, res);
   }
 
   // /api/children/:childId/emergency/:type

@@ -6,6 +6,7 @@ import type {
   MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress,
   KnowledgeArticle, KnowledgeArticleSummary, KnowledgeBookmark,
   KnowledgeCategory, KnowledgeAgeGroup,
+  MoodRecord, ConflictRecord, MoodStats,
 } from '../types'
 
 const API_BASE = '/api'
@@ -293,6 +294,27 @@ export const knowledgeApi = {
       }),
     remove: (articleId: string) =>
       request<void>(`/knowledge/bookmarks/${articleId}`, { method: 'DELETE' }),
+  },
+}
+
+// ---- Emotion ----
+export const emotionApi = {
+  moods: {
+    list: (childId: string) => request<MoodRecord[]>(`/children/${childId}/health/moods`),
+    create: (data: Omit<MoodRecord, 'recordId' | 'createdAt'>) =>
+      request<MoodRecord>('/health/moods', { method: 'POST', body: JSON.stringify(data) }),
+    stats: (childId: string) => request<MoodStats>(`/health/moods/stats?childId=${childId}`),
+    delete: (recordId: string) =>
+      request<void>(`/health/moods/${recordId}`, { method: 'DELETE' }),
+  },
+  conflicts: {
+    list: (childId: string) => request<ConflictRecord[]>(`/children/${childId}/health/conflicts`),
+    create: (data: Omit<ConflictRecord, 'conflictId' | 'createdAt' | 'updatedAt'>) =>
+      request<ConflictRecord>('/health/conflicts', { method: 'POST', body: JSON.stringify(data) }),
+    update: (conflictId: string, data: Partial<ConflictRecord>) =>
+      request<ConflictRecord>(`/health/conflicts/${conflictId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (conflictId: string) =>
+      request<void>(`/health/conflicts/${conflictId}`, { method: 'DELETE' }),
   },
 }
 

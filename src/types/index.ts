@@ -442,3 +442,59 @@ export const EVIDENCE_LEVEL_INFO: Record<EvidenceLevel, { label: string; stars: 
   rct: { label: '随机对照试验', stars: 4, description: '发表于权威期刊' },
   expert_consensus: { label: '专家共识', stars: 3, description: '中国专家共识' },
 }
+
+// ============ V2.5 情绪心理发展模块 ============
+
+export type MoodValue = 'joy' | 'sadness' | 'anger' | 'fear' | 'calm'
+
+export type EmotionAgeGroup = '3-5' | '6-8' | '9-12'
+
+export interface MoodRecord {
+  recordId: string
+  childId: string
+  date: string
+  moodValue: MoodValue
+  moodEmoji: string
+  moodLabel: string
+  subEmotion: string | null
+  reason: string | null
+  journalEntry: string | null
+  ageGroup: EmotionAgeGroup
+  createdAt: string
+}
+
+export type ConflictStatus = 'recorded' | 'resolved' | 'reminded'
+
+export interface ConflictRecord {
+  conflictId: string
+  childId: string
+  date: string
+  description: string
+  childFeeling: string
+  parentFeeling: string
+  agreements: string[]
+  status: ConflictStatus
+  note: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MoodStats {
+  distribution: Record<MoodValue, number>
+  records: { date: string; mood_value: MoodValue }[]
+  totalDays: number
+}
+
+export const MOOD_VALUE_INFO: Record<MoodValue, { label: string; color: string }> = {
+  joy: { label: '快乐', color: '#FFD700' },
+  sadness: { label: '悲伤', color: '#6495ED' },
+  anger: { label: '愤怒', color: '#FF6347' },
+  fear: { label: '恐惧', color: '#9370DB' },
+  calm: { label: '平静', color: '#90EE90' },
+}
+
+export const CONFLICT_STATUS_INFO: Record<ConflictStatus, { label: string; color: string }> = {
+  recorded: { label: '已记录', color: '#FFB800' },
+  resolved: { label: '已解决', color: '#4CAF50' },
+  reminded: { label: '已提醒', color: '#2196F3' },
+}

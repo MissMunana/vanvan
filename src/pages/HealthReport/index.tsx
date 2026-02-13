@@ -13,6 +13,7 @@ export default function HealthReport() {
   const temperatureRecords = useHealthStore((s) => s.temperatureRecords)
   const medicationRecords = useHealthStore((s) => s.medicationRecords)
   const vaccinationRecords = useHealthStore((s) => s.vaccinationRecords)
+  const emergencyProfile = useHealthStore((s) => s.emergencyProfile)
 
   const childId = child?.childId ?? ''
 
@@ -120,6 +121,47 @@ export default function HealthReport() {
             </tbody>
           </table>
         </div>
+
+        {/* Allergy & medical history */}
+        {emergencyProfile && (emergencyProfile.drugAllergies.length > 0 || emergencyProfile.foodAllergies.length > 0 || emergencyProfile.otherAllergies.length > 0 || emergencyProfile.medicalConditions.length > 0) && (
+          <div style={{ marginBottom: 20 }}>
+            <SectionTitle>过敏史与病史</SectionTitle>
+            <table style={tableStyle}>
+              <tbody>
+                {emergencyProfile.drugAllergies.length > 0 && (
+                  <tr>
+                    <td style={thStyle}>药物过敏</td>
+                    <td style={tdStyle} colSpan={3}>{emergencyProfile.drugAllergies.join('、')}</td>
+                  </tr>
+                )}
+                {emergencyProfile.foodAllergies.length > 0 && (
+                  <tr>
+                    <td style={thStyle}>食物过敏</td>
+                    <td style={tdStyle} colSpan={3}>{emergencyProfile.foodAllergies.join('、')}</td>
+                  </tr>
+                )}
+                {emergencyProfile.otherAllergies.length > 0 && (
+                  <tr>
+                    <td style={thStyle}>其他过敏</td>
+                    <td style={tdStyle} colSpan={3}>{emergencyProfile.otherAllergies.join('、')}</td>
+                  </tr>
+                )}
+                {emergencyProfile.medicalConditions.length > 0 && (
+                  <tr>
+                    <td style={thStyle}>慢性疾病</td>
+                    <td style={tdStyle} colSpan={3}>{emergencyProfile.medicalConditions.join('、')}</td>
+                  </tr>
+                )}
+                {emergencyProfile.bloodType && (
+                  <tr>
+                    <td style={thStyle}>血型</td>
+                    <td style={tdStyle} colSpan={3}>{emergencyProfile.bloodType}{emergencyProfile.rhFactor === 'negative' ? ' (Rh-)' : ''}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Temperature records */}
         {recentTemp.length > 0 && (

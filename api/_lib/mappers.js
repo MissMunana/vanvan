@@ -280,6 +280,28 @@ export function pointLogToRow(l, familyId) {
   }
 }
 
+// ===== Emotion module =====
+
+export function mapMoodRecord(r) {
+  return {
+    recordId: r.record_id, childId: r.child_id, date: r.date,
+    moodValue: r.mood_value, moodEmoji: r.mood_emoji, moodLabel: r.mood_label,
+    subEmotion: r.sub_emotion, reason: r.reason,
+    journalEntry: r.journal_entry, ageGroup: r.age_group,
+    createdAt: r.created_at,
+  }
+}
+
+export function mapConflictRecord(r) {
+  return {
+    conflictId: r.conflict_id, childId: r.child_id, date: r.date,
+    description: r.description, childFeeling: r.child_feeling,
+    parentFeeling: r.parent_feeling, agreements: r.agreements || [],
+    status: r.status, note: r.note || '',
+    createdAt: r.created_at, updatedAt: r.updated_at,
+  }
+}
+
 export function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 }

@@ -57,6 +57,13 @@ export default function Health() {
         <MedicalDisclaimer compact />
         <div style={{ display: 'flex', gap: 6 }}>
           <button
+            onClick={() => navigate('/emotion')}
+            className="btn btn-outline"
+            style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#A8A8E640', color: '#A8A8E6' }}
+          >
+            🎭 情绪
+          </button>
+          <button
             onClick={() => navigate('/emergency')}
             className="btn btn-outline"
             style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#FF525240', color: '#FF5252' }}

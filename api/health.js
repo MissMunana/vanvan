@@ -11,6 +11,11 @@ import sleepIndex from './_health/sleep/index.js';
 import sleepRecord from './_health/sleep/[recordId].js';
 import emergencyProfileIndex from './_health/emergency-profile/index.js';
 import emergencyChecklistIndex from './_health/emergency-checklist/index.js';
+import moodsIndex from './_health/moods/index.js';
+import moodsRecord from './_health/moods/[recordId].js';
+import moodsStats from './_health/moods/stats.js';
+import conflictsIndex from './_health/conflicts/index.js';
+import conflictsRecord from './_health/conflicts/[conflictId].js';
 
 export default async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -38,10 +43,22 @@ export default async function handler(req, res) {
     if (type === 'sleep') return sleepIndex(req, res);
     if (type === 'emergency-profile') return emergencyProfileIndex(req, res);
     if (type === 'emergency-checklist') return emergencyChecklistIndex(req, res);
+    if (type === 'moods') return moodsIndex(req, res);
+    if (type === 'conflicts') return conflictsIndex(req, res);
   }
 
   // /api/health/:type/:recordId
   if (segments.length === 2) {
+    // moods/stats must be checked before generic moods/:recordId
+    if (type === 'moods' && recordId === 'stats') return moodsStats(req, res);
+    if (type === 'moods') {
+      req.query = { ...req.query, recordId };
+      return moodsRecord(req, res);
+    }
+    if (type === 'conflicts') {
+      req.query = { ...req.query, conflictId: recordId };
+      return conflictsRecord(req, res);
+    }
     req.query = { ...req.query, recordId };
     if (type === 'growth') return growthRecord(req, res);
     if (type === 'temperature') return temperatureRecord(req, res);
