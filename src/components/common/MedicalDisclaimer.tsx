@@ -10,14 +10,23 @@ export default function MedicalDisclaimer({ compact = false }: MedicalDisclaimer
   if (compact) {
     return (
       <div
-        className="alert alert-warning"
         onClick={() => setExpanded(!expanded)}
-        style={{ marginBottom: 12, fontSize: '0.75rem', cursor: 'pointer', lineHeight: 1.5 }}
+        style={{
+          marginTop: 24,
+          marginBottom: 8,
+          padding: '6px 12px',
+          fontSize: '0.7rem',
+          color: 'var(--color-text-secondary)',
+          cursor: 'pointer',
+          lineHeight: 1.5,
+          textAlign: 'center',
+          opacity: expanded ? 1 : 0.6,
+          transition: 'opacity 0.2s',
+        }}
       >
-        <span style={{ marginRight: 4 }}>⚠️</span>
         {expanded
-          ? '本功能提供的所有信息和计算结果仅供参考，不构成医疗建议。儿童用药请务必遵医嘱，具体用药方案以医生处方为准。如孩子出现紧急症状，请立即就医。'
-          : '医疗免责声明（点击展开）'}
+          ? '⚠️ 本功能提供的所有信息和计算结果仅供参考，不构成医疗建议。儿童用药请务必遵医嘱，具体用药方案以医生处方为准。如孩子出现紧急症状，请立即就医。'
+          : '⚠️ 医疗免责声明（点击展开）'}
       </div>
     )
   }
