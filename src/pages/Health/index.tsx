@@ -53,31 +53,28 @@ export default function Health() {
   return (
     <PageLoading isLoading={pageLoading} error={pageError}>
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <MedicalDisclaimer compact />
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={() => navigate('/emotion')}
-            className="btn btn-outline"
-            style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#A8A8E640', color: '#A8A8E6' }}
-          >
-            🎭 情绪
-          </button>
-          <button
-            onClick={() => navigate('/emergency')}
-            className="btn btn-outline"
-            style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#FF525240', color: '#FF5252' }}
-          >
-            🆘 应急
-          </button>
-          <button
-            onClick={() => navigate('/health-report')}
-            className="btn btn-outline"
-            style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
-          >
-            🖨️ 就医报告
-          </button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginBottom: 8 }}>
+        <button
+          onClick={() => navigate('/emotion')}
+          className="btn btn-outline"
+          style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#A8A8E640', color: '#A8A8E6' }}
+        >
+          🎭 情绪
+        </button>
+        <button
+          onClick={() => navigate('/emergency')}
+          className="btn btn-outline"
+          style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap', borderColor: '#FF525240', color: '#FF5252' }}
+        >
+          🆘 应急
+        </button>
+        <button
+          onClick={() => navigate('/health-report')}
+          className="btn btn-outline"
+          style={{ fontSize: '0.75rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+        >
+          🖨️ 就医报告
+        </button>
       </div>
       <SubTabBar tabs={HEALTH_TABS} active={activeTab} onChange={handleTabChange} />
 
@@ -92,6 +89,8 @@ export default function Health() {
           {getTabContent(activeTab)}
         </motion.div>
       </AnimatePresence>
+
+      <MedicalDisclaimer compact />
     </div>
     </PageLoading>
   )

@@ -166,8 +166,19 @@ export default function Home() {
           showToast('已撤销')
         },
       })
-    } catch {
-      showToast('操作失败，请重试')
+    } catch (err) {
+      if (err instanceof Error && 'status' in err) {
+        const status = (err as { status: number }).status
+        if (status === 400) {
+          showToast('该任务今天已完成')
+        } else if (status === 401) {
+          showToast('登录已过期，请重新登录')
+        } else {
+          showToast('操作失败，请重试')
+        }
+      } else {
+        showToast('网络连接失败，请检查网络')
+      }
     }
   }, [child, completeTask, showToast, undoComplete, play, checkAndUnlock])
 
@@ -740,6 +751,7 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
           </span>
           <motion.button
             whileTap={{ scale: 0.85 }}
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation()
               onComplete()
