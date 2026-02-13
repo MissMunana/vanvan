@@ -9,6 +9,7 @@
     { "source": "/api/health/:path+", "destination": "/api/health" },
     { "source": "/api/point-logs/:path+", "destination": "/api/point-logs" },
     { "source": "/api/badges/:path+", "destination": "/api/badges" },
+    { "source": "/api/family/:path+", "destination": "/api/family" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

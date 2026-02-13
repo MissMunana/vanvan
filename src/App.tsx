@@ -24,6 +24,7 @@ import Health from './pages/Health'
 import HealthReport from './pages/HealthReport'
 import Knowledge from './pages/Knowledge'
 import Emergency from './pages/Emergency'
+import JoinFamily from './pages/Auth/JoinFamily'
 import InstallPrompt from './components/common/InstallPrompt'
 import { supabase } from './lib/supabase-browser'
 import { Agentation } from 'agentation'
@@ -163,6 +164,11 @@ export default function App() {
     )
   }
 
+  // Allow /join route before onboarding (invited users)
+  if (location.pathname === '/join') {
+    return <JoinFamily />
+  }
+
   // Authenticated but no children -> Onboarding
   if (!onboardingCompleted || children.length === 0) {
     return <Onboarding />
@@ -194,6 +200,7 @@ export default function App() {
               <Route path="/print" element={<Print />} />
               <Route path="/health-report" element={<HealthReport />} />
               <Route path="/emergency" element={<Emergency />} />
+              <Route path="/join" element={<JoinFamily />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </motion.div>

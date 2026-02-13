@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Task, TaskCategory } from '../types'
-import { tasksApi, type CompleteTaskResult } from '../lib/api'
+import { tasksApi, type CompleteTaskResult, type CreateTaskInput } from '../lib/api'
 import { getToday } from '../utils/generateId'
 
 interface TaskStore {
@@ -10,8 +10,8 @@ interface TaskStore {
 
   // Server-first async methods
   fetchTasks: (childId: string) => Promise<void>
-  addTask: (task: { childId: string; name: string; category: TaskCategory; points: number; icon: string; description: string; isActive: boolean; frequency: 'daily' | 'weekly' | 'anytime' }) => Promise<void>
-  addTasks: (tasks: { childId: string; name: string; category: TaskCategory; points: number; icon: string; description: string; isActive: boolean; frequency: 'daily' | 'weekly' | 'anytime' }[]) => Promise<void>
+  addTask: (task: CreateTaskInput) => Promise<void>
+  addTasks: (tasks: CreateTaskInput[]) => Promise<void>
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (taskId: string) => Promise<void>
   completeTask: (taskId: string) => Promise<CompleteTaskResult>

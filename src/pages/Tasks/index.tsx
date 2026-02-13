@@ -50,10 +50,26 @@ export default function Tasks() {
     if (!child) return
     try {
       const result = await completeTask(taskId)
+
+      // If awaiting parent confirmation, show different message
+      if (result.awaitingConfirm) {
+        play('complete')
+        showToast('已完成! 等待家长确认后获得积分', {
+          label: '撤销',
+          onClick: async () => {
+            await undoComplete(taskId)
+            showToast('已撤销')
+          },
+        })
+        return
+      }
+
       const totalPoints = result.earnedPoints + result.bonusPoints
 
       // Update local stores with server response
-      useAppStore.getState().setChildPoints(child.childId, result.totalPoints)
+      if (result.totalPoints != null) {
+        useAppStore.getState().setChildPoints(child.childId, result.totalPoints)
+      }
       if (result.pointLog) {
         usePointStore.getState().prependLog(result.pointLog)
       }
@@ -72,7 +88,7 @@ export default function Tasks() {
       const updatedLogs = usePointStore.getState().logs
       const unlockedBadgeIds = useBadgeStore.getState().getChildBadges(child.childId).map((b) => b.badgeId)
       const newBadges = await checkAndUnlock({
-        child: { ...child, totalPoints: result.totalPoints },
+        child: { ...child, totalPoints: result.totalPoints ?? child.totalPoints },
         tasks: updatedTasks,
         logs: updatedLogs,
         unlockedBadgeIds,
@@ -231,12 +247,22 @@ export default function Tasks() {
                     gap: 6,
                   }}>
                     {task.name}
+                    {task.isFamilyTask && (
+                      <span style={{ fontSize: '0.65rem', background: '#E3F2FD', color: '#1565C0', padding: '1px 6px', borderRadius: 6, fontWeight: 600 }}>
+                        🏠 家庭
+                      </span>
+                    )}
                     {stageInfo && (
                       <span style={{ display: 'inline-flex', alignItems: 'center' }} title={stageInfo.description}>
                         {stageInfo.icon}
                       </span>
                     )}
                   </div>
+                  {task.completedToday && task.requiresParentConfirm && !task.parentConfirmed && (
+                    <div style={{ fontSize: '0.75rem', color: '#E65100', marginTop: 2 }}>
+                      ⏳ 等待家长确认
+                    </div>
+                  )}
                   {task.consecutiveDays > 0 && (
                     <div style={{
                       fontSize: '0.75rem',

@@ -4,6 +4,8 @@ import type {
   PointLog, UnlockedBadge,
   GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord,
   MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress,
+  MedicineCabinetItem,
+  FamilyMember, FamilyInvite, FamilyRole, HandoverLog,
 } from '../types'
 
 const API_BASE = '/api'
@@ -51,6 +53,33 @@ export const familyApi = {
   get: () => request<FamilySettings>('/family'),
   update: (data: Partial<Pick<FamilySettings, 'parentPin' | 'onboardingCompleted' | 'completionCount'>>) =>
     request<FamilySettings>('/family', { method: 'PUT', body: JSON.stringify(data) }),
+  me: () => request<FamilyMember>('/family/me'),
+  members: {
+    list: () => request<FamilyMember[]>('/family/members'),
+    invite: (role: FamilyRole) =>
+      request<FamilyInvite>('/family/members', { method: 'POST', body: JSON.stringify({ role }) }),
+    updateRole: (memberId: string, role: FamilyRole) =>
+      request<FamilyMember>(`/family/members/${memberId}`, { method: 'PUT', body: JSON.stringify({ role }) }),
+    remove: (memberId: string) =>
+      request<void>(`/family/members/${memberId}`, { method: 'DELETE' }),
+  },
+  join: (inviteCode: string) =>
+    request<FamilyMember>('/family/join', { method: 'POST', body: JSON.stringify({ inviteCode }) }),
+  handovers: {
+    list: (childId?: string, startDate?: string) => {
+      const params = new URLSearchParams()
+      if (childId) params.set('childId', childId)
+      if (startDate) params.set('startDate', startDate)
+      const qs = params.toString()
+      return request<HandoverLog[]>(`/family/handovers${qs ? `?${qs}` : ''}`)
+    },
+    create: (data: Omit<HandoverLog, 'logId' | 'familyId' | 'createdAt' | 'updatedAt'>) =>
+      request<HandoverLog>('/family/handovers', { method: 'POST', body: JSON.stringify(data) }),
+    update: (logId: string, data: Partial<HandoverLog>) =>
+      request<HandoverLog>(`/family/handovers/${logId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (logId: string) =>
+      request<void>(`/family/handovers/${logId}`, { method: 'DELETE' }),
+  },
 }
 
 // ---- Children ----
@@ -95,6 +124,8 @@ export interface CreateTaskInput {
   description: string
   isActive: boolean
   frequency: 'daily' | 'weekly' | 'anytime'
+  isFamilyTask?: boolean
+  requiresParentConfirm?: boolean
 }
 
 export interface CompleteTaskResult {
@@ -105,6 +136,14 @@ export interface CompleteTaskResult {
   stageChanged: boolean
   newStage: HabitStage
   graduated: boolean
+  pointLog: PointLog | null
+  totalPoints: number | null
+  awaitingConfirm?: boolean
+}
+
+export interface ConfirmTaskResult {
+  task: Task
+  earnedPoints: number
   pointLog: PointLog
   totalPoints: number
 }
@@ -123,6 +162,8 @@ export const tasksApi = {
     request<CompleteTaskResult>(`/tasks/${taskId}/complete`, { method: 'POST' }),
   undoComplete: (taskId: string) =>
     request<Task>(`/tasks/${taskId}/undo`, { method: 'POST' }),
+  confirmTask: (taskId: string) =>
+    request<ConfirmTaskResult>(`/tasks/${taskId}/confirm`, { method: 'POST' }),
 }
 
 // ---- Rewards ----
@@ -244,6 +285,15 @@ export const healthApi = {
       request<SleepRecord>(`/health/sleep/${recordId}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (recordId: string) =>
       request<void>(`/health/sleep/${recordId}`, { method: 'DELETE' }),
+  },
+  cabinet: {
+    list: () => request<MedicineCabinetItem[]>('/health/cabinet'),
+    create: (data: Omit<MedicineCabinetItem, 'itemId' | 'familyId' | 'createdAt' | 'updatedAt'>) =>
+      request<MedicineCabinetItem>('/health/cabinet', { method: 'POST', body: JSON.stringify(data) }),
+    update: (itemId: string, data: Partial<MedicineCabinetItem>) =>
+      request<MedicineCabinetItem>(`/health/cabinet/${itemId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (itemId: string) =>
+      request<void>(`/health/cabinet/${itemId}`, { method: 'DELETE' }),
   },
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useRef } from 'react'
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
@@ -6,6 +6,7 @@ import { useTaskStore } from '../../stores/taskStore'
 import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useBadgeStore } from '../../stores/badgeStore'
+import { useRecommendationStore } from '../../stores/recommendationStore'
 import { useToast } from '../../components/common/Toast'
 import { PointAnimation } from '../../components/common/PointAnimation'
 import { useSound } from '../../hooks/useSound'
@@ -22,6 +23,10 @@ export default function Home() {
   const logs = usePointStore((s) => s.logs)
   const exchanges = useExchangeStore((s) => s.exchanges)
   const checkAndUnlock = useBadgeStore((s) => s.checkAndUnlock)
+  const taskRecommendations = useRecommendationStore((s) => s.taskRecommendations)
+  const refreshRecommendations = useRecommendationStore((s) => s.refresh)
+  const dismissTask = useRecommendationStore((s) => s.dismissTask)
+  const addTask = useTaskStore((s) => s.addTask)
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { play } = useSound()
@@ -84,6 +89,11 @@ export default function Home() {
 
   const pendingExchanges = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId), [exchanges, childId])
 
+  // Refresh recommendations when childId changes
+  useEffect(() => {
+    if (childId) refreshRecommendations(childId)
+  }, [childId, refreshRecommendations])
+
   const MAX_DISPLAY = 6
 
   const todayTasks = useMemo(() => {
@@ -103,7 +113,9 @@ export default function Home() {
       const totalPoints = result.earnedPoints + result.bonusPoints
 
       // Update local stores with server response
-      useAppStore.getState().setChildPoints(child.childId, result.totalPoints)
+      if (result.totalPoints != null) {
+        useAppStore.getState().setChildPoints(child.childId, result.totalPoints)
+      }
       if (result.pointLog) {
         usePointStore.getState().prependLog(result.pointLog)
       }
@@ -122,7 +134,7 @@ export default function Home() {
       const updatedLogs = usePointStore.getState().logs
       const unlockedBadgeIds = useBadgeStore.getState().getChildBadges(child.childId).map((b) => b.badgeId)
       const newBadges = await checkAndUnlock({
-        child: { ...child, totalPoints: result.totalPoints },
+        child: { ...child, totalPoints: result.totalPoints ?? child.totalPoints },
         tasks: updatedTasks,
         logs: updatedLogs,
         unlockedBadgeIds,
@@ -430,6 +442,72 @@ export default function Home() {
           </>
         )}
       </div>
+
+      {/* Suggested tasks */}
+      {taskRecommendations.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>💡 为你推荐</div>
+          {taskRecommendations.slice(0, 3).map((rec) => (
+            <motion.div
+              key={rec.template.name}
+              className="card"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 16px',
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>{rec.template.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600 }}>{rec.template.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                    {rec.reason}
+                  </div>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={async () => {
+                    try {
+                      await addTask({
+                        childId,
+                        name: rec.template.name,
+                        category: rec.template.category,
+                        points: rec.template.points,
+                        icon: rec.template.icon,
+                        description: rec.template.description,
+                        isActive: true,
+                        frequency: 'daily',
+                      })
+                      dismissTask(rec.template.name)
+                      showToast(`已添加任务"${rec.template.name}"`)
+                    } catch {
+                      showToast('添加失败')
+                    }
+                  }}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'var(--color-success)',
+                    color: 'white',
+                    fontSize: '1.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(76,175,80,0.3)',
+                  }}
+                >
+                  +
+                </motion.button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Pending exchanges notification */}
       {pendingExchanges.length > 0 && (

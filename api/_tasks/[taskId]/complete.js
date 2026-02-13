@@ -71,21 +71,46 @@ export default async function handler(req, res) {
     const totalEarned = earnedPoints + bonusPoints;
 
     // 6. Update the task
+    const taskUpdate = {
+      completed_today: true,
+      last_completed_date: today,
+      consecutive_days: newConsecutiveDays,
+      stage: newStage,
+      total_completions: (task.total_completions || 0) + 1,
+    };
+
+    // If task requires parent confirmation, reset confirmation status
+    if (task.requires_parent_confirm) {
+      taskUpdate.parent_confirmed = false;
+      taskUpdate.parent_confirmed_by = null;
+      taskUpdate.parent_confirmed_at = null;
+    }
+
     const { data: updatedTask, error: updateError } = await supabase
       .from('tasks')
-      .update({
-        completed_today: true,
-        last_completed_date: today,
-        consecutive_days: newConsecutiveDays,
-        stage: newStage,
-        total_completions: (task.total_completions || 0) + 1,
-      })
+      .update(taskUpdate)
       .eq('task_id', taskId)
       .eq('family_id', familyId)
       .select()
       .single();
 
     if (updateError) throw updateError;
+
+    // If requires parent confirmation, don't award points yet
+    if (task.requires_parent_confirm) {
+      return res.status(200).json({
+        task: mapTask(updatedTask),
+        earnedPoints: 0,
+        bonusPoints: 0,
+        consecutiveDays: newConsecutiveDays,
+        stageChanged,
+        newStage,
+        graduated,
+        pointLog: null,
+        totalPoints: null,
+        awaitingConfirm: true,
+      });
+    }
 
     // 7. Create point log
     const logRow = {

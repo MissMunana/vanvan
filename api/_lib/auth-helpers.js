@@ -18,7 +18,7 @@ export async function getAuthenticatedUser(req) {
 
 export async function getFamilyId(userId) {
   const { data, error } = await supabase
-    .from('families')
+    .from('family_members')
     .select('family_id')
     .eq('user_id', userId)
     .single();
@@ -28,6 +28,40 @@ export async function getFamilyId(userId) {
   }
 
   return { familyId: data.family_id, error: null };
+}
+
+export async function getFamilyMember(userId) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('family_id, role, member_id, display_name')
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !data) {
+    return { member: null, error: 'Not a family member' };
+  }
+
+  return {
+    member: {
+      familyId: data.family_id,
+      role: data.role,
+      memberId: data.member_id,
+      displayName: data.display_name,
+    },
+    error: null,
+  };
+}
+
+export function requireRole(res, role, allowed) {
+  if (!allowed.includes(role)) {
+    res.status(403).json({ error: 'Permission denied' });
+    return true;
+  }
+  return false;
+}
+
+export function forbidden(res, message = 'Forbidden') {
+  return res.status(403).json({ error: message });
 }
 
 export function methodNotAllowed(res, allowed = 'POST') {

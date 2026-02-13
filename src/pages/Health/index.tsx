@@ -10,6 +10,7 @@ import MedicationTracker from './MedicationTracker'
 import VaccineTracker from './VaccineTracker'
 import MilestoneTracker from './MilestoneTracker'
 import SleepTracker from './SleepTracker'
+import MedicineCabinet from './MedicineCabinet'
 
 const HEALTH_TABS: { key: HealthTab; label: string; icon: string }[] = [
   { key: 'growth', label: '生长曲线', icon: '📏' },
@@ -18,10 +19,11 @@ const HEALTH_TABS: { key: HealthTab; label: string; icon: string }[] = [
   { key: 'vaccine', label: '疫苗', icon: '💉' },
   { key: 'milestone', label: '里程碑', icon: '🌟' },
   { key: 'sleep', label: '睡眠', icon: '😴' },
+  { key: 'cabinet', label: '药箱', icon: '🗄️' },
 ]
 
 const TAB_INDEX: Record<HealthTab, number> = {
-  growth: 0, fever: 1, medication: 2, vaccine: 3, milestone: 4, sleep: 5,
+  growth: 0, fever: 1, medication: 2, vaccine: 3, milestone: 4, sleep: 5, cabinet: 6,
 }
 
 function getTabContent(tab: HealthTab) {
@@ -32,6 +34,7 @@ function getTabContent(tab: HealthTab) {
     case 'vaccine': return <VaccineTracker />
     case 'milestone': return <MilestoneTracker />
     case 'sleep': return <SleepTracker />
+    case 'cabinet': return <MedicineCabinet />
   }
 }
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord, MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress } from '../types'
+import type { GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord, MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress, MedicineCabinetItem } from '../types'
 import { healthApi, emergencyApi } from '../lib/api'
 
 interface HealthStore {
@@ -56,6 +56,15 @@ interface HealthStore {
   upsertEmergencyProfile: (data: Omit<EmergencyProfile, 'profileId' | 'createdAt' | 'updatedAt'>) => Promise<void>
   toggleSafetyChecklistItem: (childId: string, checklistItemId: string, completed: boolean) => Promise<void>
 
+  // Medicine Cabinet
+  cabinetItems: MedicineCabinetItem[]
+  fetchCabinetItems: () => Promise<void>
+  addCabinetItem: (data: Omit<MedicineCabinetItem, 'itemId' | 'familyId' | 'createdAt' | 'updatedAt'>) => Promise<void>
+  updateCabinetItem: (itemId: string, updates: Partial<MedicineCabinetItem>) => Promise<void>
+  deleteCabinetItem: (itemId: string) => Promise<void>
+  getExpiringItems: (daysAhead?: number) => MedicineCabinetItem[]
+  getOpenedExpiredItems: () => MedicineCabinetItem[]
+
   // Cleanup
   deleteByChildId: (childId: string) => void
 }
@@ -63,6 +72,13 @@ interface HealthStore {
 const MEDICATION_INTERVALS: Record<string, number> = {
   ibuprofen: 6 * 60,
   acetaminophen: 4 * 60,
+  oseltamivir: 12 * 60,
+  amoxicillin_clavulanate: 8 * 60,
+  azithromycin: 24 * 60,
+  montelukast: 24 * 60,
+  cetirizine: 12 * 60,
+  loratadine: 24 * 60,
+  montmorillonite: 8 * 60,
 }
 
 export const useHealthStore = create<HealthStore>()(
@@ -304,6 +320,50 @@ export const useHealthStore = create<HealthStore>()(
           }
         }
         return { safetyChecklistProgress: [...state.safetyChecklistProgress, progress] }
+      })
+    },
+
+    // Medicine Cabinet
+    cabinetItems: [],
+
+    fetchCabinetItems: async () => {
+      const data = await healthApi.cabinet.list()
+      set({ cabinetItems: data })
+    },
+
+    addCabinetItem: async (data) => {
+      const item = await healthApi.cabinet.create(data)
+      set((state) => ({ cabinetItems: [...state.cabinetItems, item] }))
+    },
+
+    updateCabinetItem: async (itemId, updates) => {
+      const updated = await healthApi.cabinet.update(itemId, updates)
+      set((state) => ({
+        cabinetItems: state.cabinetItems.map((i) => i.itemId === itemId ? updated : i),
+      }))
+    },
+
+    deleteCabinetItem: async (itemId) => {
+      await healthApi.cabinet.delete(itemId)
+      set((state) => ({
+        cabinetItems: state.cabinetItems.filter((i) => i.itemId !== itemId),
+      }))
+    },
+
+    getExpiringItems: (daysAhead = 30) => {
+      const now = new Date()
+      const threshold = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000)
+      const thresholdStr = threshold.toISOString().split('T')[0]
+      return get().cabinetItems.filter((i) => i.expiryDate <= thresholdStr)
+    },
+
+    getOpenedExpiredItems: () => {
+      const today = new Date().toISOString().split('T')[0]
+      return get().cabinetItems.filter((i) => {
+        if (!i.openedDate || !i.openedShelfLifeDays) return false
+        const opened = new Date(i.openedDate)
+        opened.setDate(opened.getDate() + i.openedShelfLifeDays)
+        return opened.toISOString().split('T')[0] <= today
       })
     },
 

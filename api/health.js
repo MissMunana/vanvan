@@ -11,6 +11,8 @@ import sleepIndex from './_health/sleep/index.js';
 import sleepRecord from './_health/sleep/[recordId].js';
 import emergencyProfileIndex from './_health/emergency-profile/index.js';
 import emergencyChecklistIndex from './_health/emergency-checklist/index.js';
+import cabinetIndex from './_health/cabinet/index.js';
+import cabinetRecord from './_health/cabinet/[recordId].js';
 
 export default async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -38,6 +40,7 @@ export default async function handler(req, res) {
     if (type === 'sleep') return sleepIndex(req, res);
     if (type === 'emergency-profile') return emergencyProfileIndex(req, res);
     if (type === 'emergency-checklist') return emergencyChecklistIndex(req, res);
+    if (type === 'cabinet') return cabinetIndex(req, res);
   }
 
   // /api/health/:type/:recordId
@@ -48,6 +51,7 @@ export default async function handler(req, res) {
     if (type === 'medication') return medicationRecord(req, res);
     if (type === 'vaccination') return vaccinationRecord(req, res);
     if (type === 'sleep') return sleepRecord(req, res);
+    if (type === 'cabinet') return cabinetRecord(req, res);
   }
 
   return res.status(404).json({ error: 'Not found' });

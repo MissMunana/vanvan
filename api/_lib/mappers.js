@@ -32,6 +32,11 @@ export function mapTask(t) {
     completedToday: t.completed_today,
     stage: t.stage,
     totalCompletions: t.total_completions,
+    isFamilyTask: t.is_family_task || false,
+    requiresParentConfirm: t.requires_parent_confirm || false,
+    parentConfirmed: t.parent_confirmed || false,
+    parentConfirmedBy: t.parent_confirmed_by || null,
+    parentConfirmedAt: t.parent_confirmed_at || null,
     createdAt: t.created_at,
   }
 }
@@ -77,6 +82,8 @@ export function mapPointLog(l) {
     reason: l.reason,
     emotion: l.emotion,
     operator: l.operator,
+    operatorUserId: l.operator_user_id || null,
+    operatorName: l.operator_name || '',
     createdAt: l.created_at,
   }
 }
@@ -175,6 +182,47 @@ export function mapSafetyChecklistProgress(r) {
   }
 }
 
+export function mapMedicineCabinetItem(r) {
+  return {
+    itemId: r.item_id, familyId: r.family_id, name: r.name,
+    genericName: r.generic_name || '', quantity: r.quantity,
+    quantityUnit: r.quantity_unit || '盒', expiryDate: r.expiry_date,
+    openedDate: r.opened_date || null,
+    openedShelfLifeDays: r.opened_shelf_life_days ?? null,
+    storageCondition: r.storage_condition || 'room_temp',
+    storageNote: r.storage_note || '', purchaseDate: r.purchase_date || null,
+    batchNumber: r.batch_number || '', note: r.note || '',
+    createdAt: r.created_at, updatedAt: r.updated_at,
+  }
+}
+
+export function mapFamilyMember(m) {
+  return {
+    memberId: m.member_id, familyId: m.family_id, userId: m.user_id,
+    role: m.role, displayName: m.display_name || '', avatar: m.avatar || '👤',
+    invitedBy: m.invited_by || null, joinedAt: m.joined_at, createdAt: m.created_at,
+  }
+}
+
+export function mapFamilyInvite(i) {
+  return {
+    inviteId: i.invite_id, familyId: i.family_id, inviteCode: i.invite_code,
+    role: i.role, invitedBy: i.invited_by, usedBy: i.used_by || null,
+    expiresAt: i.expires_at, createdAt: i.created_at,
+  }
+}
+
+export function mapHandoverLog(h) {
+  return {
+    logId: h.log_id, familyId: h.family_id, childId: h.child_id,
+    authorUserId: h.author_user_id, authorName: h.author_name,
+    date: h.date, tasksSummary: h.tasks_summary, mealsSummary: h.meals_summary,
+    sleepSummary: h.sleep_summary, healthSummary: h.health_summary,
+    specialNotes: h.special_notes, priority: h.priority,
+    createdAt: h.created_at, updatedAt: h.updated_at,
+  }
+}
+
 // Client format (camelCase) → DB row (snake_case) mappers
 
 export function childToRow(c, familyId) {
@@ -211,6 +259,11 @@ export function taskToRow(t, familyId) {
     completed_today: t.completedToday,
     stage: t.stage,
     total_completions: t.totalCompletions,
+    is_family_task: t.isFamilyTask || false,
+    requires_parent_confirm: t.requiresParentConfirm || false,
+    parent_confirmed: t.parentConfirmed || false,
+    parent_confirmed_by: t.parentConfirmedBy || null,
+    parent_confirmed_at: t.parentConfirmedAt || null,
     created_at: t.createdAt,
   }
 }
