@@ -39,9 +39,9 @@ export const useAuthStore = create<AuthStore>()(
               user: session.user,
               isAuthenticated: true,
             })
-            // Fetch family ID
+            // Fetch family ID from family_members (supports multi-caregiver)
             const { data } = await supabase
-              .from('families')
+              .from('family_members')
               .select('family_id')
               .eq('user_id', session.user.id)
               .single()

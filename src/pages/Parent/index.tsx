@@ -16,9 +16,14 @@ import { Modal } from '../../components/common/Modal'
 import { TASK_TEMPLATES, REWARD_TEMPLATES, AVATAR_OPTIONS } from '../../data/templates'
 import { CATEGORY_INFO, REWARD_CATEGORY_INFO } from '../../types'
 import { formatAge, getAgeFromBirthday, getAgeGroup } from '../../hooks/useAgeGroup'
+import { tasksApi } from '../../lib/api'
+import { useFamilyStore } from '../../stores/familyStore'
+import { useRecommendationStore } from '../../stores/recommendationStore'
+import MemberManager from './MemberManager'
+import HandoverManager from './HandoverManager'
 import type { TaskCategory, RewardCategory, Task, Reward } from '../../types'
 
-type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust' | 'settings'
+type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust' | 'members' | 'handover' | 'settings'
 
 export default function Parent() {
   const { isLoading: pageLoading, error: pageError } = usePageData(['tasks', 'rewards', 'exchanges', 'logs', 'badges', 'health'])
@@ -142,14 +147,20 @@ export default function Parent() {
 
   if (!child) return null
 
-  const tabs: { key: ParentTab; label: string; icon: string }[] = [
+  const hasPermission = useFamilyStore.getState().hasPermission
+  const currentRole = useFamilyStore.getState().currentMember?.role
+
+  const allTabs: { key: ParentTab; label: string; icon: string; show?: boolean }[] = [
     { key: 'dashboard', label: '总览', icon: '📊' },
-    { key: 'tasks', label: '任务', icon: '📋' },
-    { key: 'rewards', label: '奖励', icon: '🎁' },
-    { key: 'exchanges', label: '审核', icon: '📬' },
-    { key: 'adjust', label: '调分', icon: '✏️' },
-    { key: 'settings', label: '设置', icon: '⚙️' },
+    { key: 'tasks', label: '任务', icon: '📋', show: hasPermission('canManageTasks') },
+    { key: 'rewards', label: '奖励', icon: '🎁', show: hasPermission('canManageRewards') },
+    { key: 'exchanges', label: '审核', icon: '📬', show: hasPermission('canReviewExchanges') },
+    { key: 'adjust', label: '调分', icon: '✏️', show: hasPermission('canAdjustPoints') },
+    { key: 'members', label: '成员', icon: '👥' },
+    { key: 'handover', label: '交接', icon: '📋' },
+    { key: 'settings', label: '设置', icon: '⚙️', show: hasPermission('canChangeSettings') || currentRole === 'admin' },
   ]
+  const tabs = allTabs.filter((t) => t.show !== false)
 
   return (
     <PageLoading isLoading={pageLoading} error={pageError}>
@@ -206,6 +217,8 @@ export default function Parent() {
         {activeTab === 'rewards' && <RewardManager />}
         {activeTab === 'exchanges' && <ExchangeReview />}
         {activeTab === 'adjust' && <PointAdjust />}
+        {activeTab === 'members' && <MemberManager />}
+        {activeTab === 'handover' && <HandoverManager />}
         {activeTab === 'settings' && <Settings />}
       </div>
     </div>
@@ -220,6 +233,10 @@ function Dashboard() {
   const logs = usePointStore((s) => s.logs)
   const tasks = useTaskStore((s) => s.tasks)
   const exchanges = useExchangeStore((s) => s.exchanges)
+  const pointsSuggestions = useRecommendationStore((s) => s.pointsSuggestions)
+  const taskRecommendations = useRecommendationStore((s) => s.taskRecommendations)
+  const refreshRecommendations = useRecommendationStore((s) => s.refresh)
+  const dismissSuggestion = useRecommendationStore((s) => s.dismissSuggestion)
   const navigate = useNavigate()
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
@@ -256,6 +273,11 @@ function Dashboard() {
   }, [logs, childId])
 
   const pendingCount = useMemo(() => exchanges.filter((e) => e.status === 'pending' && e.childId === childId).length, [exchanges, childId])
+
+  // Refresh recommendations on dashboard mount
+  useEffect(() => {
+    if (childId) refreshRecommendations(childId)
+  }, [childId, refreshRecommendations])
 
   if (!child) return null
 
@@ -384,6 +406,84 @@ function Dashboard() {
         </button>
       </div>
 
+      {/* Smart Insights */}
+      {(pointsSuggestions.length > 0 || taskRecommendations.length > 0) && (
+        <div style={{ marginTop: 16 }}>
+          {pointsSuggestions.length > 0 && (
+            <>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>🤖 智能建议</div>
+              {pointsSuggestions.map((suggestion) => {
+                const severityColors: Record<string, string> = {
+                  success: '#4CAF50',
+                  warning: '#FFB800',
+                  info: '#2196F3',
+                }
+                return (
+                  <div
+                    key={suggestion.id}
+                    className="card"
+                    style={{
+                      marginBottom: 8,
+                      borderLeft: `3px solid ${severityColors[suggestion.severity] || '#ccc'}`,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px' }}>
+                      <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{suggestion.icon}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{suggestion.message}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
+                          {suggestion.detail}
+                        </div>
+                        {suggestion.actionLabel && (
+                          <button
+                            style={{ fontSize: '0.8rem', color: 'var(--color-primary)', fontWeight: 600, marginTop: 8 }}
+                          >
+                            {suggestion.actionLabel} →
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => dismissSuggestion(suggestion.id)}
+                        style={{ opacity: 0.4, fontSize: '0.8rem', padding: '2px 6px', flexShrink: 0 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
+
+          {taskRecommendations.length > 0 && (
+            <>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8, marginTop: pointsSuggestions.length > 0 ? 16 : 0 }}>
+                📋 推荐添加的任务
+              </div>
+              {taskRecommendations.slice(0, 5).map((rec) => (
+                <div key={rec.template.name} className="card" style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px' }}>
+                    <span style={{ fontSize: '1.3rem' }}>{rec.template.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{rec.template.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: 2 }}>
+                        {rec.reason}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)', fontWeight: 600, flexShrink: 0 }}>
+                      +{rec.template.points}分
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Pending task confirmations */}
+      <PendingConfirmations childId={childId} />
+
       {/* Screen time settings modal */}
       <Modal
         open={showScreenTime}
@@ -487,6 +587,70 @@ function Dashboard() {
   )
 }
 
+function PendingConfirmations({ childId }: { childId: string }) {
+  const tasks = useTaskStore((s) => s.tasks)
+  const { showToast } = useToast()
+
+  const pendingTasks = useMemo(
+    () => tasks.filter((t) => t.childId === childId && t.completedToday && t.requiresParentConfirm && !t.parentConfirmed),
+    [tasks, childId]
+  )
+
+  const handleConfirm = async (taskId: string) => {
+    try {
+      const result = await tasksApi.confirmTask(taskId)
+      // Update local task store with confirmed task
+      useTaskStore.setState((s) => ({
+        tasks: s.tasks.map((t) => t.taskId === taskId ? result.task : t),
+      }))
+      // Update child points
+      useAppStore.getState().setChildPoints(childId, result.totalPoints)
+      if (result.pointLog) {
+        usePointStore.getState().prependLog(result.pointLog)
+      }
+      showToast(`已确认，+${result.earnedPoints}分`)
+    } catch {
+      showToast('确认失败')
+    }
+  }
+
+  if (pendingTasks.length === 0) return null
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 8 }}>⏳ 待确认任务</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {pendingTasks.map((t) => (
+          <div
+            key={t.taskId}
+            style={{
+              background: '#FFF8E1',
+              border: '1px solid #FFE082',
+              borderRadius: 10,
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{t.icon} {t.name}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-secondary)' }}>+{t.points}分 · 等待确认</div>
+            </div>
+            <button
+              className="btn btn-primary"
+              style={{ fontSize: '0.75rem', padding: '6px 12px' }}
+              onClick={() => handleConfirm(t.taskId)}
+            >
+              确认
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function TaskManager() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
@@ -509,6 +673,8 @@ function TaskManager() {
     points: 10,
     icon: '⭐',
     description: '',
+    isFamilyTask: false,
+    requiresParentConfirm: false,
   })
 
   if (!child) return null
@@ -525,9 +691,11 @@ function TaskManager() {
         description: newTask.description,
         isActive: true,
         frequency: 'daily',
+        isFamilyTask: newTask.isFamilyTask,
+        requiresParentConfirm: newTask.requiresParentConfirm,
       })
       setShowAdd(false)
-      setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '' })
+      setNewTask({ name: '', category: 'life', points: 10, icon: '⭐', description: '', isFamilyTask: false, requiresParentConfirm: false })
       showToast('任务已添加')
     } catch {
       showToast('添加失败，请重试')
@@ -671,6 +839,17 @@ function TaskManager() {
                 }}>{icon}</button>
               ))}
             </div>
+          </div>
+          {/* Family task options */}
+          <div style={{ background: '#F5F5F5', borderRadius: 10, padding: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 8 }}>
+              <input type="checkbox" checked={newTask.isFamilyTask} onChange={(e) => setNewTask({ ...newTask, isFamilyTask: e.target.checked })} style={{ accentColor: 'var(--color-primary)' }} />
+              <span style={{ fontSize: '0.85rem' }}>🏠 家庭任务</span>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <input type="checkbox" checked={newTask.requiresParentConfirm} onChange={(e) => setNewTask({ ...newTask, requiresParentConfirm: e.target.checked })} style={{ accentColor: 'var(--color-primary)' }} />
+              <span style={{ fontSize: '0.85rem' }}>✅ 需要家长确认才能获得积分</span>
+            </label>
           </div>
           <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={!newTask.name.trim()}>添加任务</button>
         </div>

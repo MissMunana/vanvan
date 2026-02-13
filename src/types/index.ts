@@ -51,6 +51,11 @@ export interface Task {
   completedToday: boolean
   stage: HabitStage
   totalCompletions: number
+  isFamilyTask: boolean
+  requiresParentConfirm: boolean
+  parentConfirmed: boolean
+  parentConfirmedBy: string | null
+  parentConfirmedAt: string | null
   createdAt: string
 }
 
@@ -63,6 +68,8 @@ export interface PointLog {
   reason: string
   emotion: string | null
   operator: 'child' | 'parent'
+  operatorUserId: string | null
+  operatorName: string
   createdAt: string
 }
 
@@ -154,13 +161,13 @@ export type MeasureMethod = 'ear' | 'forehead' | 'armpit' | 'rectal' | 'oral'
 
 export type SymptomTag = 'cough' | 'runny_nose' | 'vomiting' | 'diarrhea' | 'rash' | 'lethargy' | 'headache' | 'sore_throat' | 'other'
 
-export type DosageForm = 'suspension_drops' | 'suspension' | 'granules' | 'tablets' | 'suppository'
+export type DosageForm = 'suspension_drops' | 'suspension' | 'granules' | 'tablets' | 'suppository' | 'capsules' | 'chewable_tablets' | 'syrup' | 'powder'
 
 export type AdministrationRoute = 'oral' | 'topical' | 'rectal'
 
 export type FeverLevel = 'normal' | 'low' | 'moderate' | 'high'
 
-export type HealthTab = 'growth' | 'fever' | 'medication' | 'vaccine' | 'milestone' | 'sleep'
+export type HealthTab = 'growth' | 'fever' | 'medication' | 'vaccine' | 'milestone' | 'sleep' | 'cabinet'
 
 export type GrowthMetric = 'height' | 'weight' | 'bmi' | 'headCircumference'
 
@@ -497,4 +504,123 @@ export const CONFLICT_STATUS_INFO: Record<ConflictStatus, { label: string; color
   recorded: { label: '已记录', color: '#FFB800' },
   resolved: { label: '已解决', color: '#4CAF50' },
   reminded: { label: '已提醒', color: '#2196F3' },
+}
+
+// ============ V3.0 家庭药箱管理类型 ============
+
+export type StorageCondition = 'room_temp' | 'refrigerate' | 'cool_dark' | 'other'
+
+export interface MedicineCabinetItem {
+  itemId: string
+  familyId: string
+  name: string
+  genericName: string
+  quantity: number
+  quantityUnit: string
+  expiryDate: string
+  openedDate: string | null
+  openedShelfLifeDays: number | null
+  storageCondition: StorageCondition
+  storageNote: string
+  purchaseDate: string | null
+  batchNumber: string
+  note: string
+  createdAt: string
+  updatedAt: string
+}
+
+export const STORAGE_CONDITION_INFO: Record<StorageCondition, { label: string; icon: string }> = {
+  room_temp: { label: '常温', icon: '🏠' },
+  refrigerate: { label: '冷藏', icon: '❄️' },
+  cool_dark: { label: '阴凉避光', icon: '🌑' },
+  other: { label: '其他', icon: '📦' },
+}
+
+// ============ V3.0 家庭协作类型 ============
+
+export type FamilyRole = 'admin' | 'co_admin' | 'observer'
+
+export interface FamilyMember {
+  memberId: string
+  familyId: string
+  userId: string
+  role: FamilyRole
+  displayName: string
+  avatar: string
+  invitedBy: string | null
+  joinedAt: string
+  createdAt: string
+}
+
+export interface FamilyInvite {
+  inviteId: string
+  familyId: string
+  inviteCode: string
+  role: FamilyRole
+  invitedBy: string
+  usedBy: string | null
+  expiresAt: string
+  createdAt: string
+}
+
+export const FAMILY_ROLE_INFO: Record<FamilyRole, { label: string; icon: string; description: string }> = {
+  admin: { label: '主管理员', icon: '👑', description: '全部权限，管理成员' },
+  co_admin: { label: '协管理员', icon: '🤝', description: '日常操作，不可删除/管理成员' },
+  observer: { label: '观察者', icon: '👀', description: '查看数据，记录交接日志' },
+}
+
+export const ROLE_PERMISSIONS: Record<FamilyRole, {
+  canManageTasks: boolean
+  canManageRewards: boolean
+  canAdjustPoints: boolean
+  canReviewExchanges: boolean
+  canManageChildren: boolean
+  canManageMembers: boolean
+  canDeleteData: boolean
+  canChangeSettings: boolean
+  canCreateHandoverLog: boolean
+  canViewAllData: boolean
+}> = {
+  admin: {
+    canManageTasks: true, canManageRewards: true, canAdjustPoints: true,
+    canReviewExchanges: true, canManageChildren: true, canManageMembers: true,
+    canDeleteData: true, canChangeSettings: true, canCreateHandoverLog: true, canViewAllData: true,
+  },
+  co_admin: {
+    canManageTasks: true, canManageRewards: true, canAdjustPoints: true,
+    canReviewExchanges: true, canManageChildren: false, canManageMembers: false,
+    canDeleteData: false, canChangeSettings: false, canCreateHandoverLog: true, canViewAllData: true,
+  },
+  observer: {
+    canManageTasks: false, canManageRewards: false, canAdjustPoints: false,
+    canReviewExchanges: false, canManageChildren: false, canManageMembers: false,
+    canDeleteData: false, canChangeSettings: false, canCreateHandoverLog: true, canViewAllData: true,
+  },
+}
+
+// ============ V3.0 交接日志类型 ============
+
+export type HandoverPriority = 'normal' | 'important' | 'urgent'
+
+export interface HandoverLog {
+  logId: string
+  familyId: string
+  childId: string
+  authorUserId: string
+  authorName: string
+  date: string
+  tasksSummary: string
+  mealsSummary: string
+  sleepSummary: string
+  healthSummary: string
+  specialNotes: string
+  priority: HandoverPriority
+  createdAt: string
+  updatedAt: string
+}
+
+export const HANDOVER_PRIORITY_INFO: Record<HandoverPriority, { label: string; icon: string; color: string }> = {
+  normal: { label: '普通', icon: '🟢', color: '#4CAF50' },
+  important: { label: '重要', icon: '🟡', color: '#FFB800' },
+  urgent: { label: '紧急', icon: '🔴', color: '#FF5252' },
 }

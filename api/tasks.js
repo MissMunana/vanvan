@@ -3,6 +3,7 @@ import batchHandler from './_tasks/batch.js';
 import taskIdHandler from './_tasks/[taskId].js';
 import completeHandler from './_tasks/[taskId]/complete.js';
 import undoHandler from './_tasks/[taskId]/undo.js';
+import confirmHandler from './_tasks/[taskId]/confirm.js';
 
 export default async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -31,6 +32,12 @@ export default async function handler(req, res) {
   if (segments.length === 2 && segments[1] === 'undo') {
     req.query = { ...req.query, taskId: segments[0] };
     return undoHandler(req, res);
+  }
+
+  // /api/tasks/:taskId/confirm
+  if (segments.length === 2 && segments[1] === 'confirm') {
+    req.query = { ...req.query, taskId: segments[0] };
+    return confirmHandler(req, res);
   }
 
   return res.status(404).json({ error: 'Not found' });

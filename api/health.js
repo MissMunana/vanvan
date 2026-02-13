@@ -16,6 +16,8 @@ import moodsRecord from './_health/moods/[recordId].js';
 import moodsStats from './_health/moods/stats.js';
 import conflictsIndex from './_health/conflicts/index.js';
 import conflictsRecord from './_health/conflicts/[conflictId].js';
+import cabinetIndex from './_health/cabinet/index.js';
+import cabinetRecord from './_health/cabinet/[recordId].js';
 
 export default async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -45,6 +47,7 @@ export default async function handler(req, res) {
     if (type === 'emergency-checklist') return emergencyChecklistIndex(req, res);
     if (type === 'moods') return moodsIndex(req, res);
     if (type === 'conflicts') return conflictsIndex(req, res);
+    if (type === 'cabinet') return cabinetIndex(req, res);
   }
 
   // /api/health/:type/:recordId
@@ -65,6 +68,7 @@ export default async function handler(req, res) {
     if (type === 'medication') return medicationRecord(req, res);
     if (type === 'vaccination') return vaccinationRecord(req, res);
     if (type === 'sleep') return sleepRecord(req, res);
+    if (type === 'cabinet') return cabinetRecord(req, res);
   }
 
   return res.status(404).json({ error: 'Not found' });
