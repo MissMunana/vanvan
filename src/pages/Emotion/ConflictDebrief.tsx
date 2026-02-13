@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useEmotionStore } from '../../stores/emotionStore'
 import { useToast } from '../../components/common/Toast'
+import { getToday } from '../../utils/generateId'
 import { CONFLICT_STATUS_INFO } from '../../types'
 import { FEELING_OPTIONS } from '../../data/emotionData'
 
@@ -46,7 +47,7 @@ export default function ConflictDebrief() {
     try {
       await addConflict({
         childId: child.childId,
-        date: new Date().toISOString().split('T')[0],
+        date: getToday(),
         description,
         childFeeling,
         parentFeeling,

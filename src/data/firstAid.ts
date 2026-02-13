@@ -1,5 +1,11 @@
 import type { FirstAidGuide } from '../types'
 
+export const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
+  common: { label: '常见', color: '#4CAF50' },
+  urgent: { label: '紧急', color: '#FF9800' },
+  emergency: { label: '危急', color: '#FF5252' },
+}
+
 export const FIRST_AID_GUIDES: FirstAidGuide[] = [
   {
     id: 'wound_bleeding',

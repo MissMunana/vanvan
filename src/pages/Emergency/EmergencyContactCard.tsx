@@ -139,7 +139,7 @@ export default function EmergencyContactCard({ profile, child, onEdit }: Emergen
           borderRadius: 8,
           border: `1px solid ${bloodColor}30`,
         }}>
-          {BLOOD_TYPE_INFO[profile.bloodType].label}
+          {BLOOD_TYPE_INFO[profile.bloodType]?.label ?? profile.bloodType}
           {profile.rhFactor !== 'unknown' && (
             <span style={{ fontSize: '0.7rem', marginLeft: 2 }}>
               {profile.rhFactor === 'positive' ? 'Rh+' : 'Rh-'}

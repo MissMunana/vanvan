@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     if (task.parent_confirmed) return res.status(400).json({ error: 'Task already confirmed' });
     if (!task.completed_today) return res.status(400).json({ error: 'Task not completed yet' });
 
-    // 2. Mark as confirmed
+    // 2. Mark as confirmed — use conditional update to prevent race condition
     const now = new Date().toISOString();
     const { data: updatedTask, error: updateError } = await supabase
       .from('tasks')
@@ -45,13 +45,17 @@ export default async function handler(req, res) {
       })
       .eq('task_id', taskId)
       .eq('family_id', familyId)
+      .eq('parent_confirmed', false) // Prevent double-confirm race condition
       .select()
       .single();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      // If no rows matched, another request already confirmed this task
+      return res.status(409).json({ error: 'Task was already confirmed by another request' });
+    }
 
     // 3. Award points (same logic as complete.js but delayed)
-    const earnedPoints = task.points; // Use base points for confirmed tasks
+    const earnedPoints = task.points;
 
     const logRow = {
       log_id: generateId(),
@@ -76,20 +80,16 @@ export default async function handler(req, res) {
 
     if (logError) throw logError;
 
-    // 4. Update child total_points
-    const { data: child } = await supabase
-      .from('children')
-      .select('total_points')
-      .eq('child_id', task.child_id)
-      .eq('family_id', familyId)
-      .single();
+    // 4. Update child total_points atomically via RPC
+    const { data: rpcResult, error: rpcError } = await supabase
+      .rpc('increment_points', {
+        target_child_id: task.child_id,
+        target_family_id: familyId,
+        delta: earnedPoints,
+      });
 
-    const newTotalPoints = (child?.total_points || 0) + earnedPoints;
-    await supabase
-      .from('children')
-      .update({ total_points: newTotalPoints })
-      .eq('child_id', task.child_id)
-      .eq('family_id', familyId);
+    if (rpcError) throw rpcError;
+    const newTotalPoints = rpcResult;
 
     return res.status(200).json({
       task: mapTask(updatedTask),

@@ -22,6 +22,7 @@ import { useRecommendationStore } from '../../stores/recommendationStore'
 import MemberManager from './MemberManager'
 import HandoverManager from './HandoverManager'
 import type { TaskCategory, RewardCategory, Task, Reward } from '../../types'
+import { getToday, toLocalDateStr } from '../../utils/generateId'
 
 type ParentTab = 'dashboard' | 'tasks' | 'rewards' | 'exchanges' | 'adjust' | 'members' | 'handover' | 'settings'
 
@@ -33,12 +34,25 @@ export default function Parent() {
   const parentPin = useAppStore((s) => s.parentPin)
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
 
+  const hasPermission = useFamilyStore((s) => s.hasPermission)
+  const currentRole = useFamilyStore((s) => s.currentMember?.role)
+
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
   const [pinError, setPinError] = useState(false)
-  const [failCount, setFailCount] = useState(0)
-  const [lockUntil, setLockUntil] = useState(0)
-  const [lockRemaining, setLockRemaining] = useState(0)
+  const [failCount, setFailCount] = useState(() => {
+    const v = sessionStorage.getItem('pin_fail_count')
+    return v ? parseInt(v, 10) : 0
+  })
+  const [lockUntil, setLockUntil] = useState(() => {
+    const v = sessionStorage.getItem('pin_lock_until')
+    return v ? parseInt(v, 10) : 0
+  })
+  const [lockRemaining, setLockRemaining] = useState(() => {
+    const v = sessionStorage.getItem('pin_lock_until')
+    const until = v ? parseInt(v, 10) : 0
+    return Math.max(0, until - Date.now())
+  })
   const [activeTab, setActiveTab] = useState<ParentTab>('dashboard')
 
   const navigate = useNavigate()
@@ -66,14 +80,18 @@ export default function Parent() {
       setAuthenticated(true)
       setPinError(false)
       setFailCount(0)
+      sessionStorage.removeItem('pin_fail_count')
+      sessionStorage.removeItem('pin_lock_until')
     } else {
       const newCount = failCount + 1
       setFailCount(newCount)
+      sessionStorage.setItem('pin_fail_count', String(newCount))
       setPinError(true)
       setPinInput('')
       if (newCount >= 3) {
         const until = Date.now() + 5 * 60 * 1000
         setLockUntil(until)
+        sessionStorage.setItem('pin_lock_until', String(until))
         setLockRemaining(until - Date.now())
       }
     }
@@ -146,9 +164,6 @@ export default function Parent() {
   }
 
   if (!child) return null
-
-  const hasPermission = useFamilyStore.getState().hasPermission
-  const currentRole = useFamilyStore.getState().currentMember?.role
 
   const allTabs: { key: ParentTab; label: string; icon: string; show?: boolean }[] = [
     { key: 'dashboard', label: '总览', icon: '📊' },
@@ -248,10 +263,10 @@ function Dashboard() {
   // Multi-child overview stats
   const childOverview = useMemo(() => {
     if (children.length <= 1) return null
-    const today = new Date().toISOString().split('T')[0]
+    const todayStr = getToday()
     return children.map((c) => {
       const todayTasks = tasks.filter(
-        (t) => t.childId === c.childId && t.isActive && t.completedToday && t.lastCompletedDate === today
+        (t) => t.childId === c.childId && t.isActive && t.completedToday && t.lastCompletedDate === todayStr
       ).length
       const pending = exchanges.filter((e) => e.childId === c.childId && e.status === 'pending').length
       return { child: c, todayTasks, pending }
@@ -1146,6 +1161,7 @@ function ExchangeReview() {
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const allExchanges = useExchangeStore((s) => s.exchanges)
+  const canReview = useFamilyStore((s) => s.hasPermission('canReviewExchanges'))
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
 
@@ -1264,6 +1280,7 @@ function ExchangeReview() {
                   </div>
                 </div>
               </div>
+              {canReview && (
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   className="btn btn-primary btn-sm"
@@ -1280,6 +1297,7 @@ function ExchangeReview() {
                   ✕ 拒绝
                 </button>
               </div>
+              )}
             </div>
           )})}
         </div>
@@ -1769,9 +1787,9 @@ function Settings() {
   }
 
   // Birthday range constraints (3-12 years old)
-  const today = new Date()
-  const maxBirthday = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate()).toISOString().split('T')[0]
-  const minBirthday = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate()).toISOString().split('T')[0]
+  const todayDate = new Date()
+  const maxBirthday = toLocalDateStr(new Date(todayDate.getFullYear() - 3, todayDate.getMonth(), todayDate.getDate()))
+  const minBirthday = toLocalDateStr(new Date(todayDate.getFullYear() - 12, todayDate.getMonth(), todayDate.getDate()))
 
   const deletingChildName = showDeleteChild ? children.find((c) => c.childId === showDeleteChild)?.name : ''
 

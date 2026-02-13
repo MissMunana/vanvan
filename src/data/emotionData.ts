@@ -27,7 +27,7 @@ export const MASCOT_RESPONSES: Record<MoodValue, string> = {
 // ---- 6-8 yo: Emoji + optional reasons ----
 export const MOOD_OPTIONS_6_8: MoodOption[] = [
   { value: 'joy', emoji: '😄', label: '很开心' },
-  { value: 'calm', emoji: '🙂', label: '还不错' },
+  { value: 'joy', emoji: '🙂', label: '还不错' },
   { value: 'calm', emoji: '😐', label: '一般般' },
   { value: 'sadness', emoji: '😟', label: '有点不开心' },
   { value: 'sadness', emoji: '😢', label: '很难过' },

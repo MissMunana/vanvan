@@ -13,18 +13,25 @@ export default function JoinFamily() {
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmNeeded, setConfirmNeeded] = useState(false)
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (confirm = false) => {
     if (code.length < 6) return
     setLoading(true)
     setError('')
     try {
-      await joinFamily(code.trim())
+      await joinFamily(code.trim(), confirm)
       showToast('已成功加入家庭')
-      // Reload to refresh family data
       window.location.href = '/'
-    } catch (err: any) {
-      setError(err.message || '邀请码无效或已过期')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '邀请码无效或已过期'
+      if (msg === 'CONFIRM_TRANSFER_REQUIRED') {
+        setConfirmNeeded(true)
+        setError('你已属于一个家庭。加入新家庭将离开当前家庭，确定要继续吗？')
+      } else {
+        setConfirmNeeded(false)
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -100,13 +107,24 @@ export default function JoinFamily() {
         <button className="btn btn-outline" onClick={() => navigate('/')}>
           返回
         </button>
-        <button
-          className="btn btn-primary"
-          onClick={handleSubmit}
-          disabled={code.length < 6 || loading}
-        >
-          {loading ? '加入中...' : '加入家庭'}
-        </button>
+        {confirmNeeded ? (
+          <button
+            className="btn btn-primary"
+            onClick={() => handleSubmit(true)}
+            disabled={loading}
+            style={{ background: 'var(--color-danger)' }}
+          >
+            {loading ? '转移中...' : '确认离开并加入'}
+          </button>
+        ) : (
+          <button
+            className="btn btn-primary"
+            onClick={() => handleSubmit()}
+            disabled={code.length < 6 || loading}
+          >
+            {loading ? '加入中...' : '加入家庭'}
+          </button>
+        )}
       </div>
     </div>
   )

@@ -1,13 +1,8 @@
 import type { FirstAidGuide } from '../../types'
+import { SEVERITY_CONFIG } from '../../data/firstAid'
 
 interface FirstAidDetailProps {
   guide: FirstAidGuide
-}
-
-const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
-  common: { label: '常见', color: '#4CAF50' },
-  urgent: { label: '紧急', color: '#FF9800' },
-  emergency: { label: '危急', color: '#FF5252' },
 }
 
 export default function FirstAidDetail({ guide }: FirstAidDetailProps) {

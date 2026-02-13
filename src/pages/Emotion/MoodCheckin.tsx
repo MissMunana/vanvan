@@ -10,6 +10,7 @@ import {
   EMOTION_FAMILIES, REASON_TAGS_6_8,
   getEmotionAgeGroup,
 } from '../../data/emotionData'
+import { getToday } from '../../utils/generateId'
 
 export default function MoodCheckin() {
   const child = useAppStore((s) => s.getCurrentChild())
@@ -18,7 +19,7 @@ export default function MoodCheckin() {
   const deleteMood = useEmotionStore((s) => s.deleteMood)
   const { showToast } = useToast()
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = getToday()
   const todayMood = moodRecords.find((r) => r.date === today && r.childId === child?.childId)
   const ageGroup: EmotionAgeGroup = child?.birthday ? getEmotionAgeGroup(child.birthday) : '6-8'
 
@@ -30,6 +31,7 @@ export default function MoodCheckin() {
   const [reason, setReason] = useState('')
   const [journal, setJournal] = useState('')
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Reset when age group or child changes
   useEffect(() => {
@@ -149,11 +151,18 @@ export default function MoodCheckin() {
               </div>
             )}
             <button
-              onClick={() => {
-                setSelected(null)
-                setSelectedFamily(null)
-                // Allow re-selection by clearing todayMood display
-                deleteMood(todayMood.recordId)
+              disabled={deleting}
+              onClick={async () => {
+                setDeleting(true)
+                try {
+                  await deleteMood(todayMood.recordId)
+                  setSelected(null)
+                  setSelectedFamily(null)
+                } catch {
+                  showToast('删除失败，请重试')
+                } finally {
+                  setDeleting(false)
+                }
               }}
               style={{
                 marginTop: 10, background: 'none', border: '1px solid var(--color-border)',
@@ -161,7 +170,7 @@ export default function MoodCheckin() {
                 color: 'var(--color-text-secondary)', cursor: 'pointer',
               }}
             >
-              重新记录
+              {deleting ? '删除中...' : '重新记录'}
             </button>
           </div>
         ) : (

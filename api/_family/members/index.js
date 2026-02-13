@@ -1,6 +1,6 @@
 import supabase from '../../_lib/supabase-admin.js';
 import { getAuthenticatedUser, getFamilyMember, unauthorized, requireRole } from '../../_lib/auth-helpers.js';
-import { mapFamilyMember, mapFamilyInvite, generateId } from '../../_lib/mappers.js';
+import { mapFamilyMember, mapFamilyInvite, generateId, generateInviteCode } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
   const { user, error: authError } = await getAuthenticatedUser(req);
@@ -32,8 +32,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid role. Must be co_admin or observer' });
     }
 
-    // Generate 6-char uppercase invite code
-    const inviteCode = Math.random().toString(36).slice(2, 8).toUpperCase();
+    // Generate cryptographically secure 6-char uppercase invite code
+    const inviteCode = generateInviteCode();
     const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
 
     const row = {

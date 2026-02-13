@@ -1,5 +1,5 @@
 import supabase from '../../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized } from '../../_lib/auth-helpers.js';
+import { getAuthenticatedUser, getFamilyId, unauthorized, validateChildOwnership } from '../../_lib/auth-helpers.js';
 import { mapEmergencyProfile, generateId } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -21,9 +21,21 @@ export default async function handler(req, res) {
   } = req.body;
   if (!childId) return res.status(400).json({ error: 'childId is required' });
 
+  if (!await validateChildOwnership(familyId, childId)) {
+    return res.status(403).json({ error: 'Child does not belong to your family' });
+  }
+
   const now = new Date().toISOString();
+
+  // Check if profile already exists for this child
+  const { data: existing } = await supabase
+    .from('emergency_profiles')
+    .select('profile_id')
+    .eq('child_id', childId)
+    .maybeSingle();
+
   const row = {
-    profile_id: generateId(),
+    profile_id: existing?.profile_id || generateId(),
     child_id: childId,
     family_id: familyId,
     blood_type: bloodType || 'unknown',
@@ -39,7 +51,7 @@ export default async function handler(req, res) {
     insurance_info: insuranceInfo || '',
     note: note || '',
     updated_at: now,
-    created_at: now,
+    created_at: existing ? undefined : now,
   };
 
   const { data, error } = await supabase

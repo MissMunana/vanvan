@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
 import { useToast } from '../../components/common/Toast'
+import { getToday } from '../../utils/generateId'
 
 import {
   MILESTONES,
@@ -33,7 +34,7 @@ export default function MilestoneTracker() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
+    return getAgeInMonths(child.birthday, getToday())
   }, [child])
 
   const milestoneRecords = useMemo(() => {

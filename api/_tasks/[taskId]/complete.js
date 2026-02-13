@@ -134,32 +134,19 @@ export default async function handler(req, res) {
 
     if (logError) throw logError;
 
-    // 8. Update child total_points atomically
-    const { data: child } = await supabase
-      .from('children')
-      .select('total_points')
-      .eq('child_id', task.child_id)
-      .eq('family_id', familyId)
-      .single();
+    // 8. Update child total_points atomically via RPC
+    const { data: rpcResult, error: rpcError } = await supabase
+      .rpc('increment_points', {
+        target_child_id: task.child_id,
+        target_family_id: familyId,
+        delta: totalEarned,
+      });
 
-    const newTotalPoints = (child?.total_points || 0) + totalEarned;
-    await supabase
-      .from('children')
-      .update({ total_points: newTotalPoints })
-      .eq('child_id', task.child_id)
-      .eq('family_id', familyId);
+    if (rpcError) throw rpcError;
+    const newTotalPoints = rpcResult;
 
-    // 9. Increment family completion_count
-    const { data: family } = await supabase
-      .from('families')
-      .select('completion_count')
-      .eq('family_id', familyId)
-      .single();
-
-    await supabase
-      .from('families')
-      .update({ completion_count: (family?.completion_count || 0) + 1 })
-      .eq('family_id', familyId);
+    // 9. Increment family completion_count atomically
+    await supabase.rpc('increment_completion_count', { target_family_id: familyId });
 
     return res.status(200).json({
       task: mapTask(updatedTask),

@@ -1,4 +1,5 @@
 import type { BadgeDefinition, Task, PointLog, Child } from '../types'
+import { toLocalDateStr } from '../utils/generateId'
 
 export interface BadgeContext {
   child: Child
@@ -124,7 +125,7 @@ export const BADGE_LIST: BadgeWithChecker[] = [
       for (let i = 0; i < 7; i++) {
         const d = new Date(today)
         d.setDate(today.getDate() - i)
-        const dateStr = d.toISOString().split('T')[0]
+        const dateStr = toLocalDateStr(d)
         const dayLogs = logs.filter(
           (l) => l.childId === child.childId && l.type === 'earn' && l.taskId && l.createdAt.startsWith(dateStr)
         )

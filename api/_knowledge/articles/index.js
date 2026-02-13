@@ -1,4 +1,5 @@
 import supabase from '../../_lib/supabase-admin.js';
+import { getAuthenticatedUser, unauthorized } from '../../_lib/auth-helpers.js';
 import { mapKnowledgeArticle } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -6,6 +7,9 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const { error: authError } = await getAuthenticatedUser(req);
+  if (authError) return unauthorized(res, authError);
 
   const url = new URL(req.url, `http://${req.headers.host}`);
   const category = url.searchParams.get('category');
@@ -22,7 +26,13 @@ export default async function handler(req, res) {
 
   if (category) query = query.eq('category', category);
   if (ageGroup) query = query.eq('age_group', ageGroup);
-  if (search) query = query.or(`title.ilike.%${search}%,summary.ilike.%${search}%`);
+  if (search) {
+    // Sanitize search input: remove PostgREST special characters to prevent filter injection
+    const sanitized = search.replace(/[%_().,\\]/g, '').trim().slice(0, 100);
+    if (sanitized) {
+      query = query.or(`title.ilike.%${sanitized}%,summary.ilike.%${sanitized}%`);
+    }
+  }
 
   const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });

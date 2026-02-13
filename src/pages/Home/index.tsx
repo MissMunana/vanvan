@@ -7,6 +7,7 @@ import { usePointStore } from '../../stores/pointStore'
 import { useExchangeStore } from '../../stores/exchangeStore'
 import { useBadgeStore } from '../../stores/badgeStore'
 import { useRecommendationStore } from '../../stores/recommendationStore'
+import { useFamilyStore } from '../../stores/familyStore'
 import { useToast } from '../../components/common/Toast'
 import { PointAnimation } from '../../components/common/PointAnimation'
 import { useSound } from '../../hooks/useSound'
@@ -33,6 +34,7 @@ export default function Home() {
   const refreshRecommendations = useRecommendationStore((s) => s.refresh)
   const dismissTask = useRecommendationStore((s) => s.dismissTask)
   const addTask = useTaskStore((s) => s.addTask)
+  const canManageTasks = useFamilyStore((s) => s.hasPermission('canManageTasks'))
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { play } = useSound()
@@ -485,42 +487,44 @@ export default function Home() {
                     {rec.reason}
                   </div>
                 </div>
-                <motion.button
-                  whileTap={{ scale: 0.85 }}
-                  onClick={async () => {
-                    try {
-                      await addTask({
-                        childId,
-                        name: rec.template.name,
-                        category: rec.template.category,
-                        points: rec.template.points,
-                        icon: rec.template.icon,
-                        description: rec.template.description,
-                        isActive: true,
-                        frequency: 'daily',
-                      })
-                      dismissTask(rec.template.name)
-                      showToast(`已添加任务"${rec.template.name}"`)
-                    } catch {
-                      showToast('添加失败')
-                    }
-                  }}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: 'var(--color-success)',
-                    color: 'white',
-                    fontSize: '1.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 2px 8px rgba(76,175,80,0.3)',
-                  }}
-                >
-                  +
-                </motion.button>
+                {canManageTasks && (
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={async () => {
+                      try {
+                        await addTask({
+                          childId,
+                          name: rec.template.name,
+                          category: rec.template.category,
+                          points: rec.template.points,
+                          icon: rec.template.icon,
+                          description: rec.template.description,
+                          isActive: true,
+                          frequency: 'daily',
+                        })
+                        dismissTask(rec.template.name)
+                        showToast(`已添加任务"${rec.template.name}"`)
+                      } catch {
+                        showToast('添加失败')
+                      }
+                    }}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      background: 'var(--color-success)',
+                      color: 'white',
+                      fontSize: '1.2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: '0 2px 8px rgba(76,175,80,0.3)',
+                    }}
+                  >
+                    +
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           ))}

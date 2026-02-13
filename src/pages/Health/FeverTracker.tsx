@@ -7,6 +7,7 @@ import type { MeasureMethod, SymptomTag } from '../../types'
 import { FEVER_LEVEL_INFO, SYMPTOM_TAG_INFO, MEASURE_METHOD_INFO } from '../../types'
 import { getFeverLevel, getAgeInMonths } from '../../utils/growthUtils'
 import TemperatureChart from '../../components/charts/TemperatureChart'
+import { getToday } from '../../utils/generateId'
 
 const METHODS: MeasureMethod[] = ['ear', 'forehead', 'armpit']
 const SYMPTOMS: SymptomTag[] = ['cough', 'runny_nose', 'vomiting', 'diarrhea', 'rash', 'lethargy', 'headache', 'sore_throat']
@@ -51,7 +52,7 @@ export default function FeverTracker() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
+    return getAgeInMonths(child.birthday, getToday())
   }, [child])
 
   const seekMedicalAttention = useMemo(() => {

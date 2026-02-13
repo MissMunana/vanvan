@@ -3,6 +3,7 @@ import { useAppStore } from '../../stores/appStore'
 import { useEmotionStore } from '../../stores/emotionStore'
 import type { MoodValue } from '../../types'
 import { MOOD_VALUE_INFO } from '../../types'
+import { toLocalDateStr } from '../../utils/generateId'
 
 const MOOD_KEYS: MoodValue[] = ['joy', 'calm', 'sadness', 'anger', 'fear']
 
@@ -25,7 +26,7 @@ export default function EmotionReport() {
     for (let i = 13; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
+      const dateStr = toLocalDateStr(d)
       const record = childMoods.find((r) => r.date === dateStr)
       if (record) {
         days.push({ date: dateStr, moodValue: record.moodValue, emoji: record.moodEmoji })
@@ -40,7 +41,7 @@ export default function EmotionReport() {
     const childConflicts = conflictRecords.filter((r) => r.childId === child.childId)
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const thirtyStr = thirtyDaysAgo.toISOString().split('T')[0]
+    const thirtyStr = toLocalDateStr(thirtyDaysAgo)
     return {
       total: childConflicts.length,
       resolved: childConflicts.filter((r) => r.status === 'resolved').length,

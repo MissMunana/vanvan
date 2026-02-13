@@ -66,10 +66,32 @@ export default function MedicationTracker() {
     return selectedDrug.calculate(w || 0, ageMonths, selectedFormulation)
   }, [weight, ageMonths, selectedDrug, selectedFormulation])
 
+  // Memoize interval checks for all drugs to avoid calling in render loop
+  const intervalChecksMap = useMemo(() => {
+    const map: Record<string, { safe: boolean; minutesRemaining: number }> = {}
+    if (!child) return map
+    for (const drugs of Object.values(drugsByCategory)) {
+      for (const drug of drugs) {
+        map[drug.id] = drug.intervalHours
+          ? checkMedicationInterval(child.childId, drug.id)
+          : { safe: true, minutesRemaining: 0 }
+      }
+    }
+    return map
+  }, [child, drugsByCategory, medicationRecords, checkMedicationInterval])
+
   const intervalCheck = useMemo(() => {
-    if (!child || !selectedDrug.intervalHours) return { safe: true, minutesRemaining: 0 }
-    return checkMedicationInterval(child.childId, selectedDrugId)
-  }, [child, selectedDrugId, medicationRecords, checkMedicationInterval])
+    return intervalChecksMap[selectedDrugId] || { safe: true, minutesRemaining: 0 }
+  }, [intervalChecksMap, selectedDrugId])
+
+  const isAgeBelowMinimum = !!(selectedDrug.minAgeMonths && ageMonths < selectedDrug.minAgeMonths)
+
+  const isWeightOutOfRange = useMemo(() => {
+    if (!selectedDrug.requiresWeight) return false
+    const w = parseFloat(weight)
+    if (!w || w <= 0) return false
+    return w < 3 || w > 80
+  }, [weight, selectedDrug])
 
   const openCalc = (drugId: DrugId) => {
     setSelectedDrugId(drugId)
@@ -156,11 +178,7 @@ export default function MedicationTracker() {
             <DrugButton
               key={drug.id}
               drug={drug}
-              intervalCheck={
-                drug.intervalHours && child
-                  ? checkMedicationInterval(child.childId, drug.id)
-                  : { safe: true, minutesRemaining: 0 }
-              }
+              intervalCheck={intervalChecksMap[drug.id]}
               onClick={() => openCalc(drug.id)}
             />
           ))}
@@ -215,10 +233,10 @@ export default function MedicationTracker() {
             商品名：{selectedDrug.brandNames.join('、')}
           </div>
 
-          {/* Age restriction warning */}
-          {selectedDrug.minAgeMonths && ageMonths < selectedDrug.minAgeMonths && (
+          {/* Age restriction warning — blocks saving */}
+          {isAgeBelowMinimum && (
             <div className="alert alert-danger">
-              ⚠️ 该药品建议 {Math.floor(selectedDrug.minAgeMonths / 12)} 岁以上使用，当前孩子 {Math.floor(ageMonths / 12)} 岁
+              ⚠️ 该药品建议 {Math.floor(selectedDrug.minAgeMonths! / 12)} 岁以上使用，当前孩子 {Math.floor(ageMonths / 12)} 岁，无法保存记录
             </div>
           )}
 
@@ -243,6 +261,11 @@ export default function MedicationTracker() {
                 min="3"
                 max="80"
               />
+              {isWeightOutOfRange && (
+                <div style={{ fontSize: '0.7rem', color: 'var(--color-alert-danger-text)', marginTop: 4 }}>
+                  ⚠️ 体重应在 3-80kg 之间，请确认输入正确
+                </div>
+              )}
               {latestWeight && weight !== String(latestWeight) && (
                 <button
                   onClick={() => setWeight(String(latestWeight))}
@@ -341,9 +364,9 @@ export default function MedicationTracker() {
           <button
             className="btn btn-health btn-block"
             onClick={() => dosageResult && handleSaveMedication(selectedFormulation, dosageResult)}
-            disabled={!dosageResult || (selectedDrug.intervalHours ? !intervalCheck.safe : false)}
+            disabled={!dosageResult || isAgeBelowMinimum || isWeightOutOfRange || (selectedDrug.intervalHours ? !intervalCheck.safe : false)}
           >
-            保存用药记录
+            {isAgeBelowMinimum ? '年龄不符，无法保存' : isWeightOutOfRange ? '体重超出范围' : '保存用药记录'}
           </button>
         </div>
       </Modal>

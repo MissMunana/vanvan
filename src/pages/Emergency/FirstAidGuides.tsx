@@ -1,13 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FIRST_AID_GUIDES } from '../../data/firstAid'
+import { FIRST_AID_GUIDES, SEVERITY_CONFIG } from '../../data/firstAid'
 import FirstAidDetail from './FirstAidDetail'
-
-const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
-  common: { label: '常见', color: '#4CAF50' },
-  urgent: { label: '紧急', color: '#FF9800' },
-  emergency: { label: '危急', color: '#FF5252' },
-}
 
 export default function FirstAidGuides() {
   const [expandedId, setExpandedId] = useState<string | null>(null)

@@ -32,8 +32,12 @@ export const useEmotionStore = create<EmotionStore>()(
     error: null,
 
     fetchMoods: async (childId) => {
-      const data = await emotionApi.moods.list(childId)
-      set({ moodRecords: data })
+      try {
+        const data = await emotionApi.moods.list(childId)
+        set({ moodRecords: data })
+      } catch (err: any) {
+        set({ error: err.message || '加载心情数据失败' })
+      }
     },
 
     addMood: async (data) => {
@@ -59,13 +63,21 @@ export const useEmotionStore = create<EmotionStore>()(
     },
 
     fetchMoodStats: async (childId) => {
-      const stats = await emotionApi.moods.stats(childId)
-      set({ moodStats: stats })
+      try {
+        const stats = await emotionApi.moods.stats(childId)
+        set({ moodStats: stats })
+      } catch (err: any) {
+        set({ error: err.message || '加载情绪统计失败' })
+      }
     },
 
     fetchConflicts: async (childId) => {
-      const data = await emotionApi.conflicts.list(childId)
-      set({ conflictRecords: data })
+      try {
+        const data = await emotionApi.conflicts.list(childId)
+        set({ conflictRecords: data })
+      } catch (err: any) {
+        set({ error: err.message || '加载冲突记录失败' })
+      }
     },
 
     addConflict: async (data) => {

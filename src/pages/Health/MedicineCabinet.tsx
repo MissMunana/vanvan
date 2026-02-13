@@ -6,6 +6,7 @@ import type { MedicineCabinetItem, StorageCondition } from '../../types'
 import { STORAGE_CONDITION_INFO } from '../../types'
 import { DRUG_REGISTRY, type DrugId } from '../../utils/dosageUtils'
 import { OPENED_SHELF_LIFE, STORAGE_RECOMMENDATIONS, QUANTITY_UNITS } from '../../data/medicineCabinetData'
+import { getToday } from '../../utils/generateId'
 
 export default function MedicineCabinet() {
   const cabinetItems = useHealthStore((s) => s.cabinetItems)
@@ -27,7 +28,7 @@ export default function MedicineCabinet() {
   const expiringItems = useMemo(() => getExpiringItems(30), [cabinetItems, getExpiringItems])
   const openedExpiredItems = useMemo(() => getOpenedExpiredItems(), [cabinetItems, getOpenedExpiredItems])
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = getToday()
 
   return (
     <div>

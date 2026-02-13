@@ -282,6 +282,44 @@ CREATE POLICY vaccination_all ON vaccination_records FOR ALL USING (family_id = 
 CREATE POLICY milestone_all ON milestone_records FOR ALL USING (family_id = get_my_family_id());
 
 -- ============================================================
+-- ATOMIC INCREMENT FUNCTIONS (prevent race conditions)
+-- ============================================================
+
+-- Atomically increment child's total_points, returns new total
+CREATE OR REPLACE FUNCTION increment_points(target_child_id TEXT, target_family_id UUID, delta INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+  new_total INTEGER;
+BEGIN
+  UPDATE children
+  SET total_points = total_points + delta
+  WHERE child_id = target_child_id AND family_id = target_family_id
+  RETURNING total_points INTO new_total;
+  RETURN new_total;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Atomically increment family's completion_count
+CREATE OR REPLACE FUNCTION increment_completion_count(target_family_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE families
+  SET completion_count = completion_count + 1
+  WHERE family_id = target_family_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Atomically increment article view_count
+CREATE OR REPLACE FUNCTION increment_view_count(target_article_id TEXT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE knowledge_articles
+  SET view_count = view_count + 1
+  WHERE article_id = target_article_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================
 -- AUTO-CREATE FAMILY ON SIGNUP (trigger)
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()

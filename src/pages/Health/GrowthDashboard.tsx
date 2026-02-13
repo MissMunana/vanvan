@@ -7,6 +7,7 @@ import type { GrowthMetric } from '../../types'
 import GrowthCurveChart from '../../components/charts/GrowthCurveChart'
 import GrowthEntry from './GrowthEntry'
 import { calculateGrowthVelocity, getAgeInMonths, checkGrowthAlert } from '../../utils/growthUtils'
+import { getToday } from '../../utils/generateId'
 
 const METRIC_TABS: { key: GrowthMetric; label: string }[] = [
   { key: 'height', label: '身高' },
@@ -60,7 +61,7 @@ export default function GrowthDashboard() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
+    return getAgeInMonths(child.birthday, getToday())
   }, [child])
   const showHeadCirc = child && ageMonths <= 36
   const visibleTabs = showHeadCirc ? METRIC_TABS : METRIC_TABS.filter((t) => t.key !== 'headCircumference')

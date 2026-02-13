@@ -7,6 +7,7 @@ import { Modal } from '../../components/common/Modal'
 import { PLANNED_VACCINES, OPTIONAL_VACCINES, ALL_VACCINES, type VaccineScheduleItem } from '../../data/vaccineSchedule'
 import { getAgeInMonths } from '../../utils/growthUtils'
 import type { VaccinationRecord, VaccineReaction } from '../../types'
+import { getToday } from '../../utils/generateId'
 
 type ViewMode = 'schedule' | 'history'
 
@@ -45,7 +46,7 @@ export default function VaccineTracker() {
   const [viewMode, setViewMode] = useState<ViewMode>('schedule')
   const [showRecord, setShowRecord] = useState(false)
   const [selectedVaccine, setSelectedVaccine] = useState<VaccineScheduleItem | null>(null)
-  const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0])
+  const [recordDate, setRecordDate] = useState(getToday())
   const [batchNumber, setBatchNumber] = useState('')
   const [site, setSite] = useState('')
   const [note, setNote] = useState('')
@@ -64,12 +65,12 @@ export default function VaccineTracker() {
 
   const ageMonths = useMemo(() => {
     if (!child) return 0
-    return getAgeInMonths(child.birthday, new Date().toISOString().split('T')[0])
+    return getAgeInMonths(child.birthday, getToday())
   }, [child])
 
   const openRecordModal = (vaccine: VaccineScheduleItem) => {
     setSelectedVaccine(vaccine)
-    setRecordDate(new Date().toISOString().split('T')[0])
+    setRecordDate(getToday())
     setBatchNumber('')
     setSite('')
     setNote('')
@@ -187,7 +188,7 @@ export default function VaccineTracker() {
 
             <div>
               <label className="form-label">接种日期</label>
-              <input type="date" value={recordDate} onChange={(e) => setRecordDate(e.target.value)} min={child.birthday} max={new Date().toISOString().split('T')[0]} />
+              <input type="date" value={recordDate} onChange={(e) => setRecordDate(e.target.value)} min={child.birthday} max={getToday()} />
             </div>
 
             <div>

@@ -2,6 +2,7 @@ import type { Task, TaskCategory, Child, PointLog, Reward, Exchange, Temperature
 import { CATEGORY_INFO, HABIT_STAGE_INFO } from '../types'
 import { TASK_TEMPLATES, type TaskTemplate } from '../data/templates'
 import { KNOWLEDGE_ARTICLES, type KnowledgeArticle } from '../data/knowledgeArticles'
+import { getToday } from './generateId'
 
 // ============ Task Recommendations ============
 
@@ -135,7 +136,7 @@ export function getPointsSuggestions(
   rewards: Reward[]
 ): PointsSuggestion[] {
   const suggestions: PointsSuggestion[] = []
-  const today = new Date().toISOString().split('T')[0]
+  const today = getToday()
   const childTasks = tasks.filter((t) => t.childId === child.childId && t.isActive)
   const childLogs = logs.filter((l) => l.childId === child.childId)
   const childRewards = rewards.filter((r) => r.childId === child.childId && r.isActive)

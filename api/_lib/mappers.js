@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 // DB row (snake_case) → Client format (camelCase) mappers
 
 export function mapChild(c) {
@@ -356,7 +358,13 @@ export function mapConflictRecord(r) {
 }
 
 export function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+  return crypto.randomUUID()
+}
+
+export function generateInviteCode() {
+  // Cryptographically secure 6-char alphanumeric code
+  const bytes = crypto.randomBytes(4);
+  return bytes.toString('base64url').slice(0, 6).toUpperCase();
 }
 
 export function getToday() {

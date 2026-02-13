@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useHealthStore } from '../../stores/healthStore'
@@ -38,6 +38,12 @@ export default function SafetyChecklists() {
 
   const [activeGroup, setActiveGroup] = useState<SafetyAgeGroup>(defaultAgeGroup)
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
+
+  // Sync active age group when child changes
+  useEffect(() => {
+    setActiveGroup(defaultAgeGroup)
+    setCollapsedCategories(new Set())
+  }, [defaultAgeGroup])
 
   const items = useMemo(() => getChecklistForAgeGroup(activeGroup), [activeGroup])
   const categories = useMemo(() => getChecklistCategories(activeGroup), [activeGroup])

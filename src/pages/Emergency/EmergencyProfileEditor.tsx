@@ -116,7 +116,24 @@ export default function EmergencyProfileEditor({ isOpen, onClose, profile, child
     setContacts((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
+  const isValidPhone = (phone: string) => {
+    if (!phone.trim()) return true // empty is ok (optional)
+    const digits = phone.replace(/[\s\-()]/g, '')
+    return /^1\d{10}$/.test(digits) || /^\d{3,4}-?\d{7,8}$/.test(digits)
+  }
+
   const handleSave = async () => {
+    // Validate phone numbers
+    const filledContacts = contacts.filter((c) => c.name.trim() || c.phone.trim())
+    const badPhone = filledContacts.find((c) => c.phone.trim() && !isValidPhone(c.phone))
+    if (badPhone) {
+      showToast(`联系人"${badPhone.name || '未命名'}"的电话号码格式不正确`)
+      return
+    }
+    if (hospitalPhone && !isValidPhone(hospitalPhone)) {
+      showToast('医院电话号码格式不正确')
+      return
+    }
     setSaving(true)
     try {
       await upsertEmergencyProfile({
@@ -127,7 +144,7 @@ export default function EmergencyProfileEditor({ isOpen, onClose, profile, child
         foodAllergies,
         otherAllergies,
         medicalConditions,
-        emergencyContacts: contacts.filter((c) => c.name.trim() || c.phone.trim()),
+        emergencyContacts: filledContacts,
         preferredHospital,
         hospitalAddress,
         hospitalPhone,

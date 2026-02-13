@@ -14,7 +14,7 @@ interface FamilyStore {
   inviteMember: (role: FamilyRole) => Promise<FamilyInvite>
   updateMemberRole: (memberId: string, role: FamilyRole) => Promise<void>
   removeMember: (memberId: string) => Promise<void>
-  joinFamily: (inviteCode: string) => Promise<FamilyMember>
+  joinFamily: (inviteCode: string, confirmTransfer?: boolean) => Promise<FamilyMember>
 
   // Handovers
   fetchHandoverLogs: (childId?: string, startDate?: string) => Promise<void>
@@ -61,8 +61,8 @@ export const useFamilyStore = create<FamilyStore>()(
       }))
     },
 
-    joinFamily: async (inviteCode) => {
-      const member = await familyApi.join(inviteCode)
+    joinFamily: async (inviteCode, confirmTransfer) => {
+      const member = await familyApi.join(inviteCode, confirmTransfer)
       set({ currentMember: member })
       return member
     },

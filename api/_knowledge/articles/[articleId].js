@@ -1,4 +1,5 @@
 import supabase from '../../_lib/supabase-admin.js';
+import { getAuthenticatedUser, unauthorized } from '../../_lib/auth-helpers.js';
 import { mapKnowledgeArticle } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -6,6 +7,9 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const { error: authError } = await getAuthenticatedUser(req);
+  if (authError) return unauthorized(res, authError);
 
   const { articleId } = req.query;
 
@@ -18,11 +22,8 @@ export default async function handler(req, res) {
 
   if (error) return res.status(404).json({ error: 'Article not found' });
 
-  // Increment view count non-blocking
-  supabase.from('knowledge_articles')
-    .update({ view_count: (data.view_count || 0) + 1 })
-    .eq('article_id', articleId)
-    .then(() => {});
+  // Increment view count atomically via RPC, non-blocking
+  supabase.rpc('increment_view_count', { target_article_id: articleId }).catch(() => {});
 
   return res.status(200).json(mapKnowledgeArticle(data));
 }

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { SleepRecord } from '../../types'
+import { toLocalDateStr } from '../../utils/generateId'
 
 interface SleepChartProps {
   records: SleepRecord[]
@@ -42,7 +43,7 @@ export default function SleepChart({
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now)
       d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
+      const dateStr = toLocalDateStr(d)
       const label = `${d.getMonth() + 1}/${d.getDate()}`
 
       const record = records.find((r) => r.date === dateStr)

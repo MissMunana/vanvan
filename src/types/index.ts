@@ -488,7 +488,7 @@ export interface ConflictRecord {
 
 export interface MoodStats {
   distribution: Record<MoodValue, number>
-  records: { date: string; mood_value: MoodValue }[]
+  records: { date: string; moodValue: MoodValue }[]
   totalDays: number
 }
 

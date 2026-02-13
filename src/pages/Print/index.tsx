@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../../stores/appStore'
 import { useTaskStore } from '../../stores/taskStore'
+import { getToday } from '../../utils/generateId'
 
 type TemplateStyle = 'bear' | 'space' | 'clean'
 type PrintType = 'weekly' | 'challenge'
@@ -35,7 +36,7 @@ export default function Print() {
   const [style, setStyle] = useState<TemplateStyle>('bear')
   const [printType, setPrintType] = useState<PrintType>('weekly')
   const [challengeName, setChallengeName] = useState('')
-  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [startDate, setStartDate] = useState(() => getToday())
 
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
   const childId = child?.childId || ''

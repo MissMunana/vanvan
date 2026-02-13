@@ -7,6 +7,7 @@ import { getRecommendationForAge } from '../../data/sleepRecommendations'
 import SleepChart from '../../components/charts/SleepChart'
 import type { SleepQuality, NapRecord } from '../../types'
 import { SLEEP_QUALITY_INFO } from '../../types'
+import { getToday, toLocalDateStr } from '../../utils/generateId'
 
 const QUALITIES: SleepQuality[] = ['great', 'good', 'fair', 'poor']
 const CARD = { background: 'var(--color-surface)', borderRadius: 12, padding: 16, marginBottom: 12 } as const
@@ -49,7 +50,7 @@ export default function SleepTracker() {
   const addSleepRecord = useHealthStore((s) => s.addSleepRecord)
   const deleteSleepRecord = useHealthStore((s) => s.deleteSleepRecord)
   const { showToast } = useToast()
-  const today = new Date().toISOString().split('T')[0]
+  const today = getToday()
 
   const [date, setDate] = useState(today)
   const [bedTime, setBedTime] = useState('')
@@ -88,9 +89,12 @@ export default function SleepTracker() {
     if (!child) return
     if (!sleepTime || !wakeTime) { showToast('请填写入睡时间和醒来时间'); return }
     const durationMinutes = calcDurationMinutes(sleepTime, wakeTime)
+    if (durationMinutes > 16 * 60) { showToast('夜间睡眠时长超过16小时，请检查时间'); return }
     const napRecords: NapRecord[] = naps.filter((n) => n.start && n.end).map((n) => ({
       startTime: n.start, endTime: n.end, durationMinutes: calcDurationMinutes(n.start, n.end),
     }))
+    const badNap = napRecords.find((n) => n.durationMinutes > 4 * 60)
+    if (badNap) { showToast('单次小睡超过4小时，请检查时间'); return }
     const totalNapMinutes = napRecords.reduce((sum, n) => sum + n.durationMinutes, 0)
     try {
       await addSleepRecord({
@@ -106,7 +110,7 @@ export default function SleepTracker() {
 
   const stats = useMemo(() => {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - period)
-    const cutoffStr = cutoff.toISOString().split('T')[0]
+    const cutoffStr = toLocalDateStr(cutoff)
     const pr = records.filter((r) => r.date >= cutoffStr)
     const wd = pr.filter((r) => r.durationMinutes != null)
     const avgDuration = wd.length > 0
@@ -119,7 +123,7 @@ export default function SleepTracker() {
   }, [records, period])
 
   const avgHours = stats.avgDuration / 60
-  const recStatus = recommendation
+  const recStatus = recommendation && stats.count > 0
     ? avgHours >= recommendation.minHours && avgHours <= recommendation.maxHours ? 'green'
       : Math.abs(avgHours - recommendation.minHours) <= 1 || Math.abs(avgHours - recommendation.maxHours) <= 1 ? 'yellow' : 'red'
     : null
@@ -196,7 +200,7 @@ export default function SleepTracker() {
                 <input type="time" value={nap.start} onChange={(e) => updateNap(i, 'start', e.target.value)} style={napInput} />
                 <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>~</span>
                 <input type="time" value={nap.end} onChange={(e) => updateNap(i, 'end', e.target.value)} style={napInput} />
-                {dur != null && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{dur}分</span>}
+                {dur != null && <span style={{ fontSize: '0.75rem', color: dur > 240 ? '#FF5252' : 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{dur > 240 ? '时间异常' : `${dur}分`}</span>}
                 <button onClick={() => removeNap(i)} style={{ background: 'none', border: 'none', color: '#FF5252', fontSize: '1.1rem', cursor: 'pointer', padding: '0 4px' }}>x</button>
               </div>
             )

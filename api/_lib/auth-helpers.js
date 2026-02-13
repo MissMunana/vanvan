@@ -60,6 +60,17 @@ export function requireRole(res, role, allowed) {
   return false;
 }
 
+export async function validateChildOwnership(familyId, childId) {
+  const { data, error } = await supabase
+    .from('children')
+    .select('child_id')
+    .eq('child_id', childId)
+    .eq('family_id', familyId)
+    .single();
+
+  return !error && !!data;
+}
+
 export function forbidden(res, message = 'Forbidden') {
   return res.status(403).json({ error: message });
 }

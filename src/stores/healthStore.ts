@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { GrowthRecord, TemperatureRecord, MedicationRecord, VaccinationRecord, MilestoneRecord, MilestoneStatus, SleepRecord, EmergencyProfile, SafetyChecklistProgress, MedicineCabinetItem } from '../types'
 import { healthApi, emergencyApi } from '../lib/api'
+import { getToday, toLocalDateStr } from '../utils/generateId'
 
 interface HealthStore {
   growthRecords: GrowthRecord[]
@@ -360,17 +361,17 @@ export const useHealthStore = create<HealthStore>()(
     getExpiringItems: (daysAhead = 30) => {
       const now = new Date()
       const threshold = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000)
-      const thresholdStr = threshold.toISOString().split('T')[0]
+      const thresholdStr = toLocalDateStr(threshold)
       return get().cabinetItems.filter((i) => i.expiryDate <= thresholdStr)
     },
 
     getOpenedExpiredItems: () => {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getToday()
       return get().cabinetItems.filter((i) => {
         if (!i.openedDate || !i.openedShelfLifeDays) return false
         const opened = new Date(i.openedDate)
         opened.setDate(opened.getDate() + i.openedShelfLifeDays)
-        return opened.toISOString().split('T')[0] <= today
+        return toLocalDateStr(opened) <= today
       })
     },
 

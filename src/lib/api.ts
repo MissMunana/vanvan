@@ -66,8 +66,8 @@ export const familyApi = {
     remove: (memberId: string) =>
       request<void>(`/family/members/${memberId}`, { method: 'DELETE' }),
   },
-  join: (inviteCode: string) =>
-    request<FamilyMember>('/family/join', { method: 'POST', body: JSON.stringify({ inviteCode }) }),
+  join: (inviteCode: string, confirmTransfer?: boolean) =>
+    request<FamilyMember>('/family/join', { method: 'POST', body: JSON.stringify({ inviteCode, confirmTransfer }) }),
   handovers: {
     list: (childId?: string, startDate?: string) => {
       const params = new URLSearchParams()

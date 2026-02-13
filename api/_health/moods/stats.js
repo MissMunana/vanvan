@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     distribution,
-    records: data || [],
+    records: (data || []).map((r) => ({ date: r.date, moodValue: r.mood_value })),
     totalDays: (data || []).length,
   });
 }

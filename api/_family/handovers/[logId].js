@@ -12,6 +12,23 @@ export default async function handler(req, res) {
   const { familyId } = member;
   const { logId } = req.query;
 
+  // Fetch the log first to check ownership
+  const { data: log, error: fetchError } = await supabase
+    .from('handover_logs')
+    .select('author_user_id')
+    .eq('log_id', logId)
+    .eq('family_id', familyId)
+    .single();
+
+  if (fetchError || !log) return res.status(404).json({ error: 'Log not found' });
+
+  // Only the author or admin can edit/delete
+  const isAuthor = log.author_user_id === user.id;
+  const isAdmin = member.role === 'admin';
+  if (!isAuthor && !isAdmin) {
+    return res.status(403).json({ error: 'Only the author or admin can modify this log' });
+  }
+
   // PUT /family/handovers/:logId — update
   if (req.method === 'PUT') {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;

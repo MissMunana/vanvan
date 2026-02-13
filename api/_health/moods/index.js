@@ -1,5 +1,5 @@
 import supabase from '../../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized } from '../../_lib/auth-helpers.js';
+import { getAuthenticatedUser, getFamilyId, unauthorized, validateChildOwnership } from '../../_lib/auth-helpers.js';
 import { mapMoodRecord, generateId } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -29,6 +29,9 @@ export default async function handler(req, res) {
     const { childId, date, moodValue, moodEmoji, moodLabel, subEmotion, reason, journalEntry, ageGroup } = req.body;
     if (!childId || !date || !moodValue || !moodEmoji || !moodLabel || !ageGroup) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (!await validateChildOwnership(familyId, childId)) {
+      return res.status(403).json({ error: 'Child does not belong to your family' });
     }
     const row = {
       record_id: generateId(),

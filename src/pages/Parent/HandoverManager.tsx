@@ -5,6 +5,7 @@ import { useToast } from '../../components/common/Toast'
 import { Modal } from '../../components/common/Modal'
 import { HANDOVER_PRIORITY_INFO } from '../../types'
 import type { HandoverPriority } from '../../types'
+import { getToday } from '../../utils/generateId'
 
 export default function HandoverManager() {
   const children = useAppStore((s) => s.children)
@@ -58,7 +59,7 @@ export default function HandoverManager() {
     }
     setSaving(true)
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getToday()
       await addHandoverLog({
         childId,
         authorUserId: currentMember?.userId || '',
@@ -134,7 +135,7 @@ export default function HandoverManager() {
         logsByDate.map(([date, logs]) => (
           <div key={date} style={{ marginBottom: 20 }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
-              {date === new Date().toISOString().split('T')[0] ? '今天' : date}
+              {date === getToday() ? '今天' : date}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {logs.map((log) => {

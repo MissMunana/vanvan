@@ -11,28 +11,30 @@ export default async function handler(req, res) {
   const { user, error: authError } = await getAuthenticatedUser(req);
   if (authError) return unauthorized(res, authError);
 
-  const { inviteCode } = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  const { inviteCode, confirmTransfer } = body;
   if (!inviteCode) {
     return res.status(400).json({ error: 'Invite code required' });
   }
 
-  // Find valid invite
+  // Atomically claim the invite: find + mark as used in one operation
   const { data: invite, error: inviteError } = await supabase
     .from('family_invites')
-    .select('*')
+    .update({ used_by: user.id })
     .eq('invite_code', inviteCode.toUpperCase())
     .is('used_by', null)
     .gt('expires_at', new Date().toISOString())
+    .select()
     .single();
 
   if (inviteError || !invite) {
-    return res.status(400).json({ error: 'Invalid or expired invite code' });
+    return res.status(400).json({ error: 'Invalid, expired, or already-used invite code' });
   }
 
-  // Check if user already belongs to this family
+  // Check if user already belongs to a family
   const { data: existingMember } = await supabase
     .from('family_members')
-    .select('member_id, family_id')
+    .select('member_id, family_id, role')
     .eq('user_id', user.id)
     .single();
 
@@ -40,8 +42,57 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Already a member of this family' });
   }
 
-  // If user belongs to a different family, update their membership
+  // If user belongs to a different family, require explicit confirmation
   if (existingMember) {
+    if (!confirmTransfer) {
+      // Release the invite so it can be used again after confirmation
+      await supabase
+        .from('family_invites')
+        .update({ used_by: null })
+        .eq('invite_id', invite.invite_id);
+
+      return res.status(409).json({
+        error: 'CONFIRM_TRANSFER_REQUIRED',
+        message: 'You already belong to a family. Joining a new family will remove you from the current one.',
+        currentFamilyId: existingMember.family_id,
+      });
+    }
+
+    // Check if user is the sole admin of their current family
+    if (existingMember.role === 'admin') {
+      const { data: otherAdmins } = await supabase
+        .from('family_members')
+        .select('member_id')
+        .eq('family_id', existingMember.family_id)
+        .eq('role', 'admin')
+        .neq('user_id', user.id);
+
+      if (!otherAdmins || otherAdmins.length === 0) {
+        // Release the invite
+        await supabase
+          .from('family_invites')
+          .update({ used_by: null })
+          .eq('invite_id', invite.invite_id);
+
+        return res.status(400).json({
+          error: 'You are the only admin of your current family. Please promote another member to admin before leaving.',
+        });
+      }
+    }
+
+    // Re-claim the invite atomically for the confirmed transfer
+    const { data: reclaimedInvite, error: reclaimError } = await supabase
+      .from('family_invites')
+      .update({ used_by: user.id })
+      .eq('invite_id', invite.invite_id)
+      .is('used_by', null)
+      .select()
+      .single();
+
+    if (reclaimError || !reclaimedInvite) {
+      return res.status(400).json({ error: 'Invite code was already used by someone else' });
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from('family_members')
       .update({
@@ -55,17 +106,10 @@ export default async function handler(req, res) {
       .single();
 
     if (updateError) return res.status(500).json({ error: updateError.message });
-
-    // Mark invite as used
-    await supabase
-      .from('family_invites')
-      .update({ used_by: user.id })
-      .eq('invite_id', invite.invite_id);
-
     return res.status(200).json(mapFamilyMember(updated));
   }
 
-  // New member (shouldn't happen normally due to handle_new_user trigger, but handle gracefully)
+  // New member
   const row = {
     member_id: generateId(),
     family_id: invite.family_id,
@@ -82,12 +126,5 @@ export default async function handler(req, res) {
     .single();
 
   if (insertError) return res.status(500).json({ error: insertError.message });
-
-  // Mark invite as used
-  await supabase
-    .from('family_invites')
-    .update({ used_by: user.id })
-    .eq('invite_id', invite.invite_id);
-
   return res.status(200).json(mapFamilyMember(newMember));
 }
