@@ -9,6 +9,16 @@ import { useHealthStore } from '../stores/healthStore'
 
 export type DataKey = 'tasks' | 'rewards' | 'exchanges' | 'logs' | 'badges' | 'health'
 
+// Stable reference to fetch functions to avoid dependency array issues
+const fetchFunctions = {
+  getTasks: (childId: string) => useTaskStore.getState().fetchTasks(childId),
+  getRewards: (childId: string) => useRewardStore.getState().fetchRewards(childId),
+  getExchanges: (childId: string) => useExchangeStore.getState().fetchExchanges(childId),
+  getLogs: (childId: string) => usePointStore.getState().fetchLogs(childId),
+  getBadges: (childId: string) => useBadgeStore.getState().fetchBadges(childId),
+  getHealth: (childId: string) => useHealthStore.getState().fetchAllHealth(childId),
+}
+
 /**
  * 页面级按需数据加载 hook
  *
@@ -19,13 +29,6 @@ export type DataKey = 'tasks' | 'rewards' | 'exchanges' | 'logs' | 'badges' | 'h
 export function usePageData(needs: DataKey[]) {
   const currentChildId = useAppStore((s) => s.currentChildId)
 
-  const fetchTasks = useTaskStore((s) => s.fetchTasks)
-  const fetchRewards = useRewardStore((s) => s.fetchRewards)
-  const fetchExchanges = useExchangeStore((s) => s.fetchExchanges)
-  const fetchLogs = usePointStore((s) => s.fetchLogs)
-  const fetchBadges = useBadgeStore((s) => s.fetchBadges)
-  const fetchAllHealth = useHealthStore((s) => s.fetchAllHealth)
-
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fetchingRef = useRef(false)
@@ -33,7 +36,7 @@ export function usePageData(needs: DataKey[]) {
   const childIdRef = useRef<string | null>(null)
   const needsKeyRef = useRef<string>('')
 
-  // Compute needs key for comparison
+  // Compute needs key for comparison (sorted to ensure stable ordering)
   const needsKey = [...needs].sort().join(',')
 
   useEffect(() => {
@@ -53,12 +56,12 @@ export function usePageData(needs: DataKey[]) {
     needsKeyRef.current = needsKey
 
     const fetchMap: Record<DataKey, (childId: string) => Promise<void>> = {
-      tasks: fetchTasks,
-      rewards: fetchRewards,
-      exchanges: fetchExchanges,
-      logs: fetchLogs,
-      badges: fetchBadges,
-      health: fetchAllHealth,
+      tasks: fetchFunctions.getTasks,
+      rewards: fetchFunctions.getRewards,
+      exchanges: fetchFunctions.getExchanges,
+      logs: fetchFunctions.getLogs,
+      badges: fetchFunctions.getBadges,
+      health: fetchFunctions.getHealth,
     }
 
     const missing = needs.filter((key) => !loadedRef.current.has(key))
@@ -77,8 +80,7 @@ export function usePageData(needs: DataKey[]) {
         setIsLoading(false)
         fetchingRef.current = false
       })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChildId, needsKey, fetchTasks, fetchRewards, fetchExchanges, fetchLogs, fetchBadges, fetchAllHealth])
+  }, [currentChildId, needsKey, needs])
 
   return { isLoading, error }
 }

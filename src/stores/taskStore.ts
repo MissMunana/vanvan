@@ -13,6 +13,7 @@ interface TaskStore {
   error: string | null
   _loadedChildIds: Set<string>
 
+  // Server-first async methods
   fetchTasks: (childId: string) => Promise<void>
   addTask: (task: CreateTaskInput) => Promise<Task>
   addTasks: (tasks: CreateTaskInput[]) => Promise<void>
@@ -22,10 +23,12 @@ interface TaskStore {
   undoComplete: (taskId: string) => Promise<void>
   deleteByChildId: (childId: string) => void
 
+  // Local-only helpers
   getChildTasks: (childId: string) => Task[]
   getChildTasksByCategory: (childId: string) => Record<TaskCategory, Task[]>
   updateLocalTask: (task: Task) => void
 
+  // Cleanup
   logout: () => void
 }
 
@@ -36,31 +39,20 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
   _loadedChildIds: new Set<string>(),
 
   fetchTasks: async (childId) => {
-    console.log(`[TaskStore] fetchTasks START for childId=${childId}`)
     set({ isLoading: true, error: null })
     try {
       const tasks = await tasksApi.list(childId)
-      console.log(`[TaskStore] fetchTasks API returned ${tasks.length} tasks for childId=${childId}`)
-      tasks.forEach(t => {
-        if (t.completedToday) {
-          console.log(`[TaskStore]   - Completed task: ${t.name}, lastCompletedDate=${t.lastCompletedDate}`)
-        }
-      })
-      
       set((s) => {
         const otherTasks = s.tasks.filter((t) => t.childId !== childId)
         const newLoaded = new Set(s._loadedChildIds)
         newLoaded.add(childId)
-        const newTasks = [...otherTasks, ...tasks]
-        console.log(`[TaskStore] fetchTasks SET state: ${newTasks.length} total tasks, ${otherTasks.length} other children, ${tasks.length} for current child`)
-        return { tasks: newTasks, isLoading: false, _loadedChildIds: newLoaded }
+        return { tasks: [...otherTasks, ...tasks], isLoading: false, _loadedChildIds: newLoaded }
       })
+      // Don't call refreshDailyStatus here - server already returns correct completedToday
     } catch (e) {
-      console.error(`[TaskStore] fetchTasks ERROR for childId=${childId}:`, e)
       set({ error: (e as Error).message, isLoading: false })
       throw e
     }
-    console.log(`[TaskStore] fetchTasks END for childId=${childId}`)
   },
 
   addTask: async (taskData) => {
@@ -78,6 +70,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       createdAt: new Date().toISOString(),
     } as unknown as Task
     
+    // Optimistic update
     set((s) => ({ tasks: [...s.tasks, tempTask] }))
     
     try {
@@ -87,6 +80,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       }))
       return task
     } catch (error) {
+      // Rollback on error
       set({ tasks: previousTasks })
       throw error
     }
@@ -115,8 +109,6 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     const previousTask = get().tasks.find((t) => t.taskId === taskId)
     if (!previousTask) throw new Error('Task not found')
     
-    console.log(`[TaskStore] completeTask START taskId=${taskId}`)
-    
     // Optimistic update
     set((s) => ({
       tasks: s.tasks.map((t) => (t.taskId === taskId ? { 
@@ -129,13 +121,12 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     
     try {
       const result = await tasksApi.complete(taskId)
-      console.log(`[TaskStore] completeTask API returned: completedToday=${result.task.completedToday}, lastCompletedDate=${result.task.lastCompletedDate}`)
       set((s) => ({
         tasks: s.tasks.map((t) => (t.taskId === taskId ? result.task : t)),
       }))
       return result
     } catch (error) {
-      console.error(`[TaskStore] completeTask ERROR taskId=${taskId}:`, error)
+      // Rollback on error
       set((s) => ({
         tasks: s.tasks.map((t) => (t.taskId === taskId ? previousTask : t)),
       }))
