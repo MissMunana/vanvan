@@ -28,6 +28,9 @@ interface TaskStore {
   getChildTasksByCategory: (childId: string) => Record<TaskCategory, Task[]>
   refreshDailyStatus: () => void
   updateLocalTask: (task: Task) => void
+
+  // Cleanup
+  logout: () => void
 }
 
 export const useTaskStore = create<TaskStore>()((set, get) => ({
@@ -172,5 +175,14 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     set((s) => ({
       tasks: s.tasks.map((t) => (t.taskId === task.taskId ? task : t)),
     }))
+  },
+
+  logout: () => {
+    set({
+      tasks: [],
+      isLoading: false,
+      error: null,
+      _loadedChildIds: new Set<string>(),
+    })
   },
 }))

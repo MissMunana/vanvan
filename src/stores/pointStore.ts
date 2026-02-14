@@ -18,6 +18,9 @@ interface PointStore {
   getChildLogs: (childId: string, limit?: number) => PointLog[]
   getWeeklyStats: (childId: string) => { tasksCompleted: number; pointsEarned: number; pointsSpent: number }
   prependLog: (log: PointLog) => void
+
+  // Cleanup
+  logout: () => void
 }
 
 export const usePointStore = create<PointStore>()((set, get) => ({
@@ -82,5 +85,14 @@ export const usePointStore = create<PointStore>()((set, get) => ({
 
   prependLog: (log) => {
     set((s) => ({ logs: [log, ...s.logs] }))
+  },
+
+  logout: () => {
+    set({
+      logs: [],
+      isLoading: false,
+      error: null,
+      _loadedChildIds: new Set<string>(),
+    })
   },
 }))

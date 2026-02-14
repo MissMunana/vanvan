@@ -19,6 +19,9 @@ interface ExchangeStore {
   getChildExchanges: (childId: string) => Exchange[]
   getPendingExchanges: (childId?: string) => Exchange[]
   updateLocal: (exchange: Exchange) => void
+
+  // Cleanup
+  logout: () => void
 }
 
 export const useExchangeStore = create<ExchangeStore>()((set, get) => ({
@@ -90,5 +93,14 @@ export const useExchangeStore = create<ExchangeStore>()((set, get) => ({
     set((s) => ({
       exchanges: s.exchanges.map((e) => (e.exchangeId === exchange.exchangeId ? exchange : e)),
     }))
+  },
+
+  logout: () => {
+    set({
+      exchanges: [],
+      isLoading: false,
+      error: null,
+      _loadedChildIds: new Set<string>(),
+    })
   },
 }))

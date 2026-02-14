@@ -69,6 +69,7 @@ interface HealthStore {
 
   // Cleanup
   deleteByChildId: (childId: string) => void
+  logout: () => void
 }
 
 const MEDICATION_INTERVALS: Record<string, number> = {
@@ -386,6 +387,23 @@ export const useHealthStore = create<HealthStore>()(
         emergencyProfile: state.emergencyProfile?.childId === childId ? null : state.emergencyProfile,
         safetyChecklistProgress: state.safetyChecklistProgress.filter((p) => p.childId !== childId),
       }))
+    },
+
+    logout: () => {
+      set({
+        growthRecords: [],
+        temperatureRecords: [],
+        medicationRecords: [],
+        vaccinationRecords: [],
+        milestoneRecords: [],
+        sleepRecords: [],
+        emergencyProfile: null,
+        safetyChecklistProgress: [],
+        cabinetItems: [],
+        isLoading: false,
+        error: null,
+        _loadedChildIds: new Set<string>(),
+      })
     },
   })
 )

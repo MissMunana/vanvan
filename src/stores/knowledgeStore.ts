@@ -23,6 +23,9 @@ interface KnowledgeStore {
   setActiveAgeGroup: (ageGroup: KnowledgeAgeGroup | null) => void
   setSearchQuery: (query: string) => void
   getFilteredArticles: () => KnowledgeArticleSummary[]
+
+  // Cleanup
+  logout: () => void
 }
 
 export const useKnowledgeStore = create<KnowledgeStore>()(
@@ -121,6 +124,13 @@ export const useKnowledgeStore = create<KnowledgeStore>()(
       }
 
       return filtered
+    },
+
+    logout: () => {
+      set({
+        bookmarks: [],
+        bookmarkedIds: new Set(),
+      })
     },
   })
 )

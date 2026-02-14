@@ -19,6 +19,9 @@ interface BadgeStore {
 
   // Local-only helpers
   getChildBadges: (childId: string) => UnlockedBadge[]
+
+  // Cleanup
+  logout: () => void
 }
 
 export const useBadgeStore = create<BadgeStore>()((set, get) => ({
@@ -83,5 +86,14 @@ export const useBadgeStore = create<BadgeStore>()((set, get) => ({
 
   deleteByChildId: (childId) => {
     set((s) => ({ unlockedBadges: s.unlockedBadges.filter((b) => b.childId !== childId) }))
+  },
+
+  logout: () => {
+    set({
+      unlockedBadges: [],
+      isLoading: false,
+      error: null,
+      _loadedChildIds: new Set<string>(),
+    })
   },
 }))

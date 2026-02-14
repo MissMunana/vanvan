@@ -25,6 +25,9 @@ interface FamilyStore {
 
   // Permissions
   hasPermission: (permission: keyof typeof ROLE_PERMISSIONS['admin']) => boolean
+
+  // Cleanup
+  logout: () => void
 }
 
 export const useFamilyStore = create<FamilyStore>()(
@@ -34,61 +37,132 @@ export const useFamilyStore = create<FamilyStore>()(
     handoverLogs: [],
 
     fetchMembers: async () => {
-      const data = await familyApi.members.list()
-      set({ members: data })
+      try {
+        const data = await familyApi.members.list()
+        set({ members: data })
+      } catch (error) {
+        console.error('Failed to fetch members:', error)
+        // Keep existing members on error
+      }
     },
 
     fetchCurrentMember: async () => {
-      const data = await familyApi.me()
-      set({ currentMember: data })
+      try {
+        const data = await familyApi.me()
+        set({ currentMember: data })
+      } catch (error) {
+        console.error('Failed to fetch current member:', error)
+        set({ currentMember: null })
+      }
     },
 
     inviteMember: async (role) => {
-      return await familyApi.members.invite(role)
+      try {
+        return await familyApi.members.invite(role)
+      } catch (error) {
+        console.error('Failed to invite member:', error)
+        throw error
+      }
     },
 
     updateMemberRole: async (memberId, role) => {
-      const updated = await familyApi.members.updateRole(memberId, role)
+      const previousMembers = get().members
+      // Optimistic update
       set((state) => ({
-        members: state.members.map((m) => m.memberId === memberId ? updated : m),
+        members: state.members.map((m) => m.memberId === memberId ? { ...m, role } : m),
       }))
+      try {
+        const updated = await familyApi.members.updateRole(memberId, role)
+        set((state) => ({
+          members: state.members.map((m) => m.memberId === memberId ? updated : m),
+        }))
+      } catch (error) {
+        // Rollback on error
+        set({ members: previousMembers })
+        console.error('Failed to update member role:', error)
+        throw error
+      }
     },
 
     removeMember: async (memberId) => {
-      await familyApi.members.remove(memberId)
+      const previousMembers = get().members
+      // Optimistic update
       set((state) => ({
         members: state.members.filter((m) => m.memberId !== memberId),
       }))
+      try {
+        await familyApi.members.remove(memberId)
+      } catch (error) {
+        // Rollback on error
+        set({ members: previousMembers })
+        console.error('Failed to remove member:', error)
+        throw error
+      }
     },
 
     joinFamily: async (inviteCode, confirmTransfer) => {
-      const member = await familyApi.join(inviteCode, confirmTransfer)
-      set({ currentMember: member })
-      return member
+      try {
+        const member = await familyApi.join(inviteCode, confirmTransfer)
+        set({ currentMember: member, members: [...get().members, member] })
+        return member
+      } catch (error) {
+        console.error('Failed to join family:', error)
+        throw error
+      }
     },
 
     fetchHandoverLogs: async (childId, startDate) => {
-      const data = await familyApi.handovers.list(childId, startDate)
-      set({ handoverLogs: data })
+      try {
+        const data = await familyApi.handovers.list(childId, startDate)
+        set({ handoverLogs: data })
+      } catch (error) {
+        console.error('Failed to fetch handover logs:', error)
+      }
     },
 
     addHandoverLog: async (data) => {
-      const log = await familyApi.handovers.create(data)
-      set((state) => ({ handoverLogs: [log, ...state.handoverLogs] }))
+      try {
+        const log = await familyApi.handovers.create(data)
+        set((state) => ({ handoverLogs: [log, ...state.handoverLogs] }))
+      } catch (error) {
+        console.error('Failed to add handover log:', error)
+        throw error
+      }
     },
 
     updateHandoverLog: async (logId, updates) => {
-      const updated = await familyApi.handovers.update(logId, updates)
+      const previousLogs = get().handoverLogs
+      // Optimistic update
       set((state) => ({
-        handoverLogs: state.handoverLogs.map((l) => l.logId === logId ? updated : l),
+        handoverLogs: state.handoverLogs.map((l) => l.logId === logId ? { ...l, ...updates } : l),
       }))
+      try {
+        const updated = await familyApi.handovers.update(logId, updates)
+        set((state) => ({
+          handoverLogs: state.handoverLogs.map((l) => l.logId === logId ? updated : l),
+        }))
+      } catch (error) {
+        // Rollback on error
+        set({ handoverLogs: previousLogs })
+        console.error('Failed to update handover log:', error)
+        throw error
+      }
     },
 
     deleteHandoverLog: async (logId) => {
-      await familyApi.handovers.delete(logId)
+      const previousLogs = get().handoverLogs
+      // Optimistic update
       set((state) => ({
         handoverLogs: state.handoverLogs.filter((l) => l.logId !== logId),
       }))
+      try {
+        await familyApi.handovers.delete(logId)
+      } catch (error) {
+        // Rollback on error
+        set({ handoverLogs: previousLogs })
+        console.error('Failed to delete handover log:', error)
+        throw error
+      }
     },
 
     getUrgentLogs: () => {
@@ -99,6 +173,14 @@ export const useFamilyStore = create<FamilyStore>()(
       const member = get().currentMember
       if (!member) return false
       return ROLE_PERMISSIONS[member.role]?.[permission] ?? false
+    },
+
+    logout: () => {
+      set({
+        members: [],
+        currentMember: null,
+        handoverLogs: [],
+      })
     },
   })
 )

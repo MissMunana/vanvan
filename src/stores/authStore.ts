@@ -2,6 +2,15 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase-browser'
+import { useAppStore } from './appStore'
+import { useTaskStore } from './taskStore'
+import { useRewardStore } from './rewardStore'
+import { usePointStore } from './pointStore'
+import { useBadgeStore } from './badgeStore'
+import { useExchangeStore } from './exchangeStore'
+import { useHealthStore } from './healthStore'
+import { useFamilyStore } from './familyStore'
+import { useKnowledgeStore } from './knowledgeStore'
 
 interface AuthStore {
   user: User | null
@@ -81,6 +90,18 @@ export const useAuthStore = create<AuthStore>()(
 
       logout: async () => {
         await supabase.auth.signOut()
+        
+        // Clear all stores
+        useAppStore.getState().logout()
+        useTaskStore.getState().logout()
+        useRewardStore.getState().logout()
+        usePointStore.getState().logout()
+        useBadgeStore.getState().logout()
+        useExchangeStore.getState().logout()
+        useHealthStore.getState().logout()
+        useFamilyStore.getState().logout()
+        useKnowledgeStore.getState().logout()
+        
         set({
           user: null,
           session: null,

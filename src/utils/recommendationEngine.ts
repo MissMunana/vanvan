@@ -1,7 +1,7 @@
 import type { Task, TaskCategory, Child, PointLog, Reward, Exchange, TemperatureRecord, SleepRecord } from '../types'
 import { CATEGORY_INFO, HABIT_STAGE_INFO } from '../types'
 import { TASK_TEMPLATES, type TaskTemplate } from '../data/templates'
-import { KNOWLEDGE_ARTICLES, type KnowledgeArticle } from '../data/knowledgeArticles'
+import { KNOWLEDGE_ARTICLES, type LocalKnowledgeArticle } from '../data/knowledgeArticles'
 import { getToday } from './generateId'
 
 // ============ Task Recommendations ============
@@ -270,7 +270,7 @@ export function getPointsSuggestions(
 // ============ Knowledge Recommendations ============
 
 export interface KnowledgeRecommendation {
-  article: KnowledgeArticle
+  article: LocalKnowledgeArticle
   reason: string
   priority: number
 }

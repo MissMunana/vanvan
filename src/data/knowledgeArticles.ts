@@ -1,6 +1,7 @@
 import type { HabitStage } from '../types'
 
-export type KnowledgeCategory =
+// Renamed to avoid conflict with types/index.ts KnowledgeCategory
+export type LocalKnowledgeCategory =
   | 'feeding'
   | 'sleep'
   | 'fever'
@@ -16,11 +17,12 @@ export type KnowledgeTrigger =
   | { type: 'habit_stage'; stage: HabitStage }
   | { type: 'always' }
 
-export interface KnowledgeArticle {
+// Renamed to avoid conflict with types/index.ts KnowledgeArticle
+export interface LocalKnowledgeArticle {
   articleId: string
   title: string
   icon: string
-  category: KnowledgeCategory
+  category: LocalKnowledgeCategory
   summary: string
   content: string[]
   tips: string[]
@@ -29,7 +31,7 @@ export interface KnowledgeArticle {
   priority: number
 }
 
-export const KNOWLEDGE_CATEGORY_INFO: Record<KnowledgeCategory, { label: string; icon: string }> = {
+export const KNOWLEDGE_CATEGORY_INFO: Record<LocalKnowledgeCategory, { label: string; icon: string }> = {
   habit: { label: '习惯养成', icon: '🌱' },
   behavior: { label: '行为管理', icon: '🧠' },
   feeding: { label: '喂养营养', icon: '🍎' },
@@ -40,7 +42,7 @@ export const KNOWLEDGE_CATEGORY_INFO: Record<KnowledgeCategory, { label: string;
   safety: { label: '安全防护', icon: '🛡️' },
 }
 
-export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
+export const KNOWLEDGE_ARTICLES: LocalKnowledgeArticle[] = [
   // ========== 习惯养成 ==========
   {
     articleId: 'habit-001',

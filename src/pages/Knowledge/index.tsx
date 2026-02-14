@@ -3,14 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAppStore } from '../../stores/appStore'
 import { useRecommendationStore } from '../../stores/recommendationStore'
 import { Modal } from '../../components/common/Modal'
-import { KNOWLEDGE_CATEGORY_INFO, type KnowledgeArticle, type KnowledgeCategory } from '../../data/knowledgeArticles'
+import { KNOWLEDGE_CATEGORY_INFO, type LocalKnowledgeArticle, type LocalKnowledgeCategory } from '../../data/knowledgeArticles'
 
-type FilterCategory = KnowledgeCategory | 'all'
+type FilterCategory = LocalKnowledgeCategory | 'all'
 
 const CATEGORY_TABS: { key: FilterCategory; label: string; icon: string }[] = [
   { key: 'all', label: '全部', icon: '📚' },
   ...Object.entries(KNOWLEDGE_CATEGORY_INFO).map(([key, info]) => ({
-    key: key as KnowledgeCategory,
+    key: key as LocalKnowledgeCategory,
     label: info.label,
     icon: info.icon,
   })),
@@ -22,7 +22,7 @@ export default function Knowledge() {
   const refresh = useRecommendationStore((s) => s.refresh)
 
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all')
-  const [selectedArticle, setSelectedArticle] = useState<KnowledgeArticle | null>(null)
+  const [selectedArticle, setSelectedArticle] = useState<LocalKnowledgeArticle | null>(null)
 
   useEffect(() => {
     if (currentChildId) {
