@@ -10,14 +10,15 @@ export function toLocalDateStr(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+// Use Shanghai timezone to match server (consistent with API)
 export function getToday(): string {
-  return toLocalDateStr(new Date())
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date())
 }
 
 export function getYesterday(): string {
   const d = new Date()
   d.setDate(d.getDate() - 1)
-  return toLocalDateStr(d)
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(d)
 }
 
 export function getWeekStartStr(): string {
