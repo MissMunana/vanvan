@@ -26,7 +26,6 @@ interface TaskStore {
   // Local-only helpers
   getChildTasks: (childId: string) => Task[]
   getChildTasksByCategory: (childId: string) => Record<TaskCategory, Task[]>
-  refreshDailyStatus: () => void
   updateLocalTask: (task: Task) => void
 
   // Cleanup
@@ -159,16 +158,6 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       grouped[t.category].push(t)
     })
     return grouped
-  },
-
-  refreshDailyStatus: () => {
-    const today = getToday()
-    set((s) => ({
-      tasks: s.tasks.map((t) => ({
-        ...t,
-        completedToday: t.lastCompletedDate === today,
-      })),
-    }))
   },
 
   updateLocalTask: (task) => {

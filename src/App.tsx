@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BottomNav } from './components/Layout/BottomNav'
@@ -6,9 +6,7 @@ import { SideNav } from './components/Layout/SideNav'
 import { TopBar } from './components/Layout/TopBar'
 import { useIsTablet } from './hooks/useMediaQuery'
 import { useAppStore } from './stores/appStore'
-import { useTaskStore } from './stores/taskStore'
 import { useAuthStore } from './stores/authStore'
-import { getToday } from './utils/generateId'
 import { useScreenTime } from './hooks/useScreenTime'
 import ScreenTimeLock from './components/common/ScreenTimeLock'
 import Auth from './pages/Auth'
@@ -40,7 +38,6 @@ export default function App() {
 
   const onboardingCompleted = useAppStore((s) => s.onboardingCompleted)
   const children = useAppStore((s) => s.children)
-  const refreshDailyStatus = useTaskStore((s) => s.refreshDailyStatus)
   const getCurrentChild = useAppStore((s) => s.getCurrentChild)
   const parentPin = useAppStore((s) => s.parentPin)
   const location = useLocation()
@@ -78,16 +75,6 @@ export default function App() {
       load()
     }
   }, [isAuthenticated, isDataLoaded, fetchFamily, fetchChildren, setDataLoaded])
-
-  // Refresh daily status only when date changes (not on every mount)
-  const lastCheckedDateRef = useRef<string | null>(null)
-  useEffect(() => {
-    const today = getToday()
-    if (lastCheckedDateRef.current !== today) {
-      lastCheckedDateRef.current = today
-      refreshDailyStatus()
-    }
-  }, [refreshDailyStatus])
 
   const child = getCurrentChild()
   const screenTimeConfig = child?.settings?.screenTime
