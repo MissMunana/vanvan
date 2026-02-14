@@ -18,10 +18,10 @@ import { Modal } from '../../components/common/Modal'
 import { usePageData } from '../../hooks/usePageData'
 import PageLoading from '../../components/common/PageLoading'
 
-const HOME_DATA = ['tasks', 'logs', 'exchanges', 'badges'] as const
+const HOME_DATA: Array<'tasks' | 'logs' | 'exchanges' | 'badges'> = ['tasks', 'logs', 'exchanges', 'badges']
 
 export default function Home() {
-  const { isLoading: pageLoading, error: pageError } = usePageData([...HOME_DATA])
+  const { isLoading: pageLoading, error: pageError } = usePageData(HOME_DATA)
   const children = useAppStore((s) => s.children)
   const currentChildId = useAppStore((s) => s.currentChildId)
   const allTasks = useTaskStore((s) => s.tasks)
