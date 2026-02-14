@@ -49,7 +49,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
         newLoaded.add(childId)
         return { tasks: [...otherTasks, ...tasks], isLoading: false, _loadedChildIds: newLoaded }
       })
-      get().refreshDailyStatus()
+      // Don't call refreshDailyStatus here - server already returns correct completedToday
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false })
       throw e

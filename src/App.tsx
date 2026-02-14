@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BottomNav } from './components/Layout/BottomNav'
@@ -8,6 +8,7 @@ import { useIsTablet } from './hooks/useMediaQuery'
 import { useAppStore } from './stores/appStore'
 import { useTaskStore } from './stores/taskStore'
 import { useAuthStore } from './stores/authStore'
+import { getToday } from './utils/generateId'
 import { useScreenTime } from './hooks/useScreenTime'
 import ScreenTimeLock from './components/common/ScreenTimeLock'
 import Auth from './pages/Auth'
@@ -78,8 +79,14 @@ export default function App() {
     }
   }, [isAuthenticated, isDataLoaded, fetchFamily, fetchChildren, setDataLoaded])
 
+  // Refresh daily status only when date changes (not on every mount)
+  const lastCheckedDateRef = useRef<string | null>(null)
   useEffect(() => {
-    refreshDailyStatus()
+    const today = getToday()
+    if (lastCheckedDateRef.current !== today) {
+      lastCheckedDateRef.current = today
+      refreshDailyStatus()
+    }
   }, [refreshDailyStatus])
 
   const child = getCurrentChild()
