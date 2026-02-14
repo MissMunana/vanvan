@@ -44,10 +44,14 @@ export default async function handler(req, res) {
       .single();
 
     if (taskError || !task) return res.status(404).json({ error: 'Task not found' });
-    if (task.completed_today) return res.status(400).json({ error: 'Task already completed today' });
-
+    
     const today = getToday();
     const yesterday = getYesterday();
+    
+    // Check if already completed today using last_completed_date (more reliable than completed_today)
+    if (task.last_completed_date === today) {
+      return res.status(400).json({ error: 'Task already completed today' });
+    }
 
     // 2. Calculate streak
     const wasYesterday = task.last_completed_date === yesterday;

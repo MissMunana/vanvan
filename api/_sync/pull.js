@@ -1,5 +1,6 @@
 import supabase from '../_lib/supabase-admin.js';
 import { getAuthenticatedUser, getFamilyId, unauthorized, methodNotAllowed } from '../_lib/auth-helpers.js';
+import { getToday } from '../_lib/mappers.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return methodNotAllowed(res, 'GET');
@@ -54,6 +55,8 @@ export default async function handler(req, res) {
       createdAt: c.created_at,
     }));
 
+    // Dynamically calculate completedToday based on lastCompletedDate
+    const today = getToday();
     const mappedTasks = (tasks || []).map(t => ({
       taskId: t.task_id,
       childId: t.child_id,
@@ -66,7 +69,7 @@ export default async function handler(req, res) {
       frequency: t.frequency,
       consecutiveDays: t.consecutive_days,
       lastCompletedDate: t.last_completed_date,
-      completedToday: t.completed_today,
+      completedToday: t.last_completed_date === today,
       stage: t.stage,
       totalCompletions: t.total_completions,
       createdAt: t.created_at,

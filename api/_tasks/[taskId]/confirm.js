@@ -1,6 +1,6 @@
 import supabase from '../../_lib/supabase-admin.js';
 import { getAuthenticatedUser, getFamilyMember, unauthorized, requireRole } from '../../_lib/auth-helpers.js';
-import { mapTask, mapPointLog, generateId } from '../../_lib/mappers.js';
+import { mapTask, mapPointLog, generateId, getToday } from '../../_lib/mappers.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -32,7 +32,11 @@ export default async function handler(req, res) {
     if (taskError || !task) return res.status(404).json({ error: 'Task not found' });
     if (!task.requires_parent_confirm) return res.status(400).json({ error: 'Task does not require confirmation' });
     if (task.parent_confirmed) return res.status(400).json({ error: 'Task already confirmed' });
-    if (!task.completed_today) return res.status(400).json({ error: 'Task not completed yet' });
+    // Check if task was completed today using last_completed_date
+    const today = getToday();
+    if (task.last_completed_date !== today) {
+      return res.status(400).json({ error: 'Task not completed yet' });
+    }
 
     // 2. Mark as confirmed — use conditional update to prevent race condition
     const now = new Date().toISOString();

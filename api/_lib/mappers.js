@@ -1,5 +1,10 @@
 import crypto from 'crypto';
 
+// Use Shanghai timezone to match client (consistent across API)
+function getToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date())
+}
+
 // DB row (snake_case) → Client format (camelCase) mappers
 
 export function mapChild(c) {
@@ -19,6 +24,11 @@ export function mapChild(c) {
 }
 
 export function mapTask(t) {
+  // Dynamically calculate completedToday based on lastCompletedDate
+  // This ensures consistency even if the stored completed_today is stale
+  const today = getToday()
+  const completedToday = t.last_completed_date === today
+  
   return {
     taskId: t.task_id,
     childId: t.child_id,
@@ -31,7 +41,7 @@ export function mapTask(t) {
     frequency: t.frequency,
     consecutiveDays: t.consecutive_days,
     lastCompletedDate: t.last_completed_date,
-    completedToday: t.completed_today,
+    completedToday: completedToday,
     stage: t.stage,
     totalCompletions: t.total_completions,
     isFamilyTask: t.is_family_task || false,
