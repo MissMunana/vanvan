@@ -35,7 +35,6 @@ export default function Parent() {
   const child = useMemo(() => children.find((c) => c.childId === currentChildId) || null, [children, currentChildId])
 
   const hasPermission = useFamilyStore((s) => s.hasPermission)
-  const currentRole = useFamilyStore((s) => s.currentMember?.role)
 
   const [authenticated, setAuthenticated] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -173,7 +172,7 @@ export default function Parent() {
     { key: 'adjust', label: '调分', icon: '✏️', show: hasPermission('canAdjustPoints') },
     { key: 'members', label: '成员', icon: '👥' },
     { key: 'handover', label: '交接', icon: '📋' },
-    { key: 'settings', label: '设置', icon: '⚙️', show: hasPermission('canChangeSettings') || currentRole === 'admin' },
+    { key: 'settings', label: '设置', icon: '⚙️' },
   ]
   const tabs = allTabs.filter((t) => t.show !== false)
 
