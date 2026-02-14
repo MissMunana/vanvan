@@ -25,11 +25,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const session = useAuthStore.getState().session
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
     ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    cache: 'no-store',
     headers: { ...headers, ...(options.headers as Record<string, string>) },
   })
 

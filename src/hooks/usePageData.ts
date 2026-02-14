@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { useTaskStore } from '../stores/taskStore'
 import { useRewardStore } from '../stores/rewardStore'
@@ -26,27 +26,22 @@ export function usePageData(needs: DataKey[]) {
   const fetchBadges = useBadgeStore((s) => s.fetchBadges)
   const fetchAllHealth = useHealthStore((s) => s.fetchAllHealth)
 
-  const tasksLoaded = useTaskStore((s) => s._loadedChildIds)
-  const rewardsLoaded = useRewardStore((s) => s._loadedChildIds)
-  const exchangesLoaded = useExchangeStore((s) => s._loadedChildIds)
-  const logsLoaded = usePointStore((s) => s._loadedChildIds)
-  const badgesLoaded = useBadgeStore((s) => s._loadedChildIds)
-  const healthLoaded = useHealthStore((s) => s._loadedChildIds)
+  // Use memoized needs key to avoid dependency array issues
+  const needsKey = useMemo(() => needs.join(','), [needs])
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fetchingRef = useRef(false)
+  const loadedRef = useRef<Set<string>>(new Set())
+  const childIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!currentChildId || fetchingRef.current) return
 
-    const loadedMap: Record<DataKey, Set<string>> = {
-      tasks: tasksLoaded,
-      rewards: rewardsLoaded,
-      exchanges: exchangesLoaded,
-      logs: logsLoaded,
-      badges: badgesLoaded,
-      health: healthLoaded,
+    // Reset loaded tracking when child changes
+    if (childIdRef.current !== currentChildId) {
+      childIdRef.current = currentChildId
+      loadedRef.current = new Set()
     }
 
     const fetchMap: Record<DataKey, (childId: string) => Promise<void>> = {
@@ -58,7 +53,7 @@ export function usePageData(needs: DataKey[]) {
       health: fetchAllHealth,
     }
 
-    const missing = needs.filter((key) => !loadedMap[key].has(currentChildId))
+    const missing = needs.filter((key) => !loadedRef.current.has(key))
     if (missing.length === 0) return
 
     fetchingRef.current = true
@@ -66,12 +61,15 @@ export function usePageData(needs: DataKey[]) {
     setError(null)
 
     Promise.all(missing.map((key) => fetchMap[key](currentChildId)))
+      .then(() => {
+        missing.forEach((key) => loadedRef.current.add(key))
+      })
       .catch((err) => setError((err as Error).message))
       .finally(() => {
         setIsLoading(false)
         fetchingRef.current = false
       })
-  }, [currentChildId, needs.join(','), tasksLoaded, rewardsLoaded, exchangesLoaded, logsLoaded, badgesLoaded, healthLoaded])
+  }, [currentChildId, needsKey, fetchTasks, fetchRewards, fetchExchanges, fetchLogs, fetchBadges, fetchAllHealth])
 
   return { isLoading, error }
 }
