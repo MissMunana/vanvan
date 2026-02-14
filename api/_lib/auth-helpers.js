@@ -18,7 +18,7 @@ export async function getAuthenticatedUser(req) {
 
 export async function getFamilyId(userId) {
   const { data, error } = await supabase
-    .from('family_members')
+    .from('families')
     .select('family_id')
     .eq('user_id', userId)
     .single();
@@ -31,9 +31,10 @@ export async function getFamilyId(userId) {
 }
 
 export async function getFamilyMember(userId) {
+  // Query families table since family_members table doesn't exist
   const { data, error } = await supabase
-    .from('family_members')
-    .select('family_id, role, member_id, display_name')
+    .from('families')
+    .select('family_id, user_id')
     .eq('user_id', userId)
     .single();
 
@@ -44,9 +45,9 @@ export async function getFamilyMember(userId) {
   return {
     member: {
       familyId: data.family_id,
-      role: data.role,
-      memberId: data.member_id,
-      displayName: data.display_name,
+      role: 'owner',
+      memberId: data.user_id,
+      displayName: 'Owner',
     },
     error: null,
   };
