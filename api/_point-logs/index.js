@@ -31,6 +31,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'childId, type, points, and reason are required' });
     }
 
+    // Use RPC for atomic point update to prevent race conditions
+    const { data: newTotalPoints, error: pointsError } = await supabase.rpc('add_points_atomic', {
+      p_child_id: childId,
+      p_family_id: familyId,
+      p_points: points
+    });
+
+    if (pointsError) {
+      return res.status(500).json({ error: pointsError.message });
+    }
+
     const now = new Date().toISOString();
     const row = {
       log_id: generateId(),
@@ -51,28 +62,14 @@ export default async function handler(req, res) {
       .select()
       .single();
 
-    if (logError) return res.status(500).json({ error: logError.message });
-
-    // Also update child total_points
-    const { data: child } = await supabase
-      .from('children')
-      .select('total_points')
-      .eq('child_id', childId)
-      .eq('family_id', familyId)
-      .single();
-
-    let totalPoints = child?.total_points || 0;
-    totalPoints = Math.max(0, totalPoints + points);
-
-    await supabase
-      .from('children')
-      .update({ total_points: totalPoints })
-      .eq('child_id', childId)
-      .eq('family_id', familyId);
+    if (logError) {
+      // Log error but don't fail the request since points were already updated
+      console.error('Failed to insert point log:', logError);
+    }
 
     return res.status(201).json({
-      log: mapPointLog(logData),
-      totalPoints,
+      log: logData ? mapPointLog(logData) : null,
+      totalPoints: newTotalPoints,
     });
   }
 

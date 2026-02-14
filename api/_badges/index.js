@@ -1,5 +1,5 @@
 import supabase from '../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized } from '../_lib/auth-helpers.js';
+import { getAuthenticatedUser, getFamilyId, validateChildOwnership, unauthorized } from '../_lib/auth-helpers.js';
 import { mapBadge } from '../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -26,6 +26,12 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { childId, badgeId } = req.body;
     if (!childId || !badgeId) return res.status(400).json({ error: 'childId and badgeId are required' });
+
+    // Validate child ownership
+    const isValid = await validateChildOwnership(familyId, childId);
+    if (!isValid) {
+      return res.status(403).json({ error: 'Child does not belong to this family' });
+    }
 
     const { data, error } = await supabase
       .from('unlocked_badges')

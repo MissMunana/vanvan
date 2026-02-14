@@ -72,6 +72,36 @@ export async function validateChildOwnership(familyId, childId) {
   return !error && !!data;
 }
 
+/**
+ * 批量验证多个 childId 是否属于当前家庭
+ * @param {string} familyId 
+ * @param {string[]} childIds 
+ * @returns {Promise<{valid: boolean, invalidIds: string[]}>}
+ */
+export async function validateChildrenOwnership(familyId, childIds) {
+  if (!childIds || childIds.length === 0) {
+    return { valid: true, invalidIds: [] };
+  }
+  
+  const { data, error } = await supabase
+    .from('children')
+    .select('child_id')
+    .eq('family_id', familyId)
+    .in('child_id', childIds);
+
+  if (error) {
+    return { valid: false, invalidIds: childIds };
+  }
+
+  const validIds = new Set(data.map(c => c.child_id));
+  const invalidIds = childIds.filter(id => !validIds.has(id));
+  
+  return { 
+    valid: invalidIds.length === 0, 
+    invalidIds 
+  };
+}
+
 export function forbidden(res, message = 'Forbidden') {
   return res.status(403).json({ error: message });
 }

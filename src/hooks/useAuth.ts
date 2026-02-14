@@ -84,7 +84,7 @@ export function useAuth() {
     })
 
     const options = await optionsRes.json()
-    if (!optionsRes.ok) throw new Error(options.error || 'Failed to get options')
+    if (!optionsRes.ok) throw new Error(options.error || options.message || 'Failed to get options')
 
     // Start browser WebAuthn registration ceremony
     const credential = await startRegistration({ optionsJSON: options })

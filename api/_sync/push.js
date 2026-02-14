@@ -1,5 +1,5 @@
 import supabase from '../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized, methodNotAllowed } from '../_lib/auth-helpers.js';
+import { getAuthenticatedUser, getFamilyId, validateChildrenOwnership, unauthorized, methodNotAllowed } from '../_lib/auth-helpers.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res);
@@ -12,6 +12,31 @@ export default async function handler(req, res) {
 
   const { appState, children, tasks, rewards, exchanges, pointLogs, badges, health } = req.body;
   const counts = {};
+
+  // Collect all childIds from incoming data for ownership validation
+  const allChildIds = new Set();
+  children?.forEach(c => allChildIds.add(c.childId));
+  tasks?.forEach(t => allChildIds.add(t.childId));
+  rewards?.forEach(r => allChildIds.add(r.childId));
+  exchanges?.forEach(e => allChildIds.add(e.childId));
+  pointLogs?.forEach(l => allChildIds.add(l.childId));
+  badges?.forEach(b => allChildIds.add(b.childId));
+  health?.growthRecords?.forEach(r => allChildIds.add(r.childId));
+  health?.temperatureRecords?.forEach(r => allChildIds.add(r.childId));
+  health?.medicationRecords?.forEach(r => allChildIds.add(r.childId));
+  health?.vaccinationRecords?.forEach(r => allChildIds.add(r.childId));
+  health?.milestoneRecords?.forEach(r => allChildIds.add(r.childId));
+
+  // Validate ownership of all childIds
+  if (allChildIds.size > 0) {
+    const { valid, invalidIds } = await validateChildrenOwnership(familyId, Array.from(allChildIds));
+    if (!valid) {
+      return res.status(403).json({ 
+        error: 'Forbidden: some children do not belong to this family',
+        invalidIds 
+      });
+    }
+  }
 
   try {
     // Update family settings

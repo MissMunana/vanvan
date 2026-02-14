@@ -766,7 +766,16 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
     return Math.min(1.15, 1 + dist / 1000)
   })
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dragTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [canDrag, setCanDrag] = useState(false)
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressRef.current) clearTimeout(longPressRef.current)
+      if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current)
+    }
+  }, [])
 
   const stageInfo = task.stage ? HABIT_STAGE_INFO[task.stage as keyof typeof HABIT_STAGE_INFO] : null
 
@@ -792,7 +801,7 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
       }}
       onPointerUp={() => {
         if (longPressRef.current) clearTimeout(longPressRef.current)
-        setTimeout(() => setCanDrag(false), 100)
+        dragTimeoutRef.current = setTimeout(() => setCanDrag(false), 100)
       }}
       onPointerCancel={() => {
         if (longPressRef.current) clearTimeout(longPressRef.current)
@@ -801,7 +810,7 @@ function DraggableTaskCard({ task, onComplete, onDragStart, onDrag, onDragEnd, i
       onDrag={(_e, info) => onDrag(info)}
       onDragEnd={(_e, info) => {
         onDragEnd(info)
-        setTimeout(() => setCanDrag(false), 100)
+        dragTimeoutRef.current = setTimeout(() => setCanDrag(false), 100)
       }}
       className="card"
       whileTap={canDrag ? undefined : { scale: 0.97 }}

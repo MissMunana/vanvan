@@ -1,5 +1,5 @@
 import supabase from '../_lib/supabase-admin.js';
-import { getAuthenticatedUser, getFamilyId, unauthorized } from '../_lib/auth-helpers.js';
+import { getAuthenticatedUser, getFamilyId, validateChildrenOwnership, unauthorized } from '../_lib/auth-helpers.js';
 import { mapReward, generateId } from '../_lib/mappers.js';
 
 export default async function handler(req, res) {
@@ -17,6 +17,16 @@ export default async function handler(req, res) {
   const { rewards } = req.body;
   if (!Array.isArray(rewards) || rewards.length === 0) {
     return res.status(400).json({ error: 'rewards array is required' });
+  }
+
+  // Validate all childIds belong to this family
+  const childIds = [...new Set(rewards.map(r => r.childId))];
+  const { valid, invalidIds } = await validateChildrenOwnership(familyId, childIds);
+  if (!valid) {
+    return res.status(403).json({ 
+      error: 'Some children do not belong to this family',
+      invalidIds 
+    });
   }
 
   const now = new Date().toISOString();

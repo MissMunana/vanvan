@@ -3,6 +3,10 @@ import type { Task, TaskCategory } from '../types'
 import { tasksApi, type CompleteTaskResult, type CreateTaskInput } from '../lib/api'
 import { getToday } from '../utils/generateId'
 
+// Helper to generate temporary IDs for optimistic updates
+let tempIdCounter = 0
+const generateTempId = () => `temp_${Date.now()}_${++tempIdCounter}`
+
 interface TaskStore {
   tasks: Task[]
   isLoading: boolean
@@ -11,7 +15,7 @@ interface TaskStore {
 
   // Server-first async methods
   fetchTasks: (childId: string) => Promise<void>
-  addTask: (task: CreateTaskInput) => Promise<void>
+  addTask: (task: CreateTaskInput) => Promise<Task>
   addTasks: (tasks: CreateTaskInput[]) => Promise<void>
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (taskId: string) => Promise<void>
@@ -50,8 +54,34 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
   },
 
   addTask: async (taskData) => {
-    const task = await tasksApi.create(taskData)
-    set((s) => ({ tasks: [...s.tasks, task] }))
+    const previousTasks = get().tasks
+    const tempId = generateTempId()
+    const tempTask = { 
+      ...taskData, 
+      taskId: tempId, 
+      isPending: true,
+      consecutiveDays: 0,
+      lastCompletedDate: null,
+      completedToday: false,
+      stage: 'start' as const,
+      totalCompletions: 0,
+      createdAt: new Date().toISOString(),
+    } as unknown as Task
+    
+    // Optimistic update
+    set((s) => ({ tasks: [...s.tasks, tempTask] }))
+    
+    try {
+      const task = await tasksApi.create(taskData)
+      set((s) => ({ 
+        tasks: s.tasks.map((t) => t.taskId === tempId ? task : t) 
+      }))
+      return task
+    } catch (error) {
+      // Rollback on error
+      set({ tasks: previousTasks })
+      throw error
+    }
   },
 
   addTasks: async (taskDataList) => {
@@ -74,11 +104,32 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
   },
 
   completeTask: async (taskId) => {
-    const result = await tasksApi.complete(taskId)
+    const previousTask = get().tasks.find((t) => t.taskId === taskId)
+    if (!previousTask) throw new Error('Task not found')
+    
+    // Optimistic update
     set((s) => ({
-      tasks: s.tasks.map((t) => (t.taskId === taskId ? result.task : t)),
+      tasks: s.tasks.map((t) => (t.taskId === taskId ? { 
+        ...t, 
+        completedToday: true,
+        totalCompletions: (t.totalCompletions || 0) + 1,
+        lastCompletedDate: getToday()
+      } : t)),
     }))
-    return result
+    
+    try {
+      const result = await tasksApi.complete(taskId)
+      set((s) => ({
+        tasks: s.tasks.map((t) => (t.taskId === taskId ? result.task : t)),
+      }))
+      return result
+    } catch (error) {
+      // Rollback on error
+      set((s) => ({
+        tasks: s.tasks.map((t) => (t.taskId === taskId ? previousTask : t)),
+      }))
+      throw error
+    }
   },
 
   undoComplete: async (taskId) => {
